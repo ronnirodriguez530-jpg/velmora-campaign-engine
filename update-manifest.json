@@ -1,5 +1,5 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "channel": "main",
-  "notes": "Story-first interface, persistent Campaign Master narration, GitHub source, and automatic updates."
+  "notes": "Fix navigation before campaign loading and prevent stale browser-interface caching."
 }

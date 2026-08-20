@@ -171,7 +171,7 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
       if (method === "GET" && staticFiles[url.pathname]) {
         const filename = staticFiles[url.pathname];
         const types: Record<string, string> = { ".html": "text/html; charset=utf-8", ".js": "text/javascript; charset=utf-8", ".css": "text/css; charset=utf-8" };
-        response.writeHead(200, { "content-type": types[extname(filename)] ?? "application/octet-stream" });
+        response.writeHead(200, { "content-type": types[extname(filename)] ?? "application/octet-stream", "cache-control": "no-store, max-age=0" });
         response.end(await readFile(join(publicRoot, filename)));
         return;
       }

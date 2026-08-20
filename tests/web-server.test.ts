@@ -15,6 +15,7 @@ test("browser API creates, plays, persists, acts, and rolls back", async () => {
     const page = await fetch(base);
     assert.equal(page.status, 200);
     assert.match(await page.text(), /<title>Velmora<\/title>/);
+    assert.match(page.headers.get("cache-control") ?? "", /no-store/);
 
     const created = await fetch(`${base}/api/campaigns`, {
       method: "POST",
