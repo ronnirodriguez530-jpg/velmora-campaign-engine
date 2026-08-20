@@ -1,0 +1,65 @@
+[
+  {
+    "id": "LOC-COUNCIL-CROWN",
+    "name": "Crowned Council Hall",
+    "district": "neutral",
+    "connections": ["LOC-GUARDED-AVENUE", "LOC-DIST-AURORUS", "LOC-DIST-GLASS"],
+    "perspectiveTags": ["council", "outer-crown"]
+  },
+  {
+    "id": "LOC-GUARDED-AVENUE",
+    "name": "Guarded Central Avenue",
+    "district": "neutral",
+    "connections": ["LOC-COUNCIL-CROWN", "LOC-CONTAINMENT-RING"],
+    "perspectiveTags": ["transit", "neutral"]
+  },
+  {
+    "id": "LOC-CONTAINMENT-RING",
+    "name": "Tear Containment Ring",
+    "district": "neutral",
+    "connections": ["LOC-GUARDED-AVENUE", "LOC-DIST-AURORUS", "LOC-DIST-CHRYSALIS", "LOC-DIST-THORNS", "LOC-DIST-WAYFARER", "LOC-DIST-HANDS", "LOC-DIST-GLASS"],
+    "perspectiveTags": ["tear", "harvesting", "fortified"]
+  },
+  {
+    "id": "LOC-DIST-AURORUS",
+    "name": "Aurorus Wedge",
+    "district": "FAC-002",
+    "connections": ["LOC-COUNCIL-CROWN", "LOC-CONTAINMENT-RING", "LOC-DIST-CHRYSALIS", "LOC-DIST-GLASS"],
+    "perspectiveTags": ["district", "magic", "relics"]
+  },
+  {
+    "id": "LOC-DIST-CHRYSALIS",
+    "name": "Chrysalis Wedge",
+    "district": "FAC-004",
+    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-AURORUS", "LOC-DIST-THORNS"],
+    "perspectiveTags": ["district", "healing", "alteration"]
+  },
+  {
+    "id": "LOC-DIST-THORNS",
+    "name": "Thorn Wedge",
+    "district": "FAC-001",
+    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-CHRYSALIS", "LOC-DIST-WAYFARER"],
+    "perspectiveTags": ["district", "beasts", "defense"]
+  },
+  {
+    "id": "LOC-DIST-WAYFARER",
+    "name": "Wayfarer Wedge",
+    "district": "FAC-003",
+    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-THORNS", "LOC-DIST-HANDS"],
+    "perspectiveTags": ["district", "fragments", "salvage"]
+  },
+  {
+    "id": "LOC-DIST-HANDS",
+    "name": "Hands Wedge",
+    "district": "FAC-005",
+    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-WAYFARER", "LOC-DIST-GLASS"],
+    "perspectiveTags": ["district", "civic", "distribution"]
+  },
+  {
+    "id": "LOC-DIST-GLASS",
+    "name": "Glass Wedge",
+    "district": "FAC-006",
+    "connections": ["LOC-COUNCIL-CROWN", "LOC-CONTAINMENT-RING", "LOC-DIST-HANDS", "LOC-DIST-AURORUS"],
+    "perspectiveTags": ["district", "records", "secrets"]
+  }
+]

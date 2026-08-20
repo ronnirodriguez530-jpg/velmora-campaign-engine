@@ -1,0 +1,42 @@
+# Velmora Content Boundaries
+
+This file prevents engine scaffolding, tests, and generated output from silently becoming campaign canon.
+
+## Confirmed canon
+
+- Velmora is the compact playable world around a stable but unstable-surging Tear.
+- Six wedge-shaped faction districts surround the Tear; the council hall sits at the crown position.
+- The six established factions, the First Speaker, the Endless Surge, and the four broad campaign stages remain secured.
+- The player initially controls one character.
+- Normal quests support two major outcomes; turning points may support a third.
+- Stage transition evaluates world state and requires meaningful progress through two of six faction lines.
+- Tear arrivals may contain creatures, raw magical energy, and fragments of other worlds; payload count is one common, two uncommon, and three rare.
+- Tear crossing is one-way. No temporary Tears exist. Special one-way travel through open Tears may eventually exist, but nobody currently knows how.
+
+## Mechanical scaffolding—not canon
+
+- Numeric faction-path progress from 0–3.
+- The provisional stage thresholds tied to those numbers.
+- The provisional 15% Tear-arrival check and 70/23/7 rarity weights.
+- The four generic scene templates whose IDs begin with `TPL-SCAFFOLD`.
+- Simulation profiles and abstract milestones.
+
+These parts exist so the engine can run, branch, and be tested. They may be replaced by approved content without changing canon.
+
+## Test-only material
+
+- Mock Director responses.
+- Simulation actions such as `commit simulation step`.
+- Generated test campaigns, seeds, scenes, and event histories.
+
+## Deferred content
+
+- Named quests and their actual milestones.
+- Specific powers, creatures, major beings, relics, and world fragments.
+- Final truth candidates and final outcomes.
+- Exact faction relationships and detailed faction leadership.
+- Final Tear frequency and probability tuning.
+
+## Hard rule
+
+The engine may select, place, combine, validate, and simulate approved structures. It may not promote scaffolding or generated material into canon, rewrite the setting, or create permanent new mechanics without approval.

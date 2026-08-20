@@ -1,0 +1,42 @@
+import type { DatabaseSync } from "node:sqlite";
+import type { PerspectiveContext, VelmoraContent } from "../domain/types.ts";
+import { getCampaign, getSceneForTurnAndLocation, listCharactersAtLocation, listFactionConditions, listFactionPathProgress, listLocationConsequences, listPresentCharacterStates, listRecentTearArrivals } from "../persistence/database.ts";
+
+export function buildPerspectiveContext(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignName: string
+): PerspectiveContext {
+  const campaign = getCampaign(db, campaignName);
+  if (!campaign) throw new Error(`Campaign '${campaignName}' does not exist`);
+  const currentLocation = content.locations.find((location) => location.id === campaign.currentLocationId);
+  if (!currentLocation) throw new Error(`Current location ${campaign.currentLocationId} is missing from authored content`);
+  const stage = content.stages.find((candidate) => candidate.key === campaign.stage);
+  if (!stage) throw new Error(`Campaign stage ${campaign.stage} is missing from authored content`);
+  const connectedLocations = currentLocation.connections.map((id) => {
+    const location = content.locations.find((candidate) => candidate.id === id);
+    if (!location) throw new Error(`Connected location ${id} is missing from authored content`);
+    return location;
+  });
+  const presentCharacters = listPresentCharacterStates(db, campaign.id, currentLocation.id).map((state) => ({
+    ...state,
+    factionId: content.characters.find((character) => character.id === state.characterId)?.factionId ?? null
+  }));
+  return {
+    campaignId: campaign.id,
+    seed: campaign.seed,
+    stage: campaign.stage,
+    stageAnchor: stage.anchor,
+    stageMaxThreatLevel: stage.maxThreatLevel,
+    turn: campaign.turn,
+    currentLocation,
+    connectedLocations,
+    presentCharacterIds: listCharactersAtLocation(db, campaign.id, currentLocation.id),
+    persistentConsequences: listLocationConsequences(db, campaign.id, currentLocation.id),
+    encounteredScene: getSceneForTurnAndLocation(db, campaign.id, campaign.turn, currentLocation.id) ?? null,
+    factionPathProgress: listFactionPathProgress(db, campaign.id),
+    factionConditions: listFactionConditions(db, campaign.id),
+    presentCharacters,
+    recentTearArrivals: listRecentTearArrivals(db, campaign.id)
+  };
+}

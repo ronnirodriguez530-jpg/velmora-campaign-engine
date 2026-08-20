@@ -1,0 +1,34 @@
+[
+  {
+    "id": "TPL-SCAFFOLD-OPENING",
+    "stages": ["opening"],
+    "conflictKey": "stage_pressure",
+    "objectiveKey": "assess_current_location",
+    "minThreatLevel": 1,
+    "maxThreatLevel": 2
+  },
+  {
+    "id": "TPL-SCAFFOLD-STABILIZATION",
+    "stages": ["stabilization"],
+    "conflictKey": "stage_pressure",
+    "objectiveKey": "secure_current_location",
+    "minThreatLevel": 1,
+    "maxThreatLevel": 3
+  },
+  {
+    "id": "TPL-SCAFFOLD-ESCALATION",
+    "stages": ["escalation"],
+    "conflictKey": "stage_pressure",
+    "objectiveKey": "respond_to_escalation",
+    "minThreatLevel": 3,
+    "maxThreatLevel": 5
+  },
+  {
+    "id": "TPL-SCAFFOLD-RESOLUTION",
+    "stages": ["resolution"],
+    "conflictKey": "stage_pressure",
+    "objectiveKey": "resolve_valid_truth_path",
+    "minThreatLevel": 1,
+    "maxThreatLevel": 5
+  }
+]

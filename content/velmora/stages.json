@@ -1,0 +1,30 @@
+[
+  {
+    "id": "STG-OPENING",
+    "key": "opening",
+    "order": 1,
+    "anchor": "The Endless Surge begins, raw Tear-magic critically wounds the First Speaker, and Velmora loses central coordination.",
+    "maxThreatLevel": 2
+  },
+  {
+    "id": "STG-STABILIZATION",
+    "key": "stabilization",
+    "order": 2,
+    "anchor": "Velmora survives the initial disaster and establishes temporary emergency order after the player advances two faction paths.",
+    "maxThreatLevel": 3
+  },
+  {
+    "id": "STG-ESCALATION",
+    "key": "escalation",
+    "order": 3,
+    "anchor": "The Endless Surge releases higher forms of magic, beings, and creatures into Velmora, reshaping the city around the player's established path.",
+    "maxThreatLevel": 5
+  },
+  {
+    "id": "STG-RESOLUTION",
+    "key": "resolution",
+    "order": 4,
+    "anchor": "The player reaches the source of the Endless Surge inside Velmora, chooses among the apocalypse truths their actions kept possible, and determines the final condition of the Tear, the six factions, and the city.",
+    "maxThreatLevel": 5
+  }
+]

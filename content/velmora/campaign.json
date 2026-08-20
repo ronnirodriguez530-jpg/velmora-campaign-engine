@@ -1,0 +1,9 @@
+{
+  "id": "CMP-VELMORA",
+  "name": "Velmora",
+  "initialStage": "opening",
+  "initialLocationId": "LOC-COUNCIL-CROWN",
+  "playableWorld": "Velmora",
+  "factionPathRequirement": 2,
+  "allowTemporaryTearTravel": false
+}

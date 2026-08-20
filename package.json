@@ -1,0 +1,16 @@
+{
+  "name": "velmora-campaign-engine",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "start": "node src/cli/main.ts",
+    "web": "node src/web/server.ts",
+    "test": "node --test tests/*.test.ts",
+    "check": "node src/cli/main.ts validate",
+    "simulate": "node src/cli/main.ts simulate 12 12"
+  }
+}
