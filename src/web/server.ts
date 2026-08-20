@@ -7,6 +7,8 @@ import { loadVelmoraContent } from "../application/campaign-loader.ts";
 import { buildPerspectiveContext } from "../application/context-builder.ts";
 import { submitPlayableAction } from "../application/gameplay-session.ts";
 import { openPresentedStoryMoment } from "../application/story-session.ts";
+import { checkForUpdate, installLatestUpdate } from "../application/update-manager.ts";
+import { spawn } from "node:child_process";
 import { cloudDirectorFromEnvironment } from "../director/cloud-director.ts";
 import { MockDirector } from "../director/mock-director.ts";
 import { backfillAuthoredState, createCampaign, getCampaign, listEvents, openDatabase, restorePreviousTurn } from "../persistence/database.ts";
@@ -94,6 +96,21 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         await writeFile(join(projectRoot, ".env"), `OPENAI_API_KEY=${apiKey}\n`, { encoding: "utf8", mode: 0o600 });
         process.env.OPENAI_API_KEY = apiKey;
         sendJson(response, 200, { configured: true });
+        return;
+      }
+
+      if (method === "GET" && url.pathname === "/api/update") {
+        sendJson(response, 200, await checkForUpdate(projectRoot));
+        return;
+      }
+
+      if (method === "POST" && url.pathname === "/api/update") {
+        const installed = await installLatestUpdate(projectRoot);
+        sendJson(response, 200, { installed, restarting: true });
+        setTimeout(() => server.close(() => {
+          const child = spawn(process.execPath, [fileURLToPath(import.meta.url)], { cwd: projectRoot, env: process.env, detached: true, stdio: "ignore", windowsHide: false });
+          child.unref();
+        }), 250);
         return;
       }
 

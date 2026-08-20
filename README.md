@@ -81,3 +81,8 @@ generate campaign story.
 
 On Windows, double-click `start-velmora.bat` to open the same application. The
 server binds only to this computer (`127.0.0.1`); it is not exposed publicly.
+
+Future releases are delivered from the public GitHub repository. Settings now
+contains Check for Updates and Install and Restart controls. Updating replaces
+only application source; the local `data` save folder and `.env` API key file
+are explicitly preserved.

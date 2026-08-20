@@ -45,6 +45,8 @@ Every simulation reached Resolution after the same amount of abstract faction pr
 - Actionable section badges are wired to current engine state.
 - The API key can be configured locally through Settings without placing it in chat.
 - Full suite passed: 19 of 19 tests.
+- Public GitHub source repository established.
+- In-app update check, installation, save protection, restart, and browser reload implemented.
 
 ## Active checkpoint
 
