@@ -19,7 +19,8 @@ const context: PerspectiveContext = {
   factionConditions: [],
   presentCharacters: [],
   recentTearArrivals: [],
-  npcContext: { full: [], supporting: [], omittedCount: 0, budgetUsed: 0, budgetLimit: 36 }
+  npcContext: { full: [], supporting: [], omittedCount: 0, budgetUsed: 0, budgetLimit: 36 },
+  publicFacts: []
 };
 
 test("cloud Director submits a strict bounded plan without executing it", async () => {
@@ -39,6 +40,7 @@ test("cloud Director submits a strict bounded plan without executing it", async 
           factionPathAdvances: [],
           locationConsequences: [],
           npcRequests: [],
+          npcUpdates: [],
           suggestedActions: ["Ask what the League needs", "Return to the avenue"],
           allowsFreeText: true
         })
@@ -79,6 +81,7 @@ test("cloud Director can request one bounded minor NPC without creating it direc
           category: "active",
           reason: "The committed player search requires a persistent specialist."
         }],
+        npcUpdates: [],
         suggestedActions: ["Question the repairer", "Inspect the lamp"],
         allowsFreeText: true
       })

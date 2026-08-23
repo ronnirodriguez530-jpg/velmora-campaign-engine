@@ -5,6 +5,7 @@ import { appendEvent } from "../persistence/database.ts";
 import { generateNpcOnDemand } from "../npc/npc-generator.ts";
 import { loadNpcReferenceLibrary } from "../npc/npc-reference-library.ts";
 import { resolve } from "node:path";
+import { applyNpcTurnUpdate } from "../npc/npc-turn-manager.ts";
 
 export async function executeToolRequest(db: DatabaseSync, content: VelmoraContent, campaignId: string, turn: number, request: ToolRequest): Promise<void> {
   if (request.type === "change_faction_condition") {
@@ -37,6 +38,8 @@ export async function executeToolRequest(db: DatabaseSync, content: VelmoraConte
       category: request.category,
       turn
     });
+  } else if (request.type === "manage_npc_turn") {
+    applyNpcTurnUpdate(db, campaignId, turn, request);
   }
   appendEvent(db, campaignId, turn, "tool_applied", request);
 }

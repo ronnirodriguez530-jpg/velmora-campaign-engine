@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { PerspectiveContext, VelmoraContent } from "../domain/types.ts";
-import { getCampaign, getSceneForTurnAndLocation, listCharactersAtLocation, listFactionConditions, listFactionPathProgress, listLocationConsequences, listPresentCharacterStates, listRecentTearArrivals } from "../persistence/database.ts";
+import { getCampaign, getSceneForTurnAndLocation, listCharactersAtLocation, listFactionConditions, listFactionPathProgress, listLocationConsequences, listPresentCharacterStates, listPublicWorldFacts, listRecentTearArrivals } from "../persistence/database.ts";
 import { buildNpcContext } from "../npc/npc-context-gate.ts";
 
 export function buildPerspectiveContext(
@@ -44,6 +44,7 @@ export function buildPerspectiveContext(
       campaignId: campaign.id,
       locationId: currentLocation.id,
       focusNpcIds: encounteredScene?.participantIds ?? []
-    })
+    }),
+    publicFacts: listPublicWorldFacts(db, campaign.id)
   };
 }

@@ -1,5 +1,5 @@
 {
-  "version": "0.4.0",
+  "version": "0.4.1",
   "channel": "main",
-  "notes": "Add the persistent NPC Engine foundation, adaptive context, teaching library, constrained generation, lifecycle, and rollback protection."
+  "notes": "Connect the NPC Turn Manager for bounded memories, relationships, public knowledge, status, movement, involvement, and rollback."
 }

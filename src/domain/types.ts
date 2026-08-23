@@ -83,6 +83,7 @@ export type PerspectiveContext = {
   presentCharacters: Array<{ characterId: string; status: string; reputation: number; factionId: string | null }>;
   recentTearArrivals: TearArrival[];
   npcContext: NpcContextPackage;
+  publicFacts: WorldFact[];
 };
 
 export type QuestState = "locked" | "available" | "active" | "changed" | "completed" | "failed";
@@ -296,7 +297,34 @@ export type RequestMinorNpcRequest = {
   reason: string;
 };
 
-export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest;
+export type ManageNpcTurnRequest = {
+  type: "manage_npc_turn";
+  npcId: string;
+  involvement: "continues" | "ends";
+  memory: {
+    summary: string;
+    emotionalImpact: string;
+    importance: 1 | 2 | 3;
+    unresolved: boolean;
+  } | null;
+  playerRelationship: {
+    standing: RelationshipStanding;
+    addQualities: RelationshipQuality[];
+    removeQualities: RelationshipQuality[];
+    reason: string;
+  } | null;
+  learnedFact: {
+    factId: string;
+    method: KnowledgeMethod;
+    confidence: number;
+    believedState: BelievedState;
+  } | null;
+  status: Exclude<NpcStatus, "dead"> | null;
+  newLocationId: string | null;
+  reason: string;
+};
+
+export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest;
 
 export type DirectorTurnPlan = {
   summary: string;

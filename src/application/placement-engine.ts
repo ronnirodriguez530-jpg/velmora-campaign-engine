@@ -20,7 +20,10 @@ export function generateScene(context: PerspectiveContext, content: VelmoraConte
     turn: context.turn,
     stage: context.stage,
     locationId: context.currentLocation.id,
-    participantIds: context.presentCharacterIds,
+    participantIds: [
+      ...context.presentCharacterIds,
+      ...context.npcContext.full.map((entry) => entry.npc.npcId)
+    ],
     factionIds,
     questLinks: [],
     conflictKey: template.conflictKey,

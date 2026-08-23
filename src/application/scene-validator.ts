@@ -10,8 +10,14 @@ export function validateScenePackage(scene: ScenePackage, context: PerspectiveCo
   if (!content.sceneTemplates.some((template) => template.id === scene.templateId && template.stages.includes(scene.stage))) {
     throw new Error("Scene template is missing or invalid for the current stage");
   }
+  const presentNpcIds = [
+    ...context.npcContext.full.map((entry) => entry.npc.npcId),
+    ...context.npcContext.supporting.map((entry) => entry.npc.npcId)
+  ];
   for (const participantId of scene.participantIds) {
-    if (!context.presentCharacterIds.includes(participantId)) throw new Error(`Scene participant ${participantId} is not present`);
+    if (!context.presentCharacterIds.includes(participantId) && !presentNpcIds.includes(participantId)) {
+      throw new Error(`Scene participant ${participantId} is not present`);
+    }
   }
   for (const factionId of scene.factionIds) {
     if (!content.factions.some((faction) => faction.id === factionId)) throw new Error(`Scene references unknown faction ${factionId}`);

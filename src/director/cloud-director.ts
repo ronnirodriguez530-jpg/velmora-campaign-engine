@@ -36,6 +36,26 @@ type SubmittedPlan = {
     category: "active" | "known" | "background";
     reason: string;
   }>;
+  npcUpdates: Array<{
+    npcId: string;
+    involvement: "continues" | "ends";
+    memory: { summary: string; emotionalImpact: string; importance: 1 | 2 | 3; unresolved: boolean } | null;
+    playerRelationship: {
+      standing: "hostile" | "unfriendly" | "neutral" | "friendly" | "loyal";
+      addQualities: Array<"trusted" | "wary" | "afraid" | "indebted" | "respectful" | "attached">;
+      removeQualities: Array<"trusted" | "wary" | "afraid" | "indebted" | "respectful" | "attached">;
+      reason: string;
+    } | null;
+    learnedFact: {
+      factId: string;
+      method: "witnessed" | "told" | "inferred";
+      confidence: number;
+      believedState: "true" | "false" | "uncertain";
+    } | null;
+    status: "available" | "injured" | "missing" | "detained" | "unavailable" | "departed" | null;
+    newLocationId: string | null;
+    reason: string;
+  }>;
   suggestedActions: [string, string];
   allowsFreeText: true;
 };
@@ -124,6 +144,62 @@ const PLAN_TOOL = {
           additionalProperties: false
         }
       },
+      npcUpdates: {
+        type: "array",
+        maxItems: 20,
+        description: "Bounded consequences for existing NPCs directly involved in this turn. Omit uninvolved NPCs.",
+        items: {
+          type: "object",
+          properties: {
+            npcId: { type: "string" },
+            involvement: { type: "string", enum: ["continues", "ends"] },
+            memory: {
+              anyOf: [{
+                type: "object",
+                properties: {
+                  summary: { type: "string" },
+                  emotionalImpact: { type: "string" },
+                  importance: { type: "integer", enum: [1, 2, 3] },
+                  unresolved: { type: "boolean" }
+                },
+                required: ["summary", "emotionalImpact", "importance", "unresolved"],
+                additionalProperties: false
+              }, { type: "null" }]
+            },
+            playerRelationship: {
+              anyOf: [{
+                type: "object",
+                properties: {
+                  standing: { type: "string", enum: ["hostile", "unfriendly", "neutral", "friendly", "loyal"] },
+                  addQualities: { type: "array", items: { type: "string", enum: ["trusted", "wary", "afraid", "indebted", "respectful", "attached"] }, maxItems: 2 },
+                  removeQualities: { type: "array", items: { type: "string", enum: ["trusted", "wary", "afraid", "indebted", "respectful", "attached"] }, maxItems: 2 },
+                  reason: { type: "string" }
+                },
+                required: ["standing", "addQualities", "removeQualities", "reason"],
+                additionalProperties: false
+              }, { type: "null" }]
+            },
+            learnedFact: {
+              anyOf: [{
+                type: "object",
+                properties: {
+                  factId: { type: "string" },
+                  method: { type: "string", enum: ["witnessed", "told", "inferred"] },
+                  confidence: { type: "integer", minimum: 0, maximum: 100 },
+                  believedState: { type: "string", enum: ["true", "false", "uncertain"] }
+                },
+                required: ["factId", "method", "confidence", "believedState"],
+                additionalProperties: false
+              }, { type: "null" }]
+            },
+            status: { anyOf: [{ type: "string", enum: ["available", "injured", "missing", "detained", "unavailable", "departed"] }, { type: "null" }] },
+            newLocationId: { anyOf: [{ type: "string" }, { type: "null" }] },
+            reason: { type: "string" }
+          },
+          required: ["npcId", "involvement", "memory", "playerRelationship", "learnedFact", "status", "newLocationId", "reason"],
+          additionalProperties: false
+        }
+      },
       suggestedActions: {
         type: "array",
         items: { type: "string" },
@@ -132,7 +208,7 @@ const PLAN_TOOL = {
       },
       allowsFreeText: { type: "boolean", enum: [true] }
     },
-    required: ["summary", "majorActionProposal", "factionChanges", "npcReputationChanges", "movements", "factionPathAdvances", "locationConsequences", "npcRequests", "suggestedActions", "allowsFreeText"],
+    required: ["summary", "majorActionProposal", "factionChanges", "npcReputationChanges", "movements", "factionPathAdvances", "locationConsequences", "npcRequests", "npcUpdates", "suggestedActions", "allowsFreeText"],
     additionalProperties: false
   }
 } as const;
@@ -159,6 +235,7 @@ Use only the supplied player-perspective context. Do not reveal off-screen infor
 You may create temporary sensory detail, dialogue, reactions, and immediate complications needed to make the current scene feel alive. Do not promote those details into permanent world facts unless the engine accepts a corresponding tool request.
 Narrate the result of the player's action as story, not as a technical summary. Propose only consequences justified by that action. Keep durable changes rare and bounded. A faction condition or NPC reputation may change by exactly one step. Advance a faction path only after a meaningful completed milestone; never invent the milestone's canon content.
 Use the supplied npcContext for portrayal. A full NPC may use only that NPC's supplied knowledge and beliefs. Prefer existing NPCs. Request at most one new minor NPC only when the player's action requires a persistent person who does not already exist; never use this to create a leader, major villain, canon authority, master, unique power holder, or predetermined plot answer. The request must use the current location.
+For existing NPCs directly affected by the turn, submit a bounded npcUpdate. Record only memories and relationship changes justified by the player's action. Standing may move only one step. New knowledge must reference an existing supplied public fact; never invent a fact or reveal a restricted fact. Ordinary NPC updates may not cause death. Mark involvement as ends when that NPC should leave the foreground; category changes are owned by the engine.
 Always call submit_turn_plan exactly once. Provide exactly two suggested actions while allowing free text. If validation feedback is supplied, repair only the rejected fields.`;
 
 const SCENE_RULES = `You are the D&D-style Campaign Master and Story Brain for Velmora. Present only the validated current scene and player-visible context supplied by the engine.
@@ -170,8 +247,9 @@ function parseSubmittedPlan(value: unknown): DirectorTurnPlan {
   const plan = value as Partial<SubmittedPlan>;
   if (typeof plan.summary !== "string" || plan.summary.trim().length === 0) throw new Error("Cloud Director plan requires a summary");
   if (typeof plan.majorActionProposal !== "boolean") throw new Error("Cloud Director plan requires majorActionProposal");
-  if (!Array.isArray(plan.factionChanges) || !Array.isArray(plan.npcReputationChanges) || !Array.isArray(plan.movements) || !Array.isArray(plan.factionPathAdvances) || !Array.isArray(plan.locationConsequences) || !Array.isArray(plan.npcRequests)) throw new Error("Cloud Director plan requires change arrays");
+  if (!Array.isArray(plan.factionChanges) || !Array.isArray(plan.npcReputationChanges) || !Array.isArray(plan.movements) || !Array.isArray(plan.factionPathAdvances) || !Array.isArray(plan.locationConsequences) || !Array.isArray(plan.npcRequests) || !Array.isArray(plan.npcUpdates)) throw new Error("Cloud Director plan requires change arrays");
   if (plan.npcRequests.length > 1) throw new Error("Cloud Director may request at most one minor NPC per turn");
+  if (plan.npcUpdates.length > 20) throw new Error("Cloud Director may update at most twenty affected NPCs per turn");
   if (!Array.isArray(plan.suggestedActions) || plan.suggestedActions.length !== 2 || !plan.suggestedActions.every((item) => typeof item === "string")) {
     throw new Error("Cloud Director plan requires exactly two suggested actions");
   }
@@ -183,6 +261,7 @@ function parseSubmittedPlan(value: unknown): DirectorTurnPlan {
     ...plan.locationConsequences.map((change) => ({ type: "record_location_consequence" as const, ...change })),
     ...plan.factionPathAdvances.map((change) => ({ type: "advance_faction_path" as const, ...change })),
     ...plan.npcRequests.map((change) => ({ type: "request_minor_npc" as const, ...change })),
+    ...plan.npcUpdates.map((change) => ({ type: "manage_npc_turn" as const, ...change })),
     ...plan.movements.map((change) => ({ type: "move_player" as const, ...change }))
   ];
   return {

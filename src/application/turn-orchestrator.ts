@@ -26,6 +26,9 @@ async function requestValidPlan(
       if (plan.toolRequests.filter((request) => request.type === "request_minor_npc").length > 1) {
         throw new Error("A turn may request at most one new minor NPC");
       }
+      if (plan.toolRequests.filter((request) => request.type === "manage_npc_turn").length > 20) {
+        throw new Error("A turn may manage at most twenty directly affected NPCs");
+      }
       for (const request of plan.toolRequests) validateToolRequest(db, content, context.campaignId, request);
       return plan;
     } catch (error) {

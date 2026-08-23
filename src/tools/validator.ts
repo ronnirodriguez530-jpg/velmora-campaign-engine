@@ -1,6 +1,7 @@
 import type { ToolRequest, VelmoraContent } from "../domain/types.ts";
 import { getCharacterReputation, getFactionCondition, getFactionPathProgress } from "../persistence/database.ts";
 import type { DatabaseSync } from "node:sqlite";
+import { validateNpcTurnUpdate } from "../npc/npc-turn-manager.ts";
 
 export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, campaignId: string, request: ToolRequest): void {
   if (request.reason.trim().length < 3) throw new Error("Tool request requires a meaningful reason");
@@ -58,6 +59,11 @@ export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, c
     if (!(["active", "known", "background"] as const).includes(request.category)) {
       throw new Error(`Unknown NPC category ${request.category}`);
     }
+    return;
+  }
+
+  if (request.type === "manage_npc_turn") {
+    validateNpcTurnUpdate(db, content, campaignId, request);
     return;
   }
 

@@ -467,7 +467,8 @@ export function reclassifyNpc(
   if (!reason.trim()) throw new Error("NPC category changes require a reason");
   if (npc.category === category) return npc;
   const now = new Date().toISOString();
-  db.exec("BEGIN IMMEDIATE");
+  const ownsTransaction = !db.isTransaction;
+  if (ownsTransaction) db.exec("BEGIN IMMEDIATE");
   try {
     db.prepare(`UPDATE npc_records SET category = ?, last_relevant_turn = ?, updated_at = ?
       WHERE campaign_id = ? AND npc_id = ?`)
@@ -482,9 +483,9 @@ export function reclassifyNpc(
       newCategory: category,
       reason: reason.trim()
     });
-    db.exec("COMMIT");
+    if (ownsTransaction) db.exec("COMMIT");
   } catch (error) {
-    db.exec("ROLLBACK");
+    if (ownsTransaction) db.exec("ROLLBACK");
     throw error;
   }
   return getNpc(db, campaignId, npcId)!;
@@ -528,7 +529,8 @@ export function changeNpcLifecycle(
   if (npc.status === change.status && npc.lifecycleState === lifecycleState && npc.locationId === locationId) return npc;
 
   const now = new Date().toISOString();
-  db.exec("BEGIN IMMEDIATE");
+  const ownsTransaction = !db.isTransaction;
+  if (ownsTransaction) db.exec("BEGIN IMMEDIATE");
   try {
     db.prepare(`UPDATE npc_records SET status = ?, lifecycle_state = ?, category = ?,
       location_id = ?, last_relevant_turn = ?, updated_at = ?
@@ -562,9 +564,9 @@ export function changeNpcLifecycle(
       lifecycleState,
       reason: change.reason.trim()
     });
-    db.exec("COMMIT");
+    if (ownsTransaction) db.exec("COMMIT");
   } catch (error) {
-    db.exec("ROLLBACK");
+    if (ownsTransaction) db.exec("ROLLBACK");
     throw error;
   }
   return getNpc(db, change.campaignId, change.npcId)!;
@@ -600,6 +602,14 @@ export function getWorldFact(db: DatabaseSync, campaignId: string, factId: strin
       truth_status AS truthStatus, visibility, established_turn AS establishedTurn
     FROM world_facts WHERE campaign_id = ? AND fact_id = ?`)
     .get(campaignId, factId) as WorldFact | undefined;
+}
+
+export function listPublicWorldFacts(db: DatabaseSync, campaignId: string): WorldFact[] {
+  return db.prepare(`SELECT campaign_id AS campaignId, fact_id AS factId, statement,
+      truth_status AS truthStatus, visibility, established_turn AS establishedTurn
+    FROM world_facts WHERE campaign_id = ? AND visibility = 'public'
+    ORDER BY established_turn DESC, fact_id`)
+    .all(campaignId) as WorldFact[];
 }
 
 export function teachNpcFact(
@@ -830,7 +840,8 @@ export function updateNpcRelationship(
     change.targetId
   );
   const now = new Date().toISOString();
-  db.exec("BEGIN IMMEDIATE");
+  const ownsTransaction = !db.isTransaction;
+  if (ownsTransaction) db.exec("BEGIN IMMEDIATE");
   try {
     db.prepare(`INSERT INTO npc_relationships(
         campaign_id, source_npc_id, target_type, target_id, standing, updated_turn
@@ -880,9 +891,9 @@ export function updateNpcRelationship(
       standing: change.standing,
       reason: change.reason.trim()
     });
-    db.exec("COMMIT");
+    if (ownsTransaction) db.exec("COMMIT");
   } catch (error) {
-    db.exec("ROLLBACK");
+    if (ownsTransaction) db.exec("ROLLBACK");
     throw error;
   }
   return getNpcRelationship(db, change.campaignId, change.sourceNpcId, change.targetType, change.targetId)!;

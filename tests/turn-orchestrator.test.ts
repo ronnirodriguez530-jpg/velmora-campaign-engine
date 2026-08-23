@@ -13,10 +13,16 @@ import {
   createCampaign,
   getCampaign,
   getFactionCondition,
+  getNpc,
+  getNpcKnowledge,
+  getNpcRelationship,
   listEvents,
   listNpcDesignProfiles,
   listNpcsAtLocation,
+  listRelevantNpcMemories,
   openDatabase,
+  persistNpc,
+  persistWorldFact,
   restorePreviousTurn
 } from "../src/persistence/database.ts";
 
@@ -126,6 +132,84 @@ test("live turn pipeline validates, generates, and context-filters one requested
 
     restorePreviousTurn(db, "turn-test");
     assert.equal(listNpcsAtLocation(db, campaignId, "LOC-COUNCIL-CROWN").length, 0);
+  } finally {
+    db.close();
+  }
+});
+
+test("NPC Turn Manager applies only bounded consequences and rollback restores the NPC", async () => {
+  const { content, db, campaignId } = await setup();
+  persistNpc(db, {
+    campaignId,
+    npcId: "NPC-MANAGED-001",
+    name: "Dessa Vale",
+    category: "known",
+    origin: "generated",
+    locationId: "LOC-COUNCIL-CROWN",
+    role: "council porter",
+    createdTurn: 0
+  });
+  persistWorldFact(db, {
+    campaignId,
+    factId: "FACT-PUBLIC-BELL",
+    statement: "The western warning bell failed during the attack.",
+    truthStatus: "established",
+    visibility: "public",
+    establishedTurn: 0
+  });
+  const managerDirector: CampaignDirector = {
+    source: "diagnostic",
+    preview: (context) => new MockDirector().preview(context),
+    presentScene: (context, scene) => new MockDirector().presentScene(context, scene),
+    planTurn: async () => ({
+      summary: "Dessa helps the player and is struck by falling stone before leaving the foreground.",
+      majorActionProposal: true,
+      toolRequests: [{
+        type: "manage_npc_turn",
+        npcId: "NPC-MANAGED-001",
+        involvement: "ends",
+        memory: {
+          summary: "The player pulled Dessa clear of the collapsing western arch.",
+          emotionalImpact: "grateful and shaken",
+          importance: 3,
+          unresolved: false
+        },
+        playerRelationship: {
+          standing: "friendly",
+          addQualities: ["indebted"],
+          removeQualities: [],
+          reason: "The player saved Dessa from the collapse."
+        },
+        learnedFact: {
+          factId: "FACT-PUBLIC-BELL",
+          method: "witnessed",
+          confidence: 100,
+          believedState: "true"
+        },
+        status: "injured",
+        newLocationId: null,
+        reason: "Dessa participated directly in the collapse response."
+      }],
+      suggestedActions: ["Check on Dessa", "Inspect the failed bell"],
+      allowsFreeText: true
+    })
+  };
+  try {
+    assert.equal(buildPerspectiveContext(db, content, "turn-test").publicFacts[0]?.factId, "FACT-PUBLIC-BELL");
+    const result = await runPlayerAction(db, content, managerDirector, "turn-test", "commit to rescuing Dessa");
+    assert.equal(result.advanced, true);
+    assert.equal(getNpc(db, campaignId, "NPC-MANAGED-001")?.status, "injured");
+    assert.equal(getNpc(db, campaignId, "NPC-MANAGED-001")?.category, "known");
+    assert.equal(listRelevantNpcMemories(db, campaignId, "NPC-MANAGED-001")[0]?.importance, 3);
+    assert.equal(getNpcRelationship(db, campaignId, "NPC-MANAGED-001", "player", "player")?.standing, "friendly");
+    assert.deepEqual(getNpcRelationship(db, campaignId, "NPC-MANAGED-001", "player", "player")?.qualities, ["indebted"]);
+    assert.equal(getNpcKnowledge(db, campaignId, "NPC-MANAGED-001", "FACT-PUBLIC-BELL")?.believedState, "true");
+
+    restorePreviousTurn(db, "turn-test");
+    assert.equal(getNpc(db, campaignId, "NPC-MANAGED-001")?.status, "available");
+    assert.equal(getNpcRelationship(db, campaignId, "NPC-MANAGED-001", "player", "player"), undefined);
+    assert.equal(getNpcKnowledge(db, campaignId, "NPC-MANAGED-001", "FACT-PUBLIC-BELL"), undefined);
+    assert.equal(listRelevantNpcMemories(db, campaignId, "NPC-MANAGED-001").length, 0);
   } finally {
     db.close();
   }
