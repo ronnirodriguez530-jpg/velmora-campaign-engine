@@ -1,0 +1,43 @@
+[
+  {
+    "id": "SRC-ARISTOTLE-POETICS",
+    "title": "The Poetics of Aristotle",
+    "creator": "Aristotle",
+    "url": "https://www.gutenberg.org/ebooks/1974",
+    "license": "PUBLIC_DOMAIN_US",
+    "use": "distilled_principles"
+  },
+  {
+    "id": "SRC-LUBBOCK-CRAFT",
+    "title": "The Craft of Fiction",
+    "creator": "Percy Lubbock",
+    "url": "https://www.gutenberg.org/ebooks/18961",
+    "license": "PUBLIC_DOMAIN_US",
+    "use": "distilled_principles"
+  },
+  {
+    "id": "SRC-WHARTON-WRITING",
+    "title": "The Writing of Fiction",
+    "creator": "Edith Wharton",
+    "url": "https://www.gutenberg.org/ebooks/72446",
+    "license": "PUBLIC_DOMAIN_US",
+    "use": "distilled_principles"
+  },
+  {
+    "id": "SRC-HOW-TO-WRITE-NOVEL",
+    "title": "How to Write a Novel: A Practical Guide to the Art of Fiction",
+    "creator": "Anonymous",
+    "url": "https://www.gutenberg.org/ebooks/38887",
+    "license": "PUBLIC_DOMAIN_US",
+    "use": "distilled_principles"
+  },
+  {
+    "id": "SRC-SRD-5-2-1",
+    "title": "System Reference Document 5.2.1",
+    "creator": "Wizards of the Coast LLC",
+    "url": "https://www.dndbeyond.com/srd",
+    "license": "CC-BY-4.0",
+    "attribution": "This work includes material from the System Reference Document 5.2.1 by Wizards of the Coast LLC, available at https://www.dndbeyond.com/srd. The SRD 5.2.1 is licensed under CC BY 4.0.",
+    "use": "rules_reference"
+  }
+]

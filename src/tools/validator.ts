@@ -43,6 +43,24 @@ export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, c
     return;
   }
 
+  if (request.type === "request_minor_npc") {
+    const campaign = getCampaignById(db, campaignId);
+    if (!campaign) throw new Error(`Missing campaign state ${campaignId}`);
+    if (request.locationId !== campaign.currentLocationId) {
+      throw new Error("Minor NPCs may only be requested for the player's current location");
+    }
+    if (request.factionId !== null && !content.factions.some((faction) => faction.id === request.factionId)) {
+      throw new Error(`Unknown NPC faction ${request.factionId}`);
+    }
+    if (request.role.trim().length < 3 || request.role.length > 80) {
+      throw new Error("Minor NPC role must be 3-80 characters");
+    }
+    if (!(["active", "known", "background"] as const).includes(request.category)) {
+      throw new Error(`Unknown NPC category ${request.category}`);
+    }
+    return;
+  }
+
   if (request.type !== "change_npc_reputation") throw new Error("Unknown tool request type");
   if (!content.characters.some((character) => character.id === request.characterId)) throw new Error(`Unknown character ${request.characterId}`);
   const current = getCharacterReputation(db, campaignId, request.characterId);

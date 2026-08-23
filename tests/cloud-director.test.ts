@@ -18,7 +18,8 @@ const context: PerspectiveContext = {
   factionPathProgress: [],
   factionConditions: [],
   presentCharacters: [],
-  recentTearArrivals: []
+  recentTearArrivals: [],
+  npcContext: { full: [], supporting: [], omittedCount: 0, budgetUsed: 0, budgetLimit: 36 }
 };
 
 test("cloud Director submits a strict bounded plan without executing it", async () => {
@@ -37,6 +38,7 @@ test("cloud Director submits a strict bounded plan without executing it", async 
           movements: [],
           factionPathAdvances: [],
           locationConsequences: [],
+          npcRequests: [],
           suggestedActions: ["Ask what the League needs", "Return to the avenue"],
           allowsFreeText: true
         })
@@ -55,6 +57,36 @@ test("cloud Director rejects malformed provider output", async () => {
   const fakeFetch = async () => new Response(JSON.stringify({ output: [{ type: "message" }] }), { status: 200 });
   const director = new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch });
   await assert.rejects(() => director.planTurn(context, "wait"), /did not submit a turn plan/);
+});
+
+test("cloud Director can request one bounded minor NPC without creating it directly", async () => {
+  const fakeFetch = async () => new Response(JSON.stringify({
+    output: [{
+      type: "function_call",
+      name: "submit_turn_plan",
+      arguments: JSON.stringify({
+        summary: "The search points toward a local repairer.",
+        majorActionProposal: true,
+        factionChanges: [],
+        npcReputationChanges: [],
+        movements: [],
+        factionPathAdvances: [],
+        locationConsequences: [],
+        npcRequests: [{
+          role: "council lamp repairer",
+          factionId: null,
+          locationId: "LOC-COUNCIL-CROWN",
+          category: "active",
+          reason: "The committed player search requires a persistent specialist."
+        }],
+        suggestedActions: ["Question the repairer", "Inspect the lamp"],
+        allowsFreeText: true
+      })
+    }]
+  }), { status: 200, headers: { "content-type": "application/json" } });
+  const plan = await new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch }).planTurn(context, "find the repairer");
+  assert.equal(plan.toolRequests.length, 1);
+  assert.equal(plan.toolRequests[0]?.type, "request_minor_npc");
 });
 
 test("cloud Campaign Master presents a grounded story scene", async () => {

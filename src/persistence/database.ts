@@ -1,7 +1,30 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
-import type { ScenePackage, StoryPresentation, TearArrival, VelmoraContent } from "../domain/types.ts";
+import type {
+  BelievedState,
+  FactTruthStatus,
+  FactVisibility,
+  KnowledgeMethod,
+  NpcCategory,
+  NpcKnowledge,
+  NpcKnowledgeView,
+  NpcDesignProfile,
+  NpcLifecycleState,
+  NpcMemory,
+  NpcOrigin,
+  NpcRecord,
+  NpcStatus,
+  NpcRelationship,
+  RelationshipQuality,
+  RelationshipStanding,
+  RelationshipTargetType,
+  ScenePackage,
+  StoryPresentation,
+  TearArrival,
+  VelmoraContent,
+  WorldFact
+} from "../domain/types.ts";
 
 export type CampaignRow = {
   id: string;
@@ -18,6 +41,15 @@ export type StateSnapshot = {
   characters: Array<{ characterId: string; status: string; reputation: number; locationId: string; replacementCharacterId: string | null }>;
   factionPaths: Array<{ factionId: string; progress: number }>;
   quests: Array<{ questId: string; state: string }>;
+  npcState?: {
+    records: NpcRecord[];
+    designs: NpcDesignProfile[];
+    facts: WorldFact[];
+    knowledge: NpcKnowledge[];
+    memories: NpcMemory[];
+    relationships: NpcRelationship[];
+    novelty: Array<{ fingerprint: string; npcId: string; createdTurn: number }>;
+  };
 };
 
 export function openDatabase(path: string): DatabaseSync {
@@ -181,6 +213,743 @@ function migrate(db: DatabaseSync): void {
     `);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(9, ?)").run(new Date().toISOString());
   }
+  const migrationTen = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 10").get() as { present: number } | undefined;
+  if (!migrationTen) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS npc_records (
+        campaign_id TEXT NOT NULL,
+        npc_id TEXT NOT NULL,
+        name TEXT NOT NULL,
+        category TEXT NOT NULL CHECK(category IN ('active','known','background')),
+        origin TEXT NOT NULL CHECK(origin IN ('authored','generated')),
+        faction_id TEXT,
+        location_id TEXT,
+        role TEXT NOT NULL,
+        status TEXT NOT NULL,
+        created_turn INTEGER NOT NULL,
+        last_relevant_turn INTEGER NOT NULL,
+        updated_at TEXT NOT NULL,
+        PRIMARY KEY (campaign_id, npc_id),
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS npc_records_category_idx
+        ON npc_records(campaign_id, category, last_relevant_turn DESC);
+      CREATE TABLE IF NOT EXISTS npc_category_history (
+        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        campaign_id TEXT NOT NULL,
+        npc_id TEXT NOT NULL,
+        turn INTEGER NOT NULL,
+        previous_category TEXT NOT NULL CHECK(previous_category IN ('active','known','background')),
+        new_category TEXT NOT NULL CHECK(new_category IN ('active','known','background')),
+        reason TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (campaign_id, npc_id) REFERENCES npc_records(campaign_id, npc_id) ON DELETE CASCADE
+      );
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(10, ?)").run(new Date().toISOString());
+  }
+  const migrationEleven = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 11").get() as { present: number } | undefined;
+  if (!migrationEleven) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS world_facts (
+        campaign_id TEXT NOT NULL,
+        fact_id TEXT NOT NULL,
+        statement TEXT NOT NULL,
+        truth_status TEXT NOT NULL CHECK(truth_status IN ('established','disproven','unresolved')),
+        visibility TEXT NOT NULL CHECK(visibility IN ('public','restricted','secret')),
+        established_turn INTEGER NOT NULL,
+        PRIMARY KEY (campaign_id, fact_id),
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS npc_knowledge (
+        campaign_id TEXT NOT NULL,
+        npc_id TEXT NOT NULL,
+        fact_id TEXT NOT NULL,
+        method TEXT NOT NULL CHECK(method IN ('witnessed','told','inferred')),
+        confidence INTEGER NOT NULL CHECK(confidence BETWEEN 0 AND 100),
+        believed_state TEXT NOT NULL CHECK(believed_state IN ('true','false','uncertain')),
+        source_npc_id TEXT,
+        learned_turn INTEGER NOT NULL,
+        last_updated_turn INTEGER NOT NULL,
+        PRIMARY KEY (campaign_id, npc_id, fact_id),
+        FOREIGN KEY (campaign_id, npc_id) REFERENCES npc_records(campaign_id, npc_id) ON DELETE CASCADE,
+        FOREIGN KEY (campaign_id, fact_id) REFERENCES world_facts(campaign_id, fact_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS npc_memories (
+        campaign_id TEXT NOT NULL,
+        npc_id TEXT NOT NULL,
+        memory_id TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        emotional_impact TEXT NOT NULL,
+        importance INTEGER NOT NULL CHECK(importance BETWEEN 1 AND 3),
+        unresolved INTEGER NOT NULL CHECK(unresolved IN (0,1)),
+        created_turn INTEGER NOT NULL,
+        last_recalled_turn INTEGER NOT NULL,
+        PRIMARY KEY (campaign_id, npc_id, memory_id),
+        FOREIGN KEY (campaign_id, npc_id) REFERENCES npc_records(campaign_id, npc_id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS npc_memories_relevance_idx
+        ON npc_memories(campaign_id, npc_id, unresolved DESC, importance DESC, last_recalled_turn DESC);
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(11, ?)").run(new Date().toISOString());
+  }
+  const migrationTwelve = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 12").get() as { present: number } | undefined;
+  if (!migrationTwelve) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS npc_relationships (
+        campaign_id TEXT NOT NULL,
+        source_npc_id TEXT NOT NULL,
+        target_type TEXT NOT NULL CHECK(target_type IN ('player','npc','faction')),
+        target_id TEXT NOT NULL,
+        standing TEXT NOT NULL CHECK(standing IN ('hostile','unfriendly','neutral','friendly','loyal')),
+        updated_turn INTEGER NOT NULL,
+        PRIMARY KEY (campaign_id, source_npc_id, target_type, target_id),
+        FOREIGN KEY (campaign_id, source_npc_id) REFERENCES npc_records(campaign_id, npc_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS npc_relationship_qualities (
+        campaign_id TEXT NOT NULL,
+        source_npc_id TEXT NOT NULL,
+        target_type TEXT NOT NULL,
+        target_id TEXT NOT NULL,
+        quality TEXT NOT NULL CHECK(quality IN ('trusted','wary','afraid','indebted','respectful','attached')),
+        PRIMARY KEY (campaign_id, source_npc_id, target_type, target_id, quality),
+        FOREIGN KEY (campaign_id, source_npc_id, target_type, target_id)
+          REFERENCES npc_relationships(campaign_id, source_npc_id, target_type, target_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS npc_relationship_history (
+        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        campaign_id TEXT NOT NULL,
+        source_npc_id TEXT NOT NULL,
+        target_type TEXT NOT NULL CHECK(target_type IN ('player','npc','faction')),
+        target_id TEXT NOT NULL,
+        previous_standing TEXT CHECK(previous_standing IS NULL OR previous_standing IN ('hostile','unfriendly','neutral','friendly','loyal')),
+        new_standing TEXT NOT NULL CHECK(new_standing IN ('hostile','unfriendly','neutral','friendly','loyal')),
+        added_qualities_json TEXT NOT NULL,
+        removed_qualities_json TEXT NOT NULL,
+        reason TEXT NOT NULL,
+        turn INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (campaign_id, source_npc_id) REFERENCES npc_records(campaign_id, npc_id) ON DELETE CASCADE
+      );
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(12, ?)").run(new Date().toISOString());
+  }
+  const migrationThirteen = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 13").get() as { present: number } | undefined;
+  if (!migrationThirteen) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS npc_design_profiles (
+        campaign_id TEXT NOT NULL,
+        npc_id TEXT NOT NULL,
+        desire TEXT NOT NULL,
+        complication TEXT NOT NULL,
+        change_lever TEXT NOT NULL,
+        voice_cues_json TEXT NOT NULL,
+        applied_lesson_ids_json TEXT NOT NULL,
+        fingerprint TEXT NOT NULL,
+        generated_turn INTEGER NOT NULL,
+        PRIMARY KEY (campaign_id, npc_id),
+        FOREIGN KEY (campaign_id, npc_id) REFERENCES npc_records(campaign_id, npc_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS npc_novelty_ledger (
+        campaign_id TEXT NOT NULL,
+        fingerprint TEXT NOT NULL,
+        npc_id TEXT NOT NULL,
+        created_turn INTEGER NOT NULL,
+        PRIMARY KEY (campaign_id, fingerprint),
+        FOREIGN KEY (campaign_id, npc_id) REFERENCES npc_records(campaign_id, npc_id) ON DELETE CASCADE
+      );
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(13, ?)").run(new Date().toISOString());
+  }
+  const migrationFourteen = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 14").get() as { present: number } | undefined;
+  if (!migrationFourteen) {
+    db.exec(`
+      ALTER TABLE npc_records ADD COLUMN lifecycle_state TEXT NOT NULL DEFAULT 'current'
+        CHECK(lifecycle_state IN ('current','archived'));
+      CREATE TABLE IF NOT EXISTS npc_lifecycle_history (
+        sequence INTEGER PRIMARY KEY AUTOINCREMENT,
+        campaign_id TEXT NOT NULL,
+        npc_id TEXT NOT NULL,
+        previous_status TEXT NOT NULL,
+        new_status TEXT NOT NULL,
+        previous_lifecycle_state TEXT NOT NULL CHECK(previous_lifecycle_state IN ('current','archived')),
+        new_lifecycle_state TEXT NOT NULL CHECK(new_lifecycle_state IN ('current','archived')),
+        reason TEXT NOT NULL,
+        turn INTEGER NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (campaign_id, npc_id) REFERENCES npc_records(campaign_id, npc_id) ON DELETE CASCADE
+      );
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(14, ?)").run(new Date().toISOString());
+  }
+}
+
+export function persistNpc(
+  db: DatabaseSync,
+  npc: {
+    campaignId: string;
+    npcId: string;
+    name: string;
+    category: NpcCategory;
+    origin: NpcOrigin;
+    factionId?: string | null;
+    locationId?: string | null;
+    role: string;
+    status?: NpcStatus;
+    lifecycleState?: NpcLifecycleState;
+    createdTurn: number;
+    lastRelevantTurn?: number;
+  }
+): void {
+  db.prepare(`INSERT INTO npc_records(
+      campaign_id, npc_id, name, category, origin, faction_id, location_id, role,
+      status, lifecycle_state, created_turn, last_relevant_turn, updated_at
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(
+      npc.campaignId,
+      npc.npcId,
+      npc.name,
+      npc.category,
+      npc.origin,
+      npc.factionId ?? null,
+      npc.locationId ?? null,
+      npc.role,
+      npc.status ?? "available",
+      npc.lifecycleState ?? "current",
+      npc.createdTurn,
+      npc.lastRelevantTurn ?? npc.createdTurn,
+      new Date().toISOString()
+    );
+}
+
+export function getNpc(db: DatabaseSync, campaignId: string, npcId: string): NpcRecord | undefined {
+  return db.prepare(`SELECT
+      campaign_id AS campaignId, npc_id AS npcId, name, category, origin,
+      faction_id AS factionId, location_id AS locationId, role, status,
+      lifecycle_state AS lifecycleState,
+      created_turn AS createdTurn, last_relevant_turn AS lastRelevantTurn
+    FROM npc_records WHERE campaign_id = ? AND npc_id = ?`)
+    .get(campaignId, npcId) as NpcRecord | undefined;
+}
+
+export function listNpcsByCategory(db: DatabaseSync, campaignId: string, category: NpcCategory): NpcRecord[] {
+  return db.prepare(`SELECT
+      campaign_id AS campaignId, npc_id AS npcId, name, category, origin,
+      faction_id AS factionId, location_id AS locationId, role, status,
+      lifecycle_state AS lifecycleState,
+      created_turn AS createdTurn, last_relevant_turn AS lastRelevantTurn
+    FROM npc_records WHERE campaign_id = ? AND category = ?
+    ORDER BY last_relevant_turn DESC, npc_id`)
+    .all(campaignId, category) as NpcRecord[];
+}
+
+export function listNpcsAtLocation(db: DatabaseSync, campaignId: string, locationId: string): NpcRecord[] {
+  return db.prepare(`SELECT
+      campaign_id AS campaignId, npc_id AS npcId, name, category, origin,
+      faction_id AS factionId, location_id AS locationId, role, status,
+      lifecycle_state AS lifecycleState,
+      created_turn AS createdTurn, last_relevant_turn AS lastRelevantTurn
+    FROM npc_records WHERE campaign_id = ? AND location_id = ? AND status != 'unavailable' AND lifecycle_state = 'current'
+    ORDER BY last_relevant_turn DESC, npc_id`)
+    .all(campaignId, locationId) as NpcRecord[];
+}
+
+export function reclassifyNpc(
+  db: DatabaseSync,
+  campaignId: string,
+  npcId: string,
+  category: NpcCategory,
+  turn: number,
+  reason: string
+): NpcRecord {
+  const npc = getNpc(db, campaignId, npcId);
+  if (!npc) throw new Error(`NPC ${npcId} does not exist in campaign ${campaignId}`);
+  if (!reason.trim()) throw new Error("NPC category changes require a reason");
+  if (npc.category === category) return npc;
+  const now = new Date().toISOString();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare(`UPDATE npc_records SET category = ?, last_relevant_turn = ?, updated_at = ?
+      WHERE campaign_id = ? AND npc_id = ?`)
+      .run(category, turn, now, campaignId, npcId);
+    db.prepare(`INSERT INTO npc_category_history(
+      campaign_id, npc_id, turn, previous_category, new_category, reason, created_at
+    ) VALUES(?, ?, ?, ?, ?, ?, ?)`)
+      .run(campaignId, npcId, turn, npc.category, category, reason.trim(), now);
+    appendEvent(db, campaignId, turn, "npc_reclassified", {
+      npcId,
+      previousCategory: npc.category,
+      newCategory: category,
+      reason: reason.trim()
+    });
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+  return getNpc(db, campaignId, npcId)!;
+}
+
+const NPC_STATUSES = new Set<NpcStatus>([
+  "available",
+  "injured",
+  "missing",
+  "detained",
+  "unavailable",
+  "dead",
+  "departed"
+]);
+
+export function changeNpcLifecycle(
+  db: DatabaseSync,
+  change: {
+    campaignId: string;
+    npcId: string;
+    status: NpcStatus;
+    locationId?: string | null;
+    reason: string;
+    turn: number;
+  }
+): NpcRecord {
+  const npc = getNpc(db, change.campaignId, change.npcId);
+  if (!npc) throw new Error(`NPC ${change.npcId} does not exist in campaign ${change.campaignId}`);
+  if (!NPC_STATUSES.has(change.status)) throw new Error(`Unknown NPC status ${change.status}`);
+  if (!change.reason.trim()) throw new Error("NPC lifecycle changes require a reason");
+  if (npc.status === "dead" && change.status !== "dead") {
+    throw new Error("Dead NPCs require a future explicitly approved resurrection rule");
+  }
+  const lifecycleState: NpcLifecycleState = change.status === "dead" || change.status === "departed"
+    ? "archived"
+    : "current";
+  const category: NpcCategory = lifecycleState === "archived" ? "background" : npc.category;
+  const locationId = lifecycleState === "archived" || change.status === "missing"
+    ? null
+    : (change.locationId === undefined ? npc.locationId : change.locationId);
+  if (npc.status === change.status && npc.lifecycleState === lifecycleState && npc.locationId === locationId) return npc;
+
+  const now = new Date().toISOString();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare(`UPDATE npc_records SET status = ?, lifecycle_state = ?, category = ?,
+      location_id = ?, last_relevant_turn = ?, updated_at = ?
+      WHERE campaign_id = ? AND npc_id = ?`)
+      .run(change.status, lifecycleState, category, locationId, change.turn, now, change.campaignId, change.npcId);
+    db.prepare(`INSERT INTO npc_lifecycle_history(
+      campaign_id, npc_id, previous_status, new_status, previous_lifecycle_state,
+      new_lifecycle_state, reason, turn, created_at
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(
+        change.campaignId,
+        change.npcId,
+        npc.status,
+        change.status,
+        npc.lifecycleState,
+        lifecycleState,
+        change.reason.trim(),
+        change.turn,
+        now
+      );
+    if (npc.category !== category) {
+      db.prepare(`INSERT INTO npc_category_history(
+        campaign_id, npc_id, turn, previous_category, new_category, reason, created_at
+      ) VALUES(?, ?, ?, ?, ?, ?, ?)`)
+        .run(change.campaignId, change.npcId, change.turn, npc.category, category, "NPC archived by lifecycle change", now);
+    }
+    appendEvent(db, change.campaignId, change.turn, "npc_lifecycle_changed", {
+      npcId: change.npcId,
+      previousStatus: npc.status,
+      newStatus: change.status,
+      lifecycleState,
+      reason: change.reason.trim()
+    });
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+  return getNpc(db, change.campaignId, change.npcId)!;
+}
+
+export function persistWorldFact(
+  db: DatabaseSync,
+  fact: {
+    campaignId: string;
+    factId: string;
+    statement: string;
+    truthStatus: FactTruthStatus;
+    visibility: FactVisibility;
+    establishedTurn: number;
+  }
+): void {
+  if (!fact.statement.trim()) throw new Error("World facts require a statement");
+  db.prepare(`INSERT INTO world_facts(
+      campaign_id, fact_id, statement, truth_status, visibility, established_turn
+    ) VALUES(?, ?, ?, ?, ?, ?)`)
+    .run(
+      fact.campaignId,
+      fact.factId,
+      fact.statement.trim(),
+      fact.truthStatus,
+      fact.visibility,
+      fact.establishedTurn
+    );
+}
+
+export function getWorldFact(db: DatabaseSync, campaignId: string, factId: string): WorldFact | undefined {
+  return db.prepare(`SELECT campaign_id AS campaignId, fact_id AS factId, statement,
+      truth_status AS truthStatus, visibility, established_turn AS establishedTurn
+    FROM world_facts WHERE campaign_id = ? AND fact_id = ?`)
+    .get(campaignId, factId) as WorldFact | undefined;
+}
+
+export function teachNpcFact(
+  db: DatabaseSync,
+  knowledge: {
+    campaignId: string;
+    npcId: string;
+    factId: string;
+    method: KnowledgeMethod;
+    confidence: number;
+    believedState: BelievedState;
+    sourceNpcId?: string | null;
+    learnedTurn: number;
+  }
+): void {
+  if (!Number.isInteger(knowledge.confidence) || knowledge.confidence < 0 || knowledge.confidence > 100) {
+    throw new Error("NPC knowledge confidence must be an integer from 0 to 100");
+  }
+  if (!getNpc(db, knowledge.campaignId, knowledge.npcId)) {
+    throw new Error(`NPC ${knowledge.npcId} does not exist in campaign ${knowledge.campaignId}`);
+  }
+  if (!getWorldFact(db, knowledge.campaignId, knowledge.factId)) {
+    throw new Error(`World fact ${knowledge.factId} does not exist in campaign ${knowledge.campaignId}`);
+  }
+  db.prepare(`INSERT INTO npc_knowledge(
+      campaign_id, npc_id, fact_id, method, confidence, believed_state,
+      source_npc_id, learned_turn, last_updated_turn
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(campaign_id, npc_id, fact_id) DO UPDATE SET
+      method = excluded.method,
+      confidence = excluded.confidence,
+      believed_state = excluded.believed_state,
+      source_npc_id = excluded.source_npc_id,
+      last_updated_turn = excluded.last_updated_turn`)
+    .run(
+      knowledge.campaignId,
+      knowledge.npcId,
+      knowledge.factId,
+      knowledge.method,
+      knowledge.confidence,
+      knowledge.believedState,
+      knowledge.sourceNpcId ?? null,
+      knowledge.learnedTurn,
+      knowledge.learnedTurn
+    );
+  appendEvent(db, knowledge.campaignId, knowledge.learnedTurn, "npc_learned_fact", {
+    npcId: knowledge.npcId,
+    factId: knowledge.factId,
+    method: knowledge.method
+  });
+}
+
+export function getNpcKnowledge(
+  db: DatabaseSync,
+  campaignId: string,
+  npcId: string,
+  factId: string
+): NpcKnowledge | undefined {
+  return db.prepare(`SELECT campaign_id AS campaignId, npc_id AS npcId, fact_id AS factId,
+      method, confidence, believed_state AS believedState, source_npc_id AS sourceNpcId,
+      learned_turn AS learnedTurn, last_updated_turn AS lastUpdatedTurn
+    FROM npc_knowledge WHERE campaign_id = ? AND npc_id = ? AND fact_id = ?`)
+    .get(campaignId, npcId, factId) as NpcKnowledge | undefined;
+}
+
+export function listNpcKnowledgeForContext(db: DatabaseSync, campaignId: string, npcId: string): NpcKnowledgeView[] {
+  return db.prepare(`SELECT k.fact_id AS factId, f.statement, k.method, k.confidence,
+      k.believed_state AS believedState, k.source_npc_id AS sourceNpcId,
+      k.learned_turn AS learnedTurn, k.last_updated_turn AS lastUpdatedTurn
+    FROM npc_knowledge k
+    JOIN world_facts f ON f.campaign_id = k.campaign_id AND f.fact_id = k.fact_id
+    WHERE k.campaign_id = ? AND k.npc_id = ?
+    ORDER BY k.confidence DESC, k.last_updated_turn DESC, k.fact_id`)
+    .all(campaignId, npcId) as NpcKnowledgeView[];
+}
+
+export function recordNpcMemory(
+  db: DatabaseSync,
+  memory: {
+    campaignId: string;
+    npcId: string;
+    memoryId: string;
+    summary: string;
+    emotionalImpact: string;
+    importance: 1 | 2 | 3;
+    unresolved: boolean;
+    createdTurn: number;
+  }
+): void {
+  const npc = getNpc(db, memory.campaignId, memory.npcId);
+  if (!npc) throw new Error(`NPC ${memory.npcId} does not exist in campaign ${memory.campaignId}`);
+  if (!memory.summary.trim()) throw new Error("NPC memories require a summary");
+  db.prepare(`INSERT INTO npc_memories(
+      campaign_id, npc_id, memory_id, summary, emotional_impact, importance,
+      unresolved, created_turn, last_recalled_turn
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+    .run(
+      memory.campaignId,
+      memory.npcId,
+      memory.memoryId,
+      memory.summary.trim(),
+      memory.emotionalImpact.trim(),
+      memory.importance,
+      memory.unresolved ? 1 : 0,
+      memory.createdTurn,
+      memory.createdTurn
+    );
+  appendEvent(db, memory.campaignId, memory.createdTurn, "npc_memory_recorded", {
+    npcId: memory.npcId,
+    memoryId: memory.memoryId,
+    importance: memory.importance
+  });
+  if (npc.category === "background") {
+    reclassifyNpc(db, memory.campaignId, memory.npcId, "known", memory.createdTurn, "NPC gained a meaningful personal memory");
+  }
+}
+
+export function listRelevantNpcMemories(
+  db: DatabaseSync,
+  campaignId: string,
+  npcId: string,
+  limit = 5
+): NpcMemory[] {
+  return db.prepare(`SELECT campaign_id AS campaignId, npc_id AS npcId, memory_id AS memoryId,
+      summary, emotional_impact AS emotionalImpact, importance, unresolved,
+      created_turn AS createdTurn, last_recalled_turn AS lastRecalledTurn
+    FROM npc_memories WHERE campaign_id = ? AND npc_id = ?
+    ORDER BY unresolved DESC, importance DESC, last_recalled_turn DESC LIMIT ?`)
+    .all(campaignId, npcId, limit)
+    .map((row) => {
+      const memory = row as Omit<NpcMemory, "unresolved"> & { unresolved: number };
+      return { ...memory, unresolved: memory.unresolved === 1 };
+    });
+}
+
+const RELATIONSHIP_QUALITIES = new Set<RelationshipQuality>([
+  "trusted",
+  "wary",
+  "afraid",
+  "indebted",
+  "respectful",
+  "attached"
+]);
+
+function assertRelationshipTarget(
+  db: DatabaseSync,
+  campaignId: string,
+  targetType: RelationshipTargetType,
+  targetId: string
+): void {
+  if (targetType === "player") {
+    if (targetId !== "player") throw new Error("The V1 player relationship target ID must be 'player'");
+    return;
+  }
+  if (targetType === "npc") {
+    if (!getNpc(db, campaignId, targetId)) throw new Error(`Target NPC ${targetId} does not exist`);
+    return;
+  }
+  const faction = db.prepare("SELECT 1 AS present FROM faction_state WHERE campaign_id = ? AND faction_id = ?")
+    .get(campaignId, targetId) as { present: number } | undefined;
+  if (!faction) throw new Error(`Target faction ${targetId} does not exist`);
+}
+
+export function getNpcRelationship(
+  db: DatabaseSync,
+  campaignId: string,
+  sourceNpcId: string,
+  targetType: RelationshipTargetType,
+  targetId: string
+): NpcRelationship | undefined {
+  const row = db.prepare(`SELECT campaign_id AS campaignId, source_npc_id AS sourceNpcId,
+      target_type AS targetType, target_id AS targetId, standing, updated_turn AS updatedTurn
+    FROM npc_relationships
+    WHERE campaign_id = ? AND source_npc_id = ? AND target_type = ? AND target_id = ?`)
+    .get(campaignId, sourceNpcId, targetType, targetId) as Omit<NpcRelationship, "qualities"> | undefined;
+  if (!row) return undefined;
+  const qualities = db.prepare(`SELECT quality FROM npc_relationship_qualities
+      WHERE campaign_id = ? AND source_npc_id = ? AND target_type = ? AND target_id = ?
+      ORDER BY quality`)
+    .all(campaignId, sourceNpcId, targetType, targetId) as Array<{ quality: RelationshipQuality }>;
+  return { ...row, qualities: qualities.map((entry) => entry.quality) };
+}
+
+export function listNpcRelationships(db: DatabaseSync, campaignId: string, sourceNpcId: string): NpcRelationship[] {
+  const rows = db.prepare(`SELECT campaign_id AS campaignId, source_npc_id AS sourceNpcId,
+      target_type AS targetType, target_id AS targetId, standing, updated_turn AS updatedTurn
+    FROM npc_relationships WHERE campaign_id = ? AND source_npc_id = ?
+    ORDER BY updated_turn DESC, target_type, target_id`)
+    .all(campaignId, sourceNpcId) as Array<Omit<NpcRelationship, "qualities">>;
+  return rows.map((row) => getNpcRelationship(
+    db,
+    row.campaignId,
+    row.sourceNpcId,
+    row.targetType,
+    row.targetId
+  )!);
+}
+
+export function updateNpcRelationship(
+  db: DatabaseSync,
+  change: {
+    campaignId: string;
+    sourceNpcId: string;
+    targetType: RelationshipTargetType;
+    targetId: string;
+    standing: RelationshipStanding;
+    addQualities?: RelationshipQuality[];
+    removeQualities?: RelationshipQuality[];
+    reason: string;
+    turn: number;
+  }
+): NpcRelationship {
+  if (!getNpc(db, change.campaignId, change.sourceNpcId)) {
+    throw new Error(`Source NPC ${change.sourceNpcId} does not exist`);
+  }
+  assertRelationshipTarget(db, change.campaignId, change.targetType, change.targetId);
+  if (!change.reason.trim()) throw new Error("Relationship changes require a reason");
+  const added = [...new Set(change.addQualities ?? [])];
+  const removed = [...new Set(change.removeQualities ?? [])].filter((quality) => !added.includes(quality));
+  for (const quality of [...added, ...removed]) {
+    if (!RELATIONSHIP_QUALITIES.has(quality)) throw new Error(`Unknown relationship quality ${quality}`);
+  }
+  const previous = getNpcRelationship(
+    db,
+    change.campaignId,
+    change.sourceNpcId,
+    change.targetType,
+    change.targetId
+  );
+  const now = new Date().toISOString();
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare(`INSERT INTO npc_relationships(
+        campaign_id, source_npc_id, target_type, target_id, standing, updated_turn
+      ) VALUES(?, ?, ?, ?, ?, ?)
+      ON CONFLICT(campaign_id, source_npc_id, target_type, target_id) DO UPDATE SET
+        standing = excluded.standing, updated_turn = excluded.updated_turn`)
+      .run(
+        change.campaignId,
+        change.sourceNpcId,
+        change.targetType,
+        change.targetId,
+        change.standing,
+        change.turn
+      );
+    const insertQuality = db.prepare(`INSERT OR IGNORE INTO npc_relationship_qualities(
+      campaign_id, source_npc_id, target_type, target_id, quality
+    ) VALUES(?, ?, ?, ?, ?)`);
+    for (const quality of added) {
+      insertQuality.run(change.campaignId, change.sourceNpcId, change.targetType, change.targetId, quality);
+    }
+    const deleteQuality = db.prepare(`DELETE FROM npc_relationship_qualities
+      WHERE campaign_id = ? AND source_npc_id = ? AND target_type = ? AND target_id = ? AND quality = ?`);
+    for (const quality of removed) {
+      deleteQuality.run(change.campaignId, change.sourceNpcId, change.targetType, change.targetId, quality);
+    }
+    db.prepare(`INSERT INTO npc_relationship_history(
+      campaign_id, source_npc_id, target_type, target_id, previous_standing, new_standing,
+      added_qualities_json, removed_qualities_json, reason, turn, created_at
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(
+        change.campaignId,
+        change.sourceNpcId,
+        change.targetType,
+        change.targetId,
+        previous?.standing ?? null,
+        change.standing,
+        JSON.stringify(added),
+        JSON.stringify(removed),
+        change.reason.trim(),
+        change.turn,
+        now
+      );
+    appendEvent(db, change.campaignId, change.turn, "npc_relationship_changed", {
+      sourceNpcId: change.sourceNpcId,
+      targetType: change.targetType,
+      targetId: change.targetId,
+      standing: change.standing,
+      reason: change.reason.trim()
+    });
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+  return getNpcRelationship(db, change.campaignId, change.sourceNpcId, change.targetType, change.targetId)!;
+}
+
+export function listNpcDesignProfiles(db: DatabaseSync, campaignId: string): NpcDesignProfile[] {
+  const rows = db.prepare(`SELECT campaign_id AS campaignId, npc_id AS npcId, desire,
+      complication, change_lever AS changeLever, voice_cues_json AS voiceCuesJson,
+      applied_lesson_ids_json AS appliedLessonIdsJson, fingerprint,
+      generated_turn AS generatedTurn
+    FROM npc_design_profiles WHERE campaign_id = ? ORDER BY generated_turn, npc_id`)
+    .all(campaignId) as Array<Omit<NpcDesignProfile, "voiceCues" | "appliedLessonIds"> & {
+      voiceCuesJson: string;
+      appliedLessonIdsJson: string;
+    }>;
+  return rows.map(({ voiceCuesJson, appliedLessonIdsJson, ...row }) => ({
+    ...row,
+    voiceCues: JSON.parse(voiceCuesJson) as string[],
+    appliedLessonIds: JSON.parse(appliedLessonIdsJson) as string[]
+  }));
+}
+
+export function getNpcDesignProfile(db: DatabaseSync, campaignId: string, npcId: string): NpcDesignProfile | undefined {
+  return listNpcDesignProfiles(db, campaignId).find((profile) => profile.npcId === npcId);
+}
+
+export function persistGeneratedNpc(
+  db: DatabaseSync,
+  npc: Parameters<typeof persistNpc>[1],
+  design: Omit<NpcDesignProfile, "campaignId" | "npcId">
+): void {
+  if (npc.origin !== "generated") throw new Error("Generated NPC persistence requires generated origin");
+  const duplicate = db.prepare("SELECT npc_id AS npcId FROM npc_novelty_ledger WHERE campaign_id = ? AND fingerprint = ?")
+    .get(npc.campaignId, design.fingerprint) as { npcId: string } | undefined;
+  if (duplicate) throw new Error(`NPC design fingerprint already belongs to ${duplicate.npcId}`);
+  const ownsTransaction = !db.isTransaction;
+  if (ownsTransaction) db.exec("BEGIN IMMEDIATE");
+  try {
+    persistNpc(db, npc);
+    db.prepare(`INSERT INTO npc_design_profiles(
+      campaign_id, npc_id, desire, complication, change_lever, voice_cues_json,
+      applied_lesson_ids_json, fingerprint, generated_turn
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`)
+      .run(
+        npc.campaignId,
+        npc.npcId,
+        design.desire,
+        design.complication,
+        design.changeLever,
+        JSON.stringify(design.voiceCues),
+        JSON.stringify(design.appliedLessonIds),
+        design.fingerprint,
+        design.generatedTurn
+      );
+    db.prepare("INSERT INTO npc_novelty_ledger(campaign_id, fingerprint, npc_id, created_turn) VALUES(?, ?, ?, ?)")
+      .run(npc.campaignId, design.fingerprint, npc.npcId, design.generatedTurn);
+    appendEvent(db, npc.campaignId, design.generatedTurn, "npc_generated", {
+      npcId: npc.npcId,
+      role: npc.role,
+      factionId: npc.factionId,
+      locationId: npc.locationId
+    });
+    if (ownsTransaction) db.exec("COMMIT");
+  } catch (error) {
+    if (ownsTransaction) db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export function createCampaign(db: DatabaseSync, content: VelmoraContent, name: string, seed: string): string {
@@ -238,7 +1007,40 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
     .all(campaignId) as StateSnapshot["factionPaths"];
   const quests = db.prepare("SELECT quest_id AS questId, state FROM quest_instances WHERE campaign_id = ? ORDER BY quest_id")
     .all(campaignId) as StateSnapshot["quests"];
-  return { campaign, factions, characters, factionPaths, quests };
+  const records = db.prepare(`SELECT campaign_id AS campaignId, npc_id AS npcId, name, category, origin,
+      faction_id AS factionId, location_id AS locationId, role, status,
+      lifecycle_state AS lifecycleState, created_turn AS createdTurn,
+      last_relevant_turn AS lastRelevantTurn
+    FROM npc_records WHERE campaign_id = ? ORDER BY npc_id`)
+    .all(campaignId) as NpcRecord[];
+  const designs = listNpcDesignProfiles(db, campaignId);
+  const facts = db.prepare(`SELECT campaign_id AS campaignId, fact_id AS factId, statement,
+      truth_status AS truthStatus, visibility, established_turn AS establishedTurn
+    FROM world_facts WHERE campaign_id = ? ORDER BY fact_id`)
+    .all(campaignId) as WorldFact[];
+  const knowledge = db.prepare(`SELECT campaign_id AS campaignId, npc_id AS npcId, fact_id AS factId,
+      method, confidence, believed_state AS believedState, source_npc_id AS sourceNpcId,
+      learned_turn AS learnedTurn, last_updated_turn AS lastUpdatedTurn
+    FROM npc_knowledge WHERE campaign_id = ? ORDER BY npc_id, fact_id`)
+    .all(campaignId) as NpcKnowledge[];
+  const memoryRows = db.prepare(`SELECT campaign_id AS campaignId, npc_id AS npcId, memory_id AS memoryId,
+      summary, emotional_impact AS emotionalImpact, importance, unresolved,
+      created_turn AS createdTurn, last_recalled_turn AS lastRecalledTurn
+    FROM npc_memories WHERE campaign_id = ? ORDER BY npc_id, memory_id`)
+    .all(campaignId) as Array<Omit<NpcMemory, "unresolved"> & { unresolved: number }>;
+  const memories = memoryRows.map((memory) => ({ ...memory, unresolved: memory.unresolved === 1 }));
+  const relationships = records.flatMap((npc) => listNpcRelationships(db, campaignId, npc.npcId));
+  const novelty = db.prepare(`SELECT fingerprint, npc_id AS npcId, created_turn AS createdTurn
+    FROM npc_novelty_ledger WHERE campaign_id = ? ORDER BY fingerprint`)
+    .all(campaignId) as Array<{ fingerprint: string; npcId: string; createdTurn: number }>;
+  return {
+    campaign,
+    factions,
+    characters,
+    factionPaths,
+    quests,
+    npcState: { records, designs, facts, knowledge, memories, relationships, novelty }
+  };
 }
 
 export function insertCheckpoint(
@@ -303,6 +1105,141 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
     for (const path of snapshot.factionPaths ?? []) updateFactionPath.run(path.progress, campaign.id, path.factionId);
     const updateQuest = db.prepare("UPDATE quest_instances SET state = ? WHERE campaign_id = ? AND quest_id = ?");
     for (const quest of snapshot.quests ?? []) updateQuest.run(quest.state, campaign.id, quest.questId);
+    if (snapshot.npcState) {
+      db.prepare("DELETE FROM npc_relationship_qualities WHERE campaign_id = ?").run(campaign.id);
+      db.prepare("DELETE FROM npc_relationships WHERE campaign_id = ?").run(campaign.id);
+      db.prepare("DELETE FROM npc_knowledge WHERE campaign_id = ?").run(campaign.id);
+      db.prepare("DELETE FROM npc_memories WHERE campaign_id = ?").run(campaign.id);
+      db.prepare("DELETE FROM npc_novelty_ledger WHERE campaign_id = ?").run(campaign.id);
+      db.prepare("DELETE FROM npc_design_profiles WHERE campaign_id = ?").run(campaign.id);
+
+      const snapshotNpcIds = new Set(snapshot.npcState.records.map((npc) => npc.npcId));
+      const currentNpcIds = db.prepare("SELECT npc_id AS npcId FROM npc_records WHERE campaign_id = ?")
+        .all(campaign.id) as Array<{ npcId: string }>;
+      const deleteNpc = db.prepare("DELETE FROM npc_records WHERE campaign_id = ? AND npc_id = ?");
+      for (const current of currentNpcIds) {
+        if (!snapshotNpcIds.has(current.npcId)) deleteNpc.run(campaign.id, current.npcId);
+      }
+
+      const restoreNpc = db.prepare(`INSERT INTO npc_records(
+          campaign_id, npc_id, name, category, origin, faction_id, location_id, role,
+          status, lifecycle_state, created_turn, last_relevant_turn, updated_at
+        ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ON CONFLICT(campaign_id, npc_id) DO UPDATE SET
+          name = excluded.name, category = excluded.category, origin = excluded.origin,
+          faction_id = excluded.faction_id, location_id = excluded.location_id, role = excluded.role,
+          status = excluded.status, lifecycle_state = excluded.lifecycle_state,
+          created_turn = excluded.created_turn, last_relevant_turn = excluded.last_relevant_turn,
+          updated_at = excluded.updated_at`);
+      for (const npc of snapshot.npcState.records) {
+        restoreNpc.run(
+          campaign.id,
+          npc.npcId,
+          npc.name,
+          npc.category,
+          npc.origin,
+          npc.factionId,
+          npc.locationId,
+          npc.role,
+          npc.status,
+          npc.lifecycleState,
+          npc.createdTurn,
+          npc.lastRelevantTurn,
+          new Date().toISOString()
+        );
+      }
+
+      db.prepare("DELETE FROM world_facts WHERE campaign_id = ?").run(campaign.id);
+      const restoreFact = db.prepare(`INSERT INTO world_facts(
+        campaign_id, fact_id, statement, truth_status, visibility, established_turn
+      ) VALUES(?, ?, ?, ?, ?, ?)`);
+      for (const fact of snapshot.npcState.facts) {
+        restoreFact.run(campaign.id, fact.factId, fact.statement, fact.truthStatus, fact.visibility, fact.establishedTurn);
+      }
+
+      const restoreDesign = db.prepare(`INSERT INTO npc_design_profiles(
+        campaign_id, npc_id, desire, complication, change_lever, voice_cues_json,
+        applied_lesson_ids_json, fingerprint, generated_turn
+      ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+      for (const design of snapshot.npcState.designs) {
+        restoreDesign.run(
+          campaign.id,
+          design.npcId,
+          design.desire,
+          design.complication,
+          design.changeLever,
+          JSON.stringify(design.voiceCues),
+          JSON.stringify(design.appliedLessonIds),
+          design.fingerprint,
+          design.generatedTurn
+        );
+      }
+      const restoreNovelty = db.prepare(`INSERT INTO npc_novelty_ledger(
+        campaign_id, fingerprint, npc_id, created_turn
+      ) VALUES(?, ?, ?, ?)`);
+      for (const novelty of snapshot.npcState.novelty) {
+        restoreNovelty.run(campaign.id, novelty.fingerprint, novelty.npcId, novelty.createdTurn);
+      }
+      const restoreKnowledge = db.prepare(`INSERT INTO npc_knowledge(
+        campaign_id, npc_id, fact_id, method, confidence, believed_state,
+        source_npc_id, learned_turn, last_updated_turn
+      ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+      for (const knowledge of snapshot.npcState.knowledge) {
+        restoreKnowledge.run(
+          campaign.id,
+          knowledge.npcId,
+          knowledge.factId,
+          knowledge.method,
+          knowledge.confidence,
+          knowledge.believedState,
+          knowledge.sourceNpcId,
+          knowledge.learnedTurn,
+          knowledge.lastUpdatedTurn
+        );
+      }
+      const restoreMemory = db.prepare(`INSERT INTO npc_memories(
+        campaign_id, npc_id, memory_id, summary, emotional_impact, importance,
+        unresolved, created_turn, last_recalled_turn
+      ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)`);
+      for (const memory of snapshot.npcState.memories) {
+        restoreMemory.run(
+          campaign.id,
+          memory.npcId,
+          memory.memoryId,
+          memory.summary,
+          memory.emotionalImpact,
+          memory.importance,
+          memory.unresolved ? 1 : 0,
+          memory.createdTurn,
+          memory.lastRecalledTurn
+        );
+      }
+      const restoreRelationship = db.prepare(`INSERT INTO npc_relationships(
+        campaign_id, source_npc_id, target_type, target_id, standing, updated_turn
+      ) VALUES(?, ?, ?, ?, ?, ?)`);
+      const restoreQuality = db.prepare(`INSERT INTO npc_relationship_qualities(
+        campaign_id, source_npc_id, target_type, target_id, quality
+      ) VALUES(?, ?, ?, ?, ?)`);
+      for (const relationship of snapshot.npcState.relationships) {
+        restoreRelationship.run(
+          campaign.id,
+          relationship.sourceNpcId,
+          relationship.targetType,
+          relationship.targetId,
+          relationship.standing,
+          relationship.updatedTurn
+        );
+        for (const quality of relationship.qualities) {
+          restoreQuality.run(
+            campaign.id,
+            relationship.sourceNpcId,
+            relationship.targetType,
+            relationship.targetId,
+            quality
+          );
+        }
+      }
+    }
     db.prepare("DELETE FROM scene_records WHERE campaign_id = ? AND turn > ?").run(campaign.id, snapshot.campaign.turn);
     db.prepare("DELETE FROM location_state WHERE campaign_id = ? AND created_turn > ?").run(campaign.id, snapshot.campaign.turn);
     db.prepare("DELETE FROM tear_arrivals WHERE campaign_id = ? AND turn > ?").run(campaign.id, snapshot.campaign.turn);

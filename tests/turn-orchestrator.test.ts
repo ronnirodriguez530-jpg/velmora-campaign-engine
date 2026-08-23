@@ -7,12 +7,15 @@ import type { CampaignDirector } from "../src/director/director.ts";
 import { MockDirector } from "../src/director/mock-director.ts";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { runPlayerAction } from "../src/application/turn-orchestrator.ts";
+import { buildPerspectiveContext } from "../src/application/context-builder.ts";
 import {
   countCheckpoints,
   createCampaign,
   getCampaign,
   getFactionCondition,
   listEvents,
+  listNpcDesignProfiles,
+  listNpcsAtLocation,
   openDatabase,
   restorePreviousTurn
 } from "../src/persistence/database.ts";
@@ -82,6 +85,47 @@ test("one-turn rollback restores mutable state and preserves audit history", asy
     assert.equal(restored.turn, 0);
     assert.equal(getFactionCondition(db, campaignId, "FAC-001"), 2);
     assert.ok(listEvents(db, campaignId).some((event) => event.eventType === "turn_rolled_back"));
+  } finally {
+    db.close();
+  }
+});
+
+test("live turn pipeline validates, generates, and context-filters one requested minor NPC", async () => {
+  const { content, db, campaignId } = await setup();
+  const requestingDirector: CampaignDirector = {
+    source: "diagnostic",
+    preview: (context) => new MockDirector().preview(context),
+    presentScene: (context, scene) => new MockDirector().presentScene(context, scene),
+    planTurn: async (context) => ({
+      summary: "The player commits to finding the person responsible for the damaged council lamps.",
+      majorActionProposal: true,
+      toolRequests: [{
+        type: "request_minor_npc",
+        role: "council lamp repairer",
+        factionId: null,
+        locationId: context.currentLocation.id,
+        category: "active",
+        reason: "The player's committed search requires a persistent local specialist."
+      }],
+      suggestedActions: ["Question the repairer", "Inspect the damaged lamp"],
+      allowsFreeText: true
+    })
+  };
+  try {
+    const result = await runPlayerAction(db, content, requestingDirector, "turn-test", "commit to finding the lamp repairer");
+    assert.equal(result.advanced, true);
+    const generated = listNpcsAtLocation(db, campaignId, "LOC-COUNCIL-CROWN");
+    assert.equal(generated.length, 1);
+    assert.equal(generated[0]?.role, "council lamp repairer");
+    assert.equal(listNpcDesignProfiles(db, campaignId).length, 1);
+
+    const nextContext = buildPerspectiveContext(db, content, "turn-test");
+    assert.equal(nextContext.npcContext.full.length, 1);
+    assert.equal(nextContext.npcContext.full[0]?.npc.npcId, generated[0]?.npcId);
+    assert.ok(nextContext.npcContext.full[0]?.design);
+
+    restorePreviousTurn(db, "turn-test");
+    assert.equal(listNpcsAtLocation(db, campaignId, "LOC-COUNCIL-CROWN").length, 0);
   } finally {
     db.close();
   }

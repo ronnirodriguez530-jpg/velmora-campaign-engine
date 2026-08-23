@@ -1,0 +1,36 @@
+{
+  "givenNames": ["Aven", "Corin", "Dessa", "Elian", "Ivara", "Liora", "Marek", "Neris", "Orin", "Sera", "Tavian", "Veyra"],
+  "familyNames": ["Ashen", "Dain", "Elar", "Harrow", "Mourn", "Sable", "Vale", "Venn", "Vey", "Wren"],
+  "desires": [
+    "keep a vulnerable relative safe through the next Surge",
+    "earn enough standing to leave a dangerous obligation behind",
+    "recover proof that a missing neighbor survived",
+    "protect a necessary piece of the district's daily work",
+    "learn why a familiar place changed after the last Surge",
+    "prevent an old mistake from harming another citizen"
+  ],
+  "complications": [
+    "owes a favor to someone they no longer trust",
+    "possesses incomplete evidence that points toward the wrong person",
+    "hides an alteration that may change how the faction treats them",
+    "made a promise that conflicts with their present duty",
+    "recognizes a danger but cannot explain how they know it",
+    "depends on a rival for something their household needs"
+  ],
+  "changeLevers": [
+    "the player can provide proof that changes whom they trust",
+    "the player can help fulfill or break the obligation",
+    "the player can protect what they value or place it at risk",
+    "the player can reveal a consequence they have misunderstood",
+    "the player can give them a safer way to act on their desire",
+    "the player can force a choice between their duty and private need"
+  ],
+  "voiceCues": [
+    "speaks in practical terms and measures promises by their cost",
+    "answers directly until the subject reaches their hidden obligation",
+    "describes danger through changes they have personally witnessed",
+    "uses faction language in public and plainer language in private",
+    "pauses before naming anyone who might suffer from the truth",
+    "sounds certain about work and uncertain about people"
+  ]
+}

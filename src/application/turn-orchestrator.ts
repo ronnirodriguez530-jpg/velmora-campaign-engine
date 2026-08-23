@@ -23,6 +23,9 @@ async function requestValidPlan(
   for (let attempt = 1; attempt <= MAX_DIRECTOR_ATTEMPTS; attempt += 1) {
     const plan = await director.planTurn(context, playerInput, feedback);
     try {
+      if (plan.toolRequests.filter((request) => request.type === "request_minor_npc").length > 1) {
+        throw new Error("A turn may request at most one new minor NPC");
+      }
       for (const request of plan.toolRequests) validateToolRequest(db, content, context.campaignId, request);
       return plan;
     } catch (error) {
@@ -61,7 +64,7 @@ export async function runPlayerAction(
     const pre = captureSnapshot(db, campaign.id);
     insertCheckpoint(db, campaign.id, campaign.turn, nextTurn, "pre_turn", pre);
     for (const request of plan.toolRequests) validateToolRequest(db, content, campaign.id, request);
-    for (const request of plan.toolRequests) executeToolRequest(db, campaign.id, nextTurn, request);
+    for (const request of plan.toolRequests) await executeToolRequest(db, content, campaign.id, nextTurn, request);
     db.prepare("UPDATE campaigns SET turn = ?, updated_at = ? WHERE id = ?")
       .run(nextTurn, new Date().toISOString(), campaign.id);
     evaluateStageProgression(db, content, campaignName, nextTurn);

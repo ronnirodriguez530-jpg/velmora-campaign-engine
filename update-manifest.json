@@ -1,5 +1,5 @@
 {
-  "version": "0.3.1",
+  "version": "0.4.0",
   "channel": "main",
-  "notes": "Fix navigation before campaign loading and prevent stale browser-interface caching."
+  "notes": "Add the persistent NPC Engine foundation, adaptive context, teaching library, constrained generation, lifecycle, and rollback protection."
 }

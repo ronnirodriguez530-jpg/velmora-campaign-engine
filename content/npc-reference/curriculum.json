@@ -1,0 +1,66 @@
+[
+  {
+    "id": "LESSON-ACTION-AND-DESIRE",
+    "sourceIds": ["SRC-ARISTOTLE-POETICS", "SRC-HOW-TO-WRITE-NOVEL"],
+    "tags": ["motivation", "agency", "creation"],
+    "principle": "Build the NPC around a present desire that can cause a visible choice or action.",
+    "checks": ["The desire matters now", "The NPC can act on it", "The player can affect its outcome"],
+    "avoid": ["A biography with no current motive", "An NPC who exists only to deliver information"]
+  },
+  {
+    "id": "LESSON-CAUSAL-CHARACTER",
+    "sourceIds": ["SRC-ARISTOTLE-POETICS"],
+    "tags": ["motivation", "behavior", "continuity"],
+    "principle": "Make decisions follow from established motives, knowledge, pressures, and prior events.",
+    "checks": ["The action has an understandable cause", "The choice does not contradict stored history without a new cause"],
+    "avoid": ["Changing personality only to force a plot turn"]
+  },
+  {
+    "id": "LESSON-POINT-OF-VIEW",
+    "sourceIds": ["SRC-LUBBOCK-CRAFT"],
+    "tags": ["knowledge", "belief", "dialogue", "continuity"],
+    "principle": "Portray the NPC through what that individual has perceived, learned, inferred, and misunderstood.",
+    "checks": ["Known facts come from the NPC knowledge record", "Belief remains distinct from world truth"],
+    "avoid": ["NPC omniscience", "Speaking private engine truth as common knowledge"]
+  },
+  {
+    "id": "LESSON-SELECTIVE-DETAIL",
+    "sourceIds": ["SRC-LUBBOCK-CRAFT", "SRC-WHARTON-WRITING"],
+    "tags": ["description", "dialogue", "scene", "context"],
+    "principle": "Use a few consequential details that reveal role, pressure, or personality instead of exhaustive description.",
+    "checks": ["Each emphasized detail supports the scene", "Foreground detail matches current relevance"],
+    "avoid": ["Long introductions for incidental NPCs", "Equal attention for every person present"]
+  },
+  {
+    "id": "LESSON-COHERENT-CONTRADICTION",
+    "sourceIds": ["SRC-WHARTON-WRITING", "SRC-HOW-TO-WRITE-NOVEL"],
+    "tags": ["personality", "depth", "creation"],
+    "principle": "Give an important NPC one understandable tension between what they want, believe, fear, or owe.",
+    "checks": ["The tension has a cause", "It can affect a decision", "It is not a random collection of quirks"],
+    "avoid": ["Single-trait characters", "Contradictions with no behavioral consequence"]
+  },
+  {
+    "id": "LESSON-CHANGE-LEVER",
+    "sourceIds": ["SRC-WHARTON-WRITING", "SRC-HOW-TO-WRITE-NOVEL"],
+    "tags": ["development", "relationship", "agency"],
+    "principle": "Define something the player can do that may change the NPC without guaranteeing that change.",
+    "checks": ["The lever respects player choice", "Change follows accumulated events", "The NPC can resist"],
+    "avoid": ["Predetermined conversion", "Permanent stasis regardless of player action"]
+  },
+  {
+    "id": "LESSON-ORIGINAL-VOICE",
+    "sourceIds": ["SRC-LUBBOCK-CRAFT", "SRC-WHARTON-WRITING"],
+    "tags": ["dialogue", "voice", "originality"],
+    "principle": "Differentiate speech through priorities, knowledge, confidence, and social role rather than copied catchphrases or exaggerated accents.",
+    "checks": ["Voice cues arise from this NPC's situation", "Wording is newly generated for the present scene"],
+    "avoid": ["Copied dialogue", "A repeated signature voice assigned to unrelated NPCs"]
+  },
+  {
+    "id": "LESSON-PLAYER-CENTERED-NPC",
+    "sourceIds": ["SRC-SRD-5-2-1"],
+    "tags": ["gameplay", "agency", "rules"],
+    "principle": "Use NPC competence to create choices and consequences without making the NPC solve the player's campaign.",
+    "checks": ["The player retains the decisive choice", "NPC capability remains within approved rules and canon"],
+    "avoid": ["An NPC resolving the central problem off-screen", "Unapproved powers added for convenience"]
+  }
+]

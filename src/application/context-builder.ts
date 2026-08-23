@@ -1,6 +1,7 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { PerspectiveContext, VelmoraContent } from "../domain/types.ts";
 import { getCampaign, getSceneForTurnAndLocation, listCharactersAtLocation, listFactionConditions, listFactionPathProgress, listLocationConsequences, listPresentCharacterStates, listRecentTearArrivals } from "../persistence/database.ts";
+import { buildNpcContext } from "../npc/npc-context-gate.ts";
 
 export function buildPerspectiveContext(
   db: DatabaseSync,
@@ -22,6 +23,7 @@ export function buildPerspectiveContext(
     ...state,
     factionId: content.characters.find((character) => character.id === state.characterId)?.factionId ?? null
   }));
+  const encounteredScene = getSceneForTurnAndLocation(db, campaign.id, campaign.turn, currentLocation.id) ?? null;
   return {
     campaignId: campaign.id,
     seed: campaign.seed,
@@ -33,10 +35,15 @@ export function buildPerspectiveContext(
     connectedLocations,
     presentCharacterIds: listCharactersAtLocation(db, campaign.id, currentLocation.id),
     persistentConsequences: listLocationConsequences(db, campaign.id, currentLocation.id),
-    encounteredScene: getSceneForTurnAndLocation(db, campaign.id, campaign.turn, currentLocation.id) ?? null,
+    encounteredScene,
     factionPathProgress: listFactionPathProgress(db, campaign.id),
     factionConditions: listFactionConditions(db, campaign.id),
     presentCharacters,
-    recentTearArrivals: listRecentTearArrivals(db, campaign.id)
+    recentTearArrivals: listRecentTearArrivals(db, campaign.id),
+    npcContext: buildNpcContext(db, {
+      campaignId: campaign.id,
+      locationId: currentLocation.id,
+      focusNpcIds: encounteredScene?.participantIds ?? []
+    })
   };
 }

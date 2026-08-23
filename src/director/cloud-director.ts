@@ -29,6 +29,13 @@ type SubmittedPlan = {
   movements: Array<{ locationId: string; reason: string }>;
   factionPathAdvances: Array<{ factionId: string; reason: string }>;
   locationConsequences: Array<{ locationId: string; consequence: string; reason: string }>;
+  npcRequests: Array<{
+    role: string;
+    factionId: string | null;
+    locationId: string;
+    category: "active" | "known" | "background";
+    reason: string;
+  }>;
   suggestedActions: [string, string];
   allowsFreeText: true;
 };
@@ -100,6 +107,23 @@ const PLAN_TOOL = {
           additionalProperties: false
         }
       },
+      npcRequests: {
+        type: "array",
+        maxItems: 1,
+        description: "Request at most one persistent minor NPC only when the current scene genuinely needs a new person. Reuse supplied NPCs whenever possible.",
+        items: {
+          type: "object",
+          properties: {
+            role: { type: "string" },
+            factionId: { anyOf: [{ type: "string" }, { type: "null" }] },
+            locationId: { type: "string" },
+            category: { type: "string", enum: ["active", "known", "background"] },
+            reason: { type: "string" }
+          },
+          required: ["role", "factionId", "locationId", "category", "reason"],
+          additionalProperties: false
+        }
+      },
       suggestedActions: {
         type: "array",
         items: { type: "string" },
@@ -108,7 +132,7 @@ const PLAN_TOOL = {
       },
       allowsFreeText: { type: "boolean", enum: [true] }
     },
-    required: ["summary", "majorActionProposal", "factionChanges", "npcReputationChanges", "movements", "factionPathAdvances", "locationConsequences", "suggestedActions", "allowsFreeText"],
+    required: ["summary", "majorActionProposal", "factionChanges", "npcReputationChanges", "movements", "factionPathAdvances", "locationConsequences", "npcRequests", "suggestedActions", "allowsFreeText"],
     additionalProperties: false
   }
 } as const;
@@ -134,6 +158,7 @@ const DIRECTOR_RULES = `You are the D&D-style Campaign Master and Story Brain fo
 Use only the supplied player-perspective context. Do not reveal off-screen information, invent mechanics, change authored canon, create travel through Tears, or mutate state directly.
 You may create temporary sensory detail, dialogue, reactions, and immediate complications needed to make the current scene feel alive. Do not promote those details into permanent world facts unless the engine accepts a corresponding tool request.
 Narrate the result of the player's action as story, not as a technical summary. Propose only consequences justified by that action. Keep durable changes rare and bounded. A faction condition or NPC reputation may change by exactly one step. Advance a faction path only after a meaningful completed milestone; never invent the milestone's canon content.
+Use the supplied npcContext for portrayal. A full NPC may use only that NPC's supplied knowledge and beliefs. Prefer existing NPCs. Request at most one new minor NPC only when the player's action requires a persistent person who does not already exist; never use this to create a leader, major villain, canon authority, master, unique power holder, or predetermined plot answer. The request must use the current location.
 Always call submit_turn_plan exactly once. Provide exactly two suggested actions while allowing free text. If validation feedback is supplied, repair only the rejected fields.`;
 
 const SCENE_RULES = `You are the D&D-style Campaign Master and Story Brain for Velmora. Present only the validated current scene and player-visible context supplied by the engine.
@@ -145,7 +170,8 @@ function parseSubmittedPlan(value: unknown): DirectorTurnPlan {
   const plan = value as Partial<SubmittedPlan>;
   if (typeof plan.summary !== "string" || plan.summary.trim().length === 0) throw new Error("Cloud Director plan requires a summary");
   if (typeof plan.majorActionProposal !== "boolean") throw new Error("Cloud Director plan requires majorActionProposal");
-  if (!Array.isArray(plan.factionChanges) || !Array.isArray(plan.npcReputationChanges) || !Array.isArray(plan.movements) || !Array.isArray(plan.factionPathAdvances) || !Array.isArray(plan.locationConsequences)) throw new Error("Cloud Director plan requires change arrays");
+  if (!Array.isArray(plan.factionChanges) || !Array.isArray(plan.npcReputationChanges) || !Array.isArray(plan.movements) || !Array.isArray(plan.factionPathAdvances) || !Array.isArray(plan.locationConsequences) || !Array.isArray(plan.npcRequests)) throw new Error("Cloud Director plan requires change arrays");
+  if (plan.npcRequests.length > 1) throw new Error("Cloud Director may request at most one minor NPC per turn");
   if (!Array.isArray(plan.suggestedActions) || plan.suggestedActions.length !== 2 || !plan.suggestedActions.every((item) => typeof item === "string")) {
     throw new Error("Cloud Director plan requires exactly two suggested actions");
   }
@@ -156,6 +182,7 @@ function parseSubmittedPlan(value: unknown): DirectorTurnPlan {
     ...plan.npcReputationChanges.map((change) => ({ type: "change_npc_reputation" as const, ...change })),
     ...plan.locationConsequences.map((change) => ({ type: "record_location_consequence" as const, ...change })),
     ...plan.factionPathAdvances.map((change) => ({ type: "advance_faction_path" as const, ...change })),
+    ...plan.npcRequests.map((change) => ({ type: "request_minor_npc" as const, ...change })),
     ...plan.movements.map((change) => ({ type: "move_player" as const, ...change }))
   ];
   return {

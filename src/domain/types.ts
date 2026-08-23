@@ -82,9 +82,129 @@ export type PerspectiveContext = {
   factionConditions: Array<{ factionId: string; condition: number }>;
   presentCharacters: Array<{ characterId: string; status: string; reputation: number; factionId: string | null }>;
   recentTearArrivals: TearArrival[];
+  npcContext: NpcContextPackage;
 };
 
 export type QuestState = "locked" | "available" | "active" | "changed" | "completed" | "failed";
+
+export type NpcCategory = "active" | "known" | "background";
+
+export type NpcOrigin = "authored" | "generated";
+
+export type NpcStatus = "available" | "injured" | "missing" | "detained" | "unavailable" | "dead" | "departed";
+
+export type NpcLifecycleState = "current" | "archived";
+
+export type FactTruthStatus = "established" | "disproven" | "unresolved";
+
+export type FactVisibility = "public" | "restricted" | "secret";
+
+export type KnowledgeMethod = "witnessed" | "told" | "inferred";
+
+export type BelievedState = "true" | "false" | "uncertain";
+
+export type RelationshipStanding = "hostile" | "unfriendly" | "neutral" | "friendly" | "loyal";
+
+export type RelationshipQuality = "trusted" | "wary" | "afraid" | "indebted" | "respectful" | "attached";
+
+export type RelationshipTargetType = "player" | "npc" | "faction";
+
+export type NpcRecord = {
+  campaignId: string;
+  npcId: string;
+  name: string;
+  category: NpcCategory;
+  origin: NpcOrigin;
+  factionId: string | null;
+  locationId: string | null;
+  role: string;
+  status: NpcStatus;
+  lifecycleState: NpcLifecycleState;
+  createdTurn: number;
+  lastRelevantTurn: number;
+};
+
+export type WorldFact = {
+  campaignId: string;
+  factId: string;
+  statement: string;
+  truthStatus: FactTruthStatus;
+  visibility: FactVisibility;
+  establishedTurn: number;
+};
+
+export type NpcKnowledge = {
+  campaignId: string;
+  npcId: string;
+  factId: string;
+  method: KnowledgeMethod;
+  confidence: number;
+  believedState: BelievedState;
+  sourceNpcId: string | null;
+  learnedTurn: number;
+  lastUpdatedTurn: number;
+};
+
+export type NpcMemory = {
+  campaignId: string;
+  npcId: string;
+  memoryId: string;
+  summary: string;
+  emotionalImpact: string;
+  importance: 1 | 2 | 3;
+  unresolved: boolean;
+  createdTurn: number;
+  lastRecalledTurn: number;
+};
+
+export type NpcRelationship = {
+  campaignId: string;
+  sourceNpcId: string;
+  targetType: RelationshipTargetType;
+  targetId: string;
+  standing: RelationshipStanding;
+  qualities: RelationshipQuality[];
+  updatedTurn: number;
+};
+
+export type NpcKnowledgeView = Omit<NpcKnowledge, "campaignId" | "npcId"> & {
+  statement: string;
+};
+
+export type FullNpcContext = {
+  detail: "full";
+  npc: NpcRecord;
+  design: NpcDesignProfile | null;
+  knowledge: NpcKnowledgeView[];
+  memories: NpcMemory[];
+  relationships: NpcRelationship[];
+};
+
+export type SupportingNpcContext = {
+  detail: "supporting";
+  npc: NpcRecord;
+  playerRelationship: NpcRelationship | null;
+};
+
+export type NpcContextPackage = {
+  full: FullNpcContext[];
+  supporting: SupportingNpcContext[];
+  omittedCount: number;
+  budgetUsed: number;
+  budgetLimit: number;
+};
+
+export type NpcDesignProfile = {
+  campaignId: string;
+  npcId: string;
+  desire: string;
+  complication: string;
+  changeLever: string;
+  voiceCues: string[];
+  appliedLessonIds: string[];
+  fingerprint: string;
+  generatedTurn: number;
+};
 
 export type TearArrival = {
   id: string;
@@ -167,7 +287,16 @@ export type RecordLocationConsequenceRequest = {
   reason: string;
 };
 
-export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest;
+export type RequestMinorNpcRequest = {
+  type: "request_minor_npc";
+  role: string;
+  factionId: string | null;
+  locationId: string;
+  category: NpcCategory;
+  reason: string;
+};
+
+export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest;
 
 export type DirectorTurnPlan = {
   summary: string;
