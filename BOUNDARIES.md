@@ -17,6 +17,7 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - The Wayfarer Pact does not enter or explore the Tear. Its scavengers and specialists recover, identify, adapt, and trade materials, weapons, relics, and other objects that emerge from it inside Velmora.
 - Raw Tear-magic leaves the First Speaker unconscious and unable to continue coordinating the six factions. Finding a replacement becomes an opening conflict, but the replacement and the events that produce them may differ between campaign runs.
 - The Tear sits at Velmora's center. It begins relatively small at the campaign opening and grows as the story advances.
+- A fortified containment zone surrounds the central Tear and is publicly justified as necessary for "safety." Its existence is canon, but its exact name, construction, effectiveness, and political control remain subject to the approved geography design.
 - Possible approaches to the Tear include containing, stabilizing, studying, harnessing, redirecting, sealing, controlling, transforming, or destroying it. These are possible player and faction directions, not predetermined outcomes.
 - The Tear event generator schedules possible arrivals and temporary void-rift events caused by Velmora's single central Tear. It cannot create a second true Tear or a general route for outside exploration.
 - Early void-rifts appear by chance. Later, an unnamed crystalline, cosmic void entity deliberately opens selected void-rifts, and the Order of Glass eventually learns to open controlled void-rifts of its own.

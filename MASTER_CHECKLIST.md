@@ -36,7 +36,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Each faction leader also serves as that faction's Sixfold Council representative
 - [x] First Speaker and six faction leaders are variable campaign-generated identities attached to persistent fixed offices
 - [ ] Approved faction-specific generation constraints for the seven leadership offices
-- [ ] Final approved city geography, districts, interiors, important landmarks, and containment infrastructure
+- [x] Fortified containment zone exists around the central Tear under the public justification of safety
+- [ ] Final approved city geography, districts, interiors, important landmarks, and exact containment design
 - [ ] Canon review confirming contradictions and open decisions
 
 ### 2. Campaign structure and authored content — Missing
