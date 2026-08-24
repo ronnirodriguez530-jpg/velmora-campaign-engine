@@ -31,7 +31,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Magical alterations may be temporary, treatable, permanent, or evolving and use a common/uncommon/rare Level 1-3 scale
 - [x] Alterations may affect body, abilities, mind, or combinations and occur through bounded random eligible events rather than preset timing
 - [x] Relics may be old-world survivors, void-rift arrivals, or newly created inside Velmora
-- [ ] Remaining canon boundaries for creatures and rare abilities
+- [x] Creatures originate only as altered native life or void-rift arrivals; manufactured species are excluded from the base
+- [ ] Remaining canon boundaries for rare abilities
 - [ ] Named faction leadership and essential recurring characters
 - [ ] Final approved city geography, districts, interiors, important landmarks, and containment infrastructure
 - [ ] Canon review confirming contradictions and open decisions
@@ -60,6 +61,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [ ] Interiors and sublocations needed by the opening campaign
 - [ ] Location context and perspective filtering
 - [ ] Actual Tear creatures, altered life, magical events, relics, and fragments
+- [x] Initial power families, high-tier rift directions, creature roster, set-piece reserve, and creature name bank curated in `content/velmora/POWER_CREATURE_CATALOG.md`
 - [ ] Content placement rules that keep expansion inside Velmora
 
 ### 4. Base software engine — Working foundation
@@ -120,6 +122,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 
 ### 9. Powers, magic, and abilities — Missing
 
+- [x] Authored power idea bank consolidated into bounded families and restricted-later concepts
 - [ ] Ability and power catalog
 - [ ] Character ability ownership
 - [ ] Costs, limits, risks, duration, and sustained effects
@@ -174,6 +177,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [ ] Actual payload catalog and placement logic
 - [ ] Simple bounded alteration-event generator using approved level, affected-area, and effect entries
 - [ ] Creatures, magical effects, altered life, relics, and fragments
+- [x] Initial altered-native and void-arrival creature content curated without adding a third manufactured-creature origin
 - [ ] Surge escalation and Endless Surge behavior
 - [ ] Player-driven rhythm and consequence rules
 - [ ] Safety limits preventing uncontrolled content expansion
