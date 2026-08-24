@@ -19,6 +19,12 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - The Tear sits at Velmora's center. It begins relatively small at the campaign opening and grows as the story advances.
 - Possible approaches to the Tear include containing, stabilizing, studying, harnessing, redirecting, sealing, controlling, transforming, or destroying it. These are possible player and faction directions, not predetermined outcomes.
 - The Tear event generator schedules possible arrivals and temporary void-rift events caused by Velmora's single central Tear. It cannot create a second true Tear or a general route for outside exploration.
+- Early void-rifts appear by chance. Later, an unnamed crystalline, cosmic void entity deliberately opens selected void-rifts, and the Order of Glass eventually learns to open controlled void-rifts of its own.
+- The Order uses controlled void-rifts for contact, observation, power, or extraction but does not travel through them.
+- The void entity inhabits the remote side of a recurring void signature. Its power unknowingly strengthens and magically empowers the Order of Glass; only the Order's leader eventually discovers the source.
+- The Order's leader traces the recurring power, encounters the entity through an open void while remaining in Velmora, and accepts a bargain: greater power in exchange for helping the entity acquire power from other people, magical sources, or potentially the central Tear.
+- The exact power granted by the bargain may vary with the campaign but must come from an approved power catalog and remain within engine limits.
+- As the campaign progresses, the leader becomes increasingly power-lusted and unable to bear the influence. The entity increasingly pushes or makes decisions through him, creating a major Order of Glass conflict.
 
 ## Mechanical scaffolding—not canon
 
