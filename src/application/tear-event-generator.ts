@@ -9,8 +9,8 @@ function roll(seed: string, modulus: number): number {
   return createHash("sha256").update(seed).digest().readUInt32BE(0) % modulus;
 }
 
-// Mechanical scaffolding for arrivals from Velmora's single central Tear.
-// It never creates secondary rifts, destinations, or exploration routes.
+// Mechanical scaffolding for arrivals and void-rift events caused by Velmora's single central Tear.
+// A void-rift is a temporary wormhole, not a second true Tear or a general exploration route.
 // Frequency and weights remain provisional configuration.
 export function generateTearArrival(seed: string, turn: number): TearArrival | null {
   if (roll(`${seed}|tear|${turn}|occurrence`, 100) >= 15) return null;

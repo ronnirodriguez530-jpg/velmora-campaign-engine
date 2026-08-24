@@ -11,12 +11,14 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - Normal quests support two major outcomes; turning points may support a third.
 - Stage transition evaluates world state and requires meaningful progress through two of six faction lines.
 - Tear arrivals may contain creatures, raw magical energy, and fragments of other worlds; payload count is one common, two uncommon, and three rare.
-- Tear crossing is one-way. No temporary Tears exist. Special one-way travel through open Tears may eventually exist, but nobody currently knows how.
+- Velmora's central Tear is the only true Tear in reality. Its instability can cause temporary voids or rifts to appear as wormholes whose origins may be any world, location, or universe.
+- Void-rifts deliver creatures, energy, materials, weapons, relics, fragments, and other phenomena into Velmora. They are not additional Tears or normal routes for outward exploration.
+- Crossing remains one-way. Rare special travel through an open connection may eventually exist, but nobody currently knows how.
 - The Wayfarer Pact does not enter or explore the Tear. Its scavengers and specialists recover, identify, adapt, and trade materials, weapons, relics, and other objects that emerge from it inside Velmora.
 - Raw Tear-magic leaves the First Speaker unconscious and unable to continue coordinating the six factions. Finding a replacement becomes an opening conflict, but the replacement and the events that produce them may differ between campaign runs.
 - The Tear sits at Velmora's center. It begins relatively small at the campaign opening and grows as the story advances.
 - Possible approaches to the Tear include containing, stabilizing, studying, harnessing, redirecting, sealing, controlling, transforming, or destroying it. These are possible player and faction directions, not predetermined outcomes.
-- The Tear event generator schedules possible arrivals only from Velmora's single central Tear. It cannot create secondary or temporary rifts, destinations, or routes for outside exploration.
+- The Tear event generator schedules possible arrivals and temporary void-rift events caused by Velmora's single central Tear. It cannot create a second true Tear or a general route for outside exploration.
 
 ## Mechanical scaffolding—not canon
 

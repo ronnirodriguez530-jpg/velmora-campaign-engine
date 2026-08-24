@@ -20,7 +20,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Sixfold Council and the unconscious First Speaker's removal from active leadership
 - [x] Basic Tear rules and one-way crossing rule
 - [x] Central Tear begins relatively small, grows through the campaign, and supports multiple possible approaches rather than one fixed outcome
-- [x] Tear event generator is limited to scheduling arrivals from the single central Tear and cannot create additional rifts or destinations
+- [x] Single central Tear may cause temporary void-rift wormholes from random worlds or locations, while remaining the only true Tear
+- [x] Tear event generator may schedule arrivals and void-rift events but cannot create a second true Tear or general outward exploration routes
 - [x] Wayfarer Pact operates inside Velmora on objects emerging from the Tear rather than entering it
 - [ ] Canon boundaries for magic, alteration, relics, creatures, and rare abilities
 - [ ] Named faction leadership and essential recurring characters
