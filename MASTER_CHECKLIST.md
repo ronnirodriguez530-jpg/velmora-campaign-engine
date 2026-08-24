@@ -19,6 +19,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Six factions and their broad responsibilities
 - [x] Sixfold Council, First Speaker, and opening injury
 - [x] Basic Tear rules and one-way crossing rule
+- [x] Wayfarer Pact operates inside Velmora on objects emerging from the Tear rather than entering it
 - [ ] Canon boundaries for magic, alteration, relics, creatures, and rare abilities
 - [ ] Named faction leadership and essential recurring characters
 - [ ] Final approved city geography, districts, interiors, and important landmarks

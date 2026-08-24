@@ -1,7 +1,7 @@
 [
   {"id":"FAC-001","name":"League of Thorns","initialCondition":2,"service":"Beast defense and creature materials"},
   {"id":"FAC-002","name":"Aurorus Circle","initialCondition":2,"service":"Magical power, relic knowledge, and ancient texts"},
-  {"id":"FAC-003","name":"Wayfarer Pact","initialCondition":2,"service":"Fragment navigation, rescue, and salvage access"},
+  {"id":"FAC-003","name":"Wayfarer Pact","initialCondition":2,"service":"Recovery, identification, adaptation, and trade of materials, weapons, relics, and other objects that emerge from the Tear inside Velmora"},
   {"id":"FAC-004","name":"House Chrysalis","initialCondition":2,"service":"Healing, mutation treatment, and biological research"},
   {"id":"FAC-005","name":"Hands of Velmora","initialCondition":2,"service":"Distribution, labor, peacekeeping, and repairs"},
   {"id":"FAC-006","name":"Order of Glass","initialCondition":2,"service":"Records, evidence, and cross-faction intelligence"}
