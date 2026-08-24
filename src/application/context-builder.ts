@@ -28,6 +28,7 @@ export function buildPerspectiveContext(
     campaignId: campaign.id,
     seed: campaign.seed,
     stage: campaign.stage,
+    campaignOpeningPremise: content.campaign.openingPremise,
     stageAnchor: stage.anchor,
     stageMaxThreatLevel: stage.maxThreatLevel,
     turn: campaign.turn,

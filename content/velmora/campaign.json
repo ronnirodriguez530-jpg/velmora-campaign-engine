@@ -3,6 +3,7 @@
   "name": "Velmora",
   "initialStage": "opening",
   "initialLocationId": "LOC-COUNCIL-CROWN",
+  "openingPremise": "The player begins inside the Council Crown during the opening Surge, directly witnesses raw Tear-magic strike the First Speaker, and is present when the Surge fails to end.",
   "playableWorld": "Velmora",
   "factionPathRequirement": 2,
   "allowTemporaryTearTravel": false

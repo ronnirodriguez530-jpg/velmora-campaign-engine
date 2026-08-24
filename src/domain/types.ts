@@ -5,6 +5,7 @@ export type CampaignDefinition = {
   name: string;
   initialStage: CampaignStage;
   initialLocationId: string;
+  openingPremise: string;
   playableWorld: "Velmora";
   factionPathRequirement: number;
   allowTemporaryTearTravel: false;
@@ -79,6 +80,7 @@ export type PerspectiveContext = {
   campaignId: string;
   seed: string;
   stage: CampaignStage;
+  campaignOpeningPremise: string;
   stageAnchor: string;
   stageMaxThreatLevel: number;
   turn: number;

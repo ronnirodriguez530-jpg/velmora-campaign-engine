@@ -9,6 +9,8 @@ function assert(condition: unknown, message: string): asserts condition {
 export function validateContent(content: VelmoraContent): void {
   assert(content.campaign.id === "CMP-VELMORA", "Unexpected campaign ID");
   assert(content.campaign.playableWorld === "Velmora", "Velmora must remain the playable world");
+  assert(content.campaign.initialLocationId === "LOC-COUNCIL-CROWN", "The playable opening must begin at the Council Crown");
+  assert(content.campaign.openingPremise.length > 0, "The playable opening premise is required");
   assert(content.campaign.allowTemporaryTearTravel === false, "Temporary Tear travel must be disabled");
   assert(content.campaign.factionPathRequirement === 2, "Stage progression must require two faction paths");
 

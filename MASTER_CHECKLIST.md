@@ -48,6 +48,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 ### 2. Campaign structure and authored content — Missing
 
 - [ ] Campaign premise and playable opening
+- [x] Opening location and witnessed inciting event: Council Crown during the First Speaker's attack and the Surge's failure to end
 - [x] Variable opening conflict over replacing the incapacitated First Speaker
 - [ ] Replacement candidates and selection events generated from approved campaign conditions rather than one preset outcome
 - [x] Order of Glass leader's hidden bargain and escalating influence established as a campaign conflict

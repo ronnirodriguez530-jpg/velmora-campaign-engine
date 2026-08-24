@@ -7,6 +7,7 @@ const context: PerspectiveContext = {
   campaignId: "SAVE-TEST",
   seed: "fixed-seed",
   stage: "opening",
+  campaignOpeningPremise: "The player witnesses the attack at the Council Crown.",
   stageAnchor: "The Endless Surge begins.",
   stageMaxThreatLevel: 1,
   turn: 0,
