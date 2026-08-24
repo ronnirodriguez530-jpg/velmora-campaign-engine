@@ -25,6 +25,8 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - The Order's leader traces the recurring power, encounters the entity through an open void while remaining in Velmora, and accepts a bargain: greater power in exchange for helping the entity acquire power from other people, magical sources, or potentially the central Tear.
 - The exact power granted by the bargain may vary with the campaign but must come from an approved power catalog and remain within engine limits.
 - As the campaign progresses, the leader becomes increasingly power-lusted and unable to bear the influence. The entity increasingly pushes or makes decisions through him, creating a major Order of Glass conflict.
+- Magic is new to the world and has no true masters. It may be innate, invented, engineered through magic-tech, discovered, taken, taught, or made.
+- The central Tear and its void-rifts are the sources of the world's highest-tier magic. Other methods may produce useful magic but cannot silently exceed that power ceiling.
 
 ## Mechanical scaffolding—not canon
 

@@ -25,7 +25,9 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Void-rifts progress from chance events to selected entity-opened events and eventually controlled Order of Glass openings without traversal
 - [x] Order of Glass is unknowingly empowered by an unnamed void entity whose bargain increasingly corrupts its informed leader
 - [x] Wayfarer Pact operates inside Velmora on objects emerging from the Tear rather than entering it
-- [ ] Canon boundaries for magic, alteration, relics, creatures, and rare abilities
+- [x] Magic may be innate, invented, magic-technological, discovered, taken, taught, or made
+- [x] Highest-tier magic originates from the central Tear or its void-rifts, and no true magic masters currently exist
+- [ ] Remaining canon boundaries for alteration, relics, creatures, and rare abilities
 - [ ] Named faction leadership and essential recurring characters
 - [ ] Final approved city geography, districts, interiors, important landmarks, and containment infrastructure
 - [ ] Canon review confirming contradictions and open decisions
