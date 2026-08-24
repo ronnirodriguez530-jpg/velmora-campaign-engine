@@ -61,7 +61,10 @@ NPCs are reclassified after meaningful events. Reclassification never deletes id
 - The live perspective context now includes the adaptive NPC Context Gate output.
 - The Campaign Master can propose at most one minor-NPC request per committed turn. The engine validates current location, faction, role, category, and reason before generating and storing anything.
 - The Campaign Master cannot supply the NPC identity or bypass the design evaluator, novelty ledger, transaction, or rollback system.
+- The NPC Turn Manager accepts bounded updates only for existing, current NPCs at the player's scene location.
+- A managed turn may record one memory, one adjacent player-standing change, up to two relationship-quality changes, one existing public fact, a non-death status, connected movement, and whether involvement continues or ends.
+- The engine derives active/known category from involvement. Ordinary turn management cannot kill an NPC, invent a fact, reveal a new restricted fact, or move an NPC beyond the current location graph.
 
 ## Not implemented yet
 
-- Broader Campaign Master NPC mutation tools beyond the single constrained creation request.
+- Validated reveal events for restricted knowledge and dedicated high-consequence death resolution.

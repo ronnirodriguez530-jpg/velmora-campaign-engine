@@ -116,6 +116,16 @@ Every simulation reached Resolution after the same amount of abstract faction pr
 - End-to-end tests cover Director proposal, validation, transactional generation, next-scene context, and rollback.
 - The complete audited suite passes 35 of 35 tests.
 
+## Verified NPC Turn Manager checkpoint
+
+- The Campaign Master may propose bounded consequences only for existing current NPCs at the player's scene location.
+- The engine validates one memory, an adjacent player-standing change, limited relationship qualities, one existing public fact, non-death status, connected movement, and continued/ended involvement.
+- Active/known category changes are derived by the engine rather than assigned freely by the Campaign Master.
+- Ordinary turn management cannot kill an NPC, invent a fact, reveal a new restricted fact, or move an NPC outside the current location graph.
+- Public facts are included in perspective context so the Campaign Master can reference only facts the engine actually exposes.
+- End-to-end tests confirm application and complete rollback of managed NPC consequences.
+- The complete audited suite passes 36 of 36 tests.
+
 ## Active checkpoint
 
 The real implementation boundary is recorded in `GHOST_FEATURE_AUDIT.md`. The application shell and limited continuity scaffold work; the DM Core rules remain design-only.
@@ -124,7 +134,7 @@ The first NPC Engine checkpoint now implements persistent NPC records, active/kn
 
 ## Next phase—do not skip ahead
 
-Define the minimum safe NPC consequence tools the Campaign Master needs during play; do not grant unrestricted NPC mutation authority.
+Run a real-provider NPC playtest before adding restricted reveals, death resolution, or additional NPC authority.
 
 ## Later
 

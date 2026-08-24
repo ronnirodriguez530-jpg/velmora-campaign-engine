@@ -36,7 +36,8 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 20. Constrained on-demand minor-NPC generation with canon validation, persisted design profiles, applied lesson IDs, and a permanent novelty ledger.
 21. NPC lifecycle and archival with normally permanent death, explicit transition history, and complete NPC-state rollback coverage.
 22. Live-turn NPC integration: filtered NPC context reaches the Campaign Master, which may propose one engine-validated minor NPC request per committed turn.
-23. Current automated suite: 35 of 35 tests passing.
+23. NPC Turn Manager with bounded memory, adjacent player-standing, relationship qualities, existing public-fact learning, non-death status, connected movement, and involvement/category updates.
+24. Current automated suite: 36 of 36 tests passing.
 
 ## Partial or scaffolded
 
@@ -53,7 +54,7 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 - The seven content records contain roles and faction links, not complete NPC identities or personalities.
 - There is no player-character record or character-creation flow.
 - A general `npc_records` registry now preserves minimal identity, origin, faction, location, role, status, relevance turn, and storage category.
-- Automatic category decisions, recorded transitions, knowledge/belief separation, personal memory storage, directional relationship storage, adaptive Context Gate, curated reference retrieval, constrained minor-NPC generation, persistent novelty, lifecycle/archival, complete NPC rollback, and one bounded live Campaign Master NPC request work. Broader NPC mutation tools and a real-provider playtest do not exist yet.
+- Automatic category decisions, recorded transitions, knowledge/belief separation, personal memory storage, directional relationship storage, adaptive Context Gate, curated reference retrieval, constrained minor-NPC generation, persistent novelty, lifecycle/archival, complete NPC rollback, bounded creation, and bounded live NPC consequence management work. Restricted-fact reveal events, high-consequence death resolution, and a real-provider playtest do not exist yet.
 
 ### Quests
 
@@ -121,7 +122,7 @@ The proposed NPC Context Gate is also design-only. It is not yet present in `DM_
 
 ## Completely absent systems
 
-1. Broader engine-validated NPC mutation tools for memory, relationships, knowledge, and lifecycle.
+1. Validated restricted-fact reveal events and dedicated high-consequence NPC death resolution.
 2. Player character storage, character sheet, creation, party membership, and party control.
 3. Gameplay dice roller and roll records.
 4. Combat state, initiative, turns, HP, damage, conditions, targets, and encounter resolution.
