@@ -57,6 +57,15 @@ export type TruthDefinition = {
   summary: string;
 };
 
+export type OpeningSpawnDefinition = {
+  roll: number;
+  id: string;
+  locationId: string;
+  spawnArea: string;
+  entryReason: string;
+  immediatePressure: string;
+};
+
 export type VelmoraContent = {
   campaign: CampaignDefinition;
   stages: StageDefinition[];
@@ -64,6 +73,7 @@ export type VelmoraContent = {
   locations: LocationDefinition[];
   characters: CharacterDefinition[];
   truths: TruthDefinition[];
+  openingSpawns: OpeningSpawnDefinition[];
   sceneTemplates: SceneTemplate[];
 };
 

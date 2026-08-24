@@ -5,7 +5,7 @@
     "initialCondition": 2,
     "service": "Beast defense and creature materials",
     "districtIdentity": {
-      "mapSector": "4 to 6 o'clock",
+      "mapSector": "6 to 8 o'clock",
       "colors": ["Ox-blood #6E1F2A", "Thorn green #304A3A", "Black iron #1A1C1D"],
       "environment": "A hard fortified ward of kennels, training courts, butcher sheds, trophy-marked gates, and reinforced roofs built to survive beast alarms.",
       "wayOfLife": "Days move by patrol bells, hunts, repairs, and preparation. Proven skill earns respect faster than rank, and nearly every household knows what to do when something breaches the streets.",
@@ -31,7 +31,7 @@
     "initialCondition": 2,
     "service": "Recovery, identification, adaptation, and trade of materials, weapons, relics, and other objects that emerge from the Tear inside Velmora",
     "districtIdentity": {
-      "mapSector": "6 to 8 o'clock",
+      "mapSector": "8 to 10 o'clock",
       "colors": ["Rift rust #8A4B32", "Weathered teal #376B68", "Canvas tan #B7A680"],
       "environment": "A patchwork ward of sorting yards, salvage markets, test sheds, caravans, and buildings repaired with materials that do not always belong to the same world.",
       "wayOfLife": "Everything arriving from the Tear is inspected, argued over, adapted, or traded. Families and crews value usefulness, safe handling, and the ability to make an unfamiliar object serve a local need.",
@@ -57,7 +57,7 @@
     "initialCondition": 2,
     "service": "Distribution, labor, peacekeeping, and repairs",
     "districtIdentity": {
-      "mapSector": "8 to 10 o'clock",
+      "mapSector": "4 to 6 o'clock",
       "colors": ["Kiln brick #8A3F36", "Work ochre #B58A45", "Warm plaster #D8CBAF"],
       "environment": "The densest lived-in ward, packed with workshops, communal kitchens, cisterns, storehouses, repair yards, markets, and practical housing.",
       "wayOfLife": "Work crews keep food, water, heat, roads, and peace moving between factions. Life is communal, shift-driven, noisy, and grounded in the belief that survival belongs to everyone who contributes.",

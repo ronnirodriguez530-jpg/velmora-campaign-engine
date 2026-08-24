@@ -1,0 +1,50 @@
+[
+  {
+    "roll": 1,
+    "id": "OPEN-GALLERY-WITNESS",
+    "locationId": "LOC-COUNCIL-CROWN",
+    "spawnArea": "Sixfold Chamber gallery",
+    "entryReason": "The player is present for a public council session, petition, or someone else's hearing.",
+    "immediatePressure": "The player sees raw Tear-magic strike the First Speaker as the chamber seals and panic erupts below."
+  },
+  {
+    "roll": 2,
+    "id": "OPEN-PLAZA-CROWD",
+    "locationId": "LOC-COUNCIL-CROWN",
+    "spawnArea": "Council Plaza",
+    "entryReason": "The player is waiting for a civic announcement or accompanying someone with business at the Crown.",
+    "immediatePressure": "The Surge hits the plaza, scattering the crowd as word spreads that the First Speaker has fallen."
+  },
+  {
+    "roll": 3,
+    "id": "OPEN-RECORDS-DELIVERY",
+    "locationId": "LOC-COUNCIL-CROWN",
+    "spawnArea": "Administrative and records corridor",
+    "entryReason": "The player is delivering, requesting, or verifying a message, permit, record, or piece of evidence.",
+    "immediatePressure": "The blast interrupts the exchange, cuts off the corridor, and leaves the player among officials who do not agree on what must be protected first."
+  },
+  {
+    "roll": 4,
+    "id": "OPEN-GUARD-INTAKE",
+    "locationId": "LOC-COUNCIL-CROWN",
+    "spawnArea": "Independent guard barracks and intake post",
+    "entryReason": "The player is working, assisting, reporting for temporary duty, or being considered for a civic assignment.",
+    "immediatePressure": "Containment alarms overwhelm the post and the player is caught inside the first emergency response."
+  },
+  {
+    "roll": 5,
+    "id": "OPEN-INTERVIEW-ROOM",
+    "locationId": "LOC-COUNCIL-CROWN",
+    "spawnArea": "Guarded interview room",
+    "entryReason": "The player is being questioned, monitored, or temporarily detained over a matter that can adapt to their background.",
+    "immediatePressure": "The attack disrupts the guard detail and unlocks the room, leaving the player free but surrounded by immediate danger and suspicion."
+  },
+  {
+    "roll": 6,
+    "id": "OPEN-GUEST-WING",
+    "locationId": "LOC-COUNCIL-CROWN",
+    "spawnArea": "Guest and medical wing",
+    "entryReason": "The player is visiting, accompanying someone, receiving routine treatment, or performing support work.",
+    "immediatePressure": "Casualties flood the wing while the route toward the First Speaker's guarded quarters becomes unstable and contested."
+  }
+]

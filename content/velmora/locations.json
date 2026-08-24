@@ -39,7 +39,7 @@
     "id": "LOC-DIST-CHRYSALIS",
     "name": "Chrysalis Wedge",
     "district": "FAC-004",
-    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-AURORUS", "LOC-DIST-THORNS"],
+    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-AURORUS", "LOC-DIST-HANDS"],
     "perspectiveTags": ["district", "healing", "alteration", "gardens"],
     "mapPosition": "2 to 4 o'clock",
     "environment": "Bone-ivory clinics, amber glass, moss-toned medicinal gardens, humid recovery courts, and the Chrysalis Conservatory make alteration visibly part of daily life."
@@ -48,34 +48,34 @@
     "id": "LOC-DIST-THORNS",
     "name": "Thorn Wedge",
     "district": "FAC-001",
-    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-CHRYSALIS", "LOC-DIST-WAYFARER"],
+    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-HANDS", "LOC-DIST-WAYFARER"],
     "perspectiveTags": ["district", "beasts", "defense", "patrols"],
-    "mapPosition": "4 to 6 o'clock",
+    "mapPosition": "6 to 8 o'clock",
     "environment": "Ox-blood banners, thorn-green markings, black-iron defenses, kennels, hunt yards, reinforced roofs, and Thorn Bastion prepare the ward for the next beast alarm."
   },
   {
     "id": "LOC-DIST-WAYFARER",
     "name": "Wayfarer Wedge",
     "district": "FAC-003",
-    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-THORNS", "LOC-DIST-HANDS"],
+    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-THORNS", "LOC-DIST-GLASS"],
     "perspectiveTags": ["district", "fragments", "salvage", "markets"],
-    "mapPosition": "6 to 8 o'clock",
+    "mapPosition": "8 to 10 o'clock",
     "environment": "Rust, weathered teal, canvas awnings, sorting yards, test sheds, caravans, and the Patchwork Exchange form a district rebuilt from useful pieces of impossible places."
   },
   {
     "id": "LOC-DIST-HANDS",
     "name": "Hands Wedge",
     "district": "FAC-005",
-    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-WAYFARER", "LOC-DIST-GLASS"],
+    "connections": ["LOC-CONTAINMENT-RING", "LOC-DIST-CHRYSALIS", "LOC-DIST-THORNS"],
     "perspectiveTags": ["district", "civic", "distribution", "workshops"],
-    "mapPosition": "8 to 10 o'clock",
+    "mapPosition": "4 to 6 o'clock",
     "environment": "Brick, ochre, warm plaster, dense housing, kitchens, cisterns, repair yards, markets, and the Common Forge make this the loud practical heart of everyday survival."
   },
   {
     "id": "LOC-DIST-GLASS",
     "name": "Glass Wedge",
     "district": "FAC-006",
-    "connections": ["LOC-COUNCIL-CROWN", "LOC-CONTAINMENT-RING", "LOC-DIST-HANDS", "LOC-DIST-AURORUS"],
+    "connections": ["LOC-COUNCIL-CROWN", "LOC-CONTAINMENT-RING", "LOC-DIST-WAYFARER", "LOC-DIST-AURORUS"],
     "perspectiveTags": ["district", "records", "secrets", "observation"],
     "mapPosition": "10 to 12 o'clock",
     "environment": "Smoke-gray stone, mirror-silver details, cold-blue glass, quiet lanes, evidence vaults, watchrooms, and the Glass Archive create a district that observes more than it reveals."

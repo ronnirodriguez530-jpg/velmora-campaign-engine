@@ -22,6 +22,15 @@ export function validateContent(content: VelmoraContent): void {
   assert(content.factions.every((faction) => faction.initialCondition >= 0 && faction.initialCondition <= 4), "Faction condition must be 0-4");
   assert(content.factions.every((faction) => faction.districtIdentity.colors.length === 3), "Each faction district requires exactly three map colors");
   assert(content.factions.every((faction) => faction.districtIdentity.environment.length > 0 && faction.districtIdentity.wayOfLife.length > 0 && faction.districtIdentity.landmark.length > 0), "Each faction district requires an environment, way of life, and landmark");
+  const approvedSectors = new Map([
+    ["FAC-002", "12 to 2 o'clock"],
+    ["FAC-004", "2 to 4 o'clock"],
+    ["FAC-005", "4 to 6 o'clock"],
+    ["FAC-001", "6 to 8 o'clock"],
+    ["FAC-003", "8 to 10 o'clock"],
+    ["FAC-006", "10 to 12 o'clock"]
+  ]);
+  assert(content.factions.every((faction) => approvedSectors.get(faction.id) === faction.districtIdentity.mapSector), "Faction district order must match the approved Velmora blueprint");
 
   assert(content.characters.length === 8, "Exactly eight essential NPC slots are required");
   assert(content.characters.every((character) => character.initialReputation >= -2 && character.initialReputation <= 2), "NPC reputation must be -2 to 2");
@@ -45,6 +54,12 @@ export function validateContent(content: VelmoraContent): void {
     assert(character.factionId === null || factionIds.has(character.factionId), `Character ${character.id} references missing faction`);
     assert(locationIds.has(character.initialLocationId), `Character ${character.id} references missing initial location`);
   }
+
+  assert(content.openingSpawns.length === 6, "The opening requires exactly six d6 spawn outcomes");
+  assert(content.openingSpawns.every((spawn, index) => spawn.roll === index + 1), "Opening spawn rolls must cover 1 through 6 in order");
+  assert(new Set(content.openingSpawns.map((spawn) => spawn.id)).size === 6, "Opening spawn IDs must be unique");
+  assert(content.openingSpawns.every((spawn) => spawn.locationId === content.campaign.initialLocationId), "Every opening spawn must remain inside the Council Crown");
+  assert(content.openingSpawns.every((spawn) => spawn.spawnArea.length > 0 && spawn.entryReason.length > 0 && spawn.immediatePressure.length > 0), "Every opening spawn requires an area, entry reason, and immediate pressure");
 
   assert(content.sceneTemplates.length >= 4, "At least one mechanical scene scaffold per campaign stage is required");
   for (const template of content.sceneTemplates) {

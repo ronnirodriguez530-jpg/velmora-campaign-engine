@@ -7,6 +7,7 @@ test("approved Velmora foundation content validates", async () => {
   const content = await loadVelmoraContent(resolve(import.meta.dirname, ".."));
   assert.equal(content.factions.length, 6);
   assert.equal(content.characters.length, 8);
+  assert.deepEqual(content.openingSpawns.map((spawn) => spawn.roll), [1, 2, 3, 4, 5, 6]);
   assert.equal(content.factions.every((faction) => faction.districtIdentity.colors.length === 3), true);
   assert.equal(content.campaign.factionPathRequirement, 2);
   assert.equal(content.campaign.allowTemporaryTearTravel, false);
