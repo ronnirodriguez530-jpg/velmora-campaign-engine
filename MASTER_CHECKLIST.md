@@ -38,7 +38,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [ ] Approved faction-specific generation constraints for the seven leadership offices
 - [x] Fortified containment zone exists around the central Tear under the public justification of safety
 - [x] Containment is guarded by an independent force attached to the First Speaker's office rather than a faction force
-- [ ] Containment guard chain of command after the First Speaker becomes unconscious
+- [x] First Speaker's senior deputy maintains operational command of containment and routine administration after the attack without inheriting the Speaker's political authority
+- [x] Six faction leaders collectively hold political authority until a replacement First Speaker is chosen
 - [ ] Final approved city geography, districts, interiors, important landmarks, and exact containment design
 - [ ] Canon review confirming contradictions and open decisions
 
