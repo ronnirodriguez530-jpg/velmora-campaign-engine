@@ -62,6 +62,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [ ] Location context and perspective filtering
 - [ ] Actual Tear creatures, altered life, magical events, relics, and fragments
 - [x] Initial power families, high-tier rift directions, creature roster, set-piece reserve, and creature name bank curated in `content/velmora/POWER_CREATURE_CATALOG.md`
+- [x] Foundation relics, high-tier rift relics, institutional magic-tech, and scrap-magic equipment curated in `content/velmora/RELIC_MAGIC_TECH_CATALOG.md`
 - [ ] Content placement rules that keep expansion inside Velmora
 
 ### 4. Base software engine — Working foundation
@@ -133,6 +134,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 
 ### 10. Inventory, equipment, and economy — Missing
 
+- [x] Initial relic and magic-tech idea bank curated with base, restricted, and later categories
 - [ ] Item and inventory storage
 - [ ] Weapons, armor, shields, consumables, and quest items
 - [ ] Equipment effects and usage rules
