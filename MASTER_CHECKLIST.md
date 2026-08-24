@@ -17,7 +17,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Velmora premise, tone, Tear, Endless Surge, and survival premise
 - [x] Six-wedge city structure and crown position
 - [x] Six factions and their broad responsibilities
-- [x] Sixfold Council, First Speaker, and opening injury
+- [x] Sixfold Council and the unconscious First Speaker's removal from active leadership
 - [x] Basic Tear rules and one-way crossing rule
 - [x] Wayfarer Pact operates inside Velmora on objects emerging from the Tear rather than entering it
 - [ ] Canon boundaries for magic, alteration, relics, creatures, and rare abilities
@@ -28,6 +28,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 ### 2. Campaign structure and authored content — Missing
 
 - [ ] Campaign premise and playable opening
+- [x] Variable opening conflict over replacing the incapacitated First Speaker
+- [ ] Replacement candidates and selection events generated from approved campaign conditions rather than one preset outcome
 - [ ] Major campaign spine with acts or stages
 - [ ] Multiple main-quest paths
 - [ ] Six faction questlines

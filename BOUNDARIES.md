@@ -13,6 +13,7 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - Tear arrivals may contain creatures, raw magical energy, and fragments of other worlds; payload count is one common, two uncommon, and three rare.
 - Tear crossing is one-way. No temporary Tears exist. Special one-way travel through open Tears may eventually exist, but nobody currently knows how.
 - The Wayfarer Pact does not enter or explore the Tear. Its scavengers and specialists recover, identify, adapt, and trade materials, weapons, relics, and other objects that emerge from it inside Velmora.
+- Raw Tear-magic leaves the First Speaker unconscious and unable to continue coordinating the six factions. Finding a replacement becomes an opening conflict, but the replacement and the events that produce them may differ between campaign runs.
 
 ## Mechanical scaffolding—not canon
 
