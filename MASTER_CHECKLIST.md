@@ -29,6 +29,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Highest-tier magic originates from the central Tear or its void-rifts, and no true magic masters currently exist
 - [x] High-tier magic is controllable but initially costly and risky, with burden reducible through experience, technique, equipment, or magic-tech
 - [x] Magical alterations may be temporary, treatable, permanent, or evolving and use a common/uncommon/rare Level 1-3 scale
+- [x] Alterations may affect body, abilities, mind, or combinations and occur through bounded random eligible events rather than preset timing
 - [ ] Remaining canon boundaries for relics, creatures, and rare abilities
 - [ ] Named faction leadership and essential recurring characters
 - [ ] Final approved city geography, districts, interiors, important landmarks, and containment infrastructure
@@ -170,6 +171,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Provisional bounded deterministic arrival generator
 - [ ] Approved frequency and rarity rules
 - [ ] Actual payload catalog and placement logic
+- [ ] Simple bounded alteration-event generator using approved level, affected-area, and effect entries
 - [ ] Creatures, magical effects, altered life, relics, and fragments
 - [ ] Surge escalation and Endless Surge behavior
 - [ ] Player-driven rhythm and consequence rules

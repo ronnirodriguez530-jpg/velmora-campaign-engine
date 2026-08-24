@@ -30,6 +30,8 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - Powerful Tear and void-rift magic can be controlled, but its early use carries substantial cost and risk. Experience, technique, equipment, or magic-tech may reduce that burden over time; exact costs and limits belong to the approved ability catalog.
 - Magical alterations may be temporary, treatable, permanent, or capable of evolving further.
 - Alterations use a three-level scale parallel to Tear rarity: Level 1 is common and minor, Level 2 is uncommon and significant, and Level 3 is rare and major. The level measures severity and complexity; exact duration, treatment, and evolution belong to the later alteration system.
+- An alteration may affect the body, magical abilities, the mind, or a combination. Its timing is not a fixed story beat; eligible alteration events are selected randomly from an approved bounded catalog.
+- The alteration system remains simple: each event needs only a level, affected area or areas, and a concise effect. Random generation cannot invent new permanent mechanics outside the approved catalog.
 
 ## Mechanical scaffolding—not canon
 
