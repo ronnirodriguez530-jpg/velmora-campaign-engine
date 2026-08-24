@@ -36,6 +36,9 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - A relic's approved catalog entry must define its origin, capabilities, limits, and risks before the Campaign Master may use it mechanically.
 - Creatures have only two origin categories: native life altered by magic, or beings arriving through void-rifts. Factions may study, treat, tame, or manage individual creatures and alterations, but they do not manufacture a third category of entirely new creature species.
 - Relic and magic-tech content is curated in `content/velmora/RELIC_MAGIC_TECH_CATALOG.md`. Magic-tech may be refined institutional equipment or rough scrap-built equipment, but no item gains mechanical authority until the inventory and item systems exist.
+- Random events may create opportunities to acquire a rare Level 3 ability, but they cannot automatically grant or permanently impose one.
+- Approved rare-ability paths include unusual birth, surviving major Tear or void exposure, bonding with a rare relic, creating advanced magic-tech, evolving an existing ability, accepting a bargain, or receiving or taking power from another source.
+- Permanent player ability acquisition requires an approved catalog entry, engine validation, character choice, and explicit player approval. Rare abilities begin costly or difficult to control and may become safer through experience, technique, or equipment.
 
 ## Mechanical scaffolding—not canon
 

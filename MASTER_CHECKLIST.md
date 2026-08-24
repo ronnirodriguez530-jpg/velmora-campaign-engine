@@ -32,7 +32,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Alterations may affect body, abilities, mind, or combinations and occur through bounded random eligible events rather than preset timing
 - [x] Relics may be old-world survivors, void-rift arrivals, or newly created inside Velmora
 - [x] Creatures originate only as altered native life or void-rift arrivals; manufactured species are excluded from the base
-- [ ] Remaining canon boundaries for rare abilities
+- [x] Rare Level 3 abilities arise through approved opportunities and sources, never automatic random assignment; permanent player acquisition requires choice and approval
 - [ ] Named faction leadership and essential recurring characters
 - [ ] Final approved city geography, districts, interiors, important landmarks, and containment infrastructure
 - [ ] Canon review confirming contradictions and open decisions
