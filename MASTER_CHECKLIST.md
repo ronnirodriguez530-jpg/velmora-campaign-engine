@@ -34,7 +34,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Creatures originate only as altered native life or void-rift arrivals; manufactured species are excluded from the base
 - [x] Rare Level 3 abilities arise through approved opportunities and sources, never automatic random assignment; permanent player acquisition requires choice and approval
 - [x] Each faction leader also serves as that faction's Sixfold Council representative
-- [ ] Names, identities, and essential traits for the six faction leaders and other required recurring characters
+- [x] First Speaker and six faction leaders are variable campaign-generated identities attached to persistent fixed offices
+- [ ] Approved faction-specific generation constraints for the seven leadership offices
 - [ ] Final approved city geography, districts, interiors, important landmarks, and containment infrastructure
 - [ ] Canon review confirming contradictions and open decisions
 
@@ -52,7 +53,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [ ] Choice junctions, consequences, failures, and recovery paths
 - [ ] Final-truth candidates and player-choice resolution
 - [ ] End states that preserve player agency
-- [ ] Minimum recurring cast required by the campaign
+- [x] Minimum opening leadership cast fixed at the First Speaker and six faction leaders, with identities generated per campaign
+- [ ] Additional recurring roles required by the authored questlines
 
 ### 3. Locations and world content — Partial
 

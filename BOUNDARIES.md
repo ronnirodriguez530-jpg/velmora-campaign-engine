@@ -40,6 +40,8 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - Approved rare-ability paths include unusual birth, surviving major Tear or void exposure, bonding with a rare relic, creating advanced magic-tech, evolving an existing ability, accepting a bargain, or receiving or taking power from another source.
 - Permanent player ability acquisition requires an approved catalog entry, engine validation, character choice, and explicit player approval. Rare abilities begin costly or difficult to control and may become safer through experience, technique, or equipment.
 - Each faction's leader is also that faction's representative on the Sixfold Council. The base leadership cast therefore contains six faction leaders rather than separate leaders and representatives.
+- The First Speaker and six faction leaders are fixed offices, not fixed identities. A new campaign generates faction-appropriate identities, traits, abilities, relationships, and ambitions for those seven offices, then preserves them for that campaign.
+- Required role-specific conflicts remain attached to the office. In particular, the generated Order of Glass leader inherits the hidden void bargain and escalating influence; the generated First Speaker inherits the opening injury and replacement conflict.
 
 ## Mechanical scaffolding—not canon
 
