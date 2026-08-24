@@ -16,6 +16,7 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - Raw Tear-magic leaves the First Speaker unconscious and unable to continue coordinating the six factions. Finding a replacement becomes an opening conflict, but the replacement and the events that produce them may differ between campaign runs.
 - The Tear sits at Velmora's center. It begins relatively small at the campaign opening and grows as the story advances.
 - Possible approaches to the Tear include containing, stabilizing, studying, harnessing, redirecting, sealing, controlling, transforming, or destroying it. These are possible player and faction directions, not predetermined outcomes.
+- The Tear event generator schedules possible arrivals only from Velmora's single central Tear. It cannot create secondary or temporary rifts, destinations, or routes for outside exploration.
 
 ## Mechanical scaffolding—not canon
 

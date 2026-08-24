@@ -9,7 +9,9 @@ function roll(seed: string, modulus: number): number {
   return createHash("sha256").update(seed).digest().readUInt32BE(0) % modulus;
 }
 
-// Mechanical scaffolding. Frequency and weights remain provisional configuration.
+// Mechanical scaffolding for arrivals from Velmora's single central Tear.
+// It never creates secondary rifts, destinations, or exploration routes.
+// Frequency and weights remain provisional configuration.
 export function generateTearArrival(seed: string, turn: number): TearArrival | null {
   if (roll(`${seed}|tear|${turn}|occurrence`, 100) >= 15) return null;
   const rarityRoll = roll(`${seed}|tear|${turn}|rarity`, 100);
