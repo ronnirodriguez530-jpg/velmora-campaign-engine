@@ -27,6 +27,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Wayfarer Pact operates inside Velmora on objects emerging from the Tear rather than entering it
 - [x] Magic may be innate, invented, magic-technological, discovered, taken, taught, or made
 - [x] Highest-tier magic originates from the central Tear or its void-rifts, and no true magic masters currently exist
+- [x] High-tier magic is controllable but initially costly and risky, with burden reducible through experience, technique, equipment, or magic-tech
 - [ ] Remaining canon boundaries for alteration, relics, creatures, and rare abilities
 - [ ] Named faction leadership and essential recurring characters
 - [ ] Final approved city geography, districts, interiors, important landmarks, and containment infrastructure

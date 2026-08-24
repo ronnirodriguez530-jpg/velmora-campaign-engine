@@ -27,6 +27,7 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - As the campaign progresses, the leader becomes increasingly power-lusted and unable to bear the influence. The entity increasingly pushes or makes decisions through him, creating a major Order of Glass conflict.
 - Magic is new to the world and has no true masters. It may be innate, invented, engineered through magic-tech, discovered, taken, taught, or made.
 - The central Tear and its void-rifts are the sources of the world's highest-tier magic. Other methods may produce useful magic but cannot silently exceed that power ceiling.
+- Powerful Tear and void-rift magic can be controlled, but its early use carries substantial cost and risk. Experience, technique, equipment, or magic-tech may reduce that burden over time; exact costs and limits belong to the approved ability catalog.
 
 ## Mechanical scaffolding—not canon
 
