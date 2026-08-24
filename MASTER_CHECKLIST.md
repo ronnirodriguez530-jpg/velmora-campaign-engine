@@ -33,7 +33,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Relics may be old-world survivors, void-rift arrivals, or newly created inside Velmora
 - [x] Creatures originate only as altered native life or void-rift arrivals; manufactured species are excluded from the base
 - [x] Rare Level 3 abilities arise through approved opportunities and sources, never automatic random assignment; permanent player acquisition requires choice and approval
-- [ ] Named faction leadership and essential recurring characters
+- [x] Each faction leader also serves as that faction's Sixfold Council representative
+- [ ] Names, identities, and essential traits for the six faction leaders and other required recurring characters
 - [ ] Final approved city geography, districts, interiors, important landmarks, and containment infrastructure
 - [ ] Canon review confirming contradictions and open decisions
 

@@ -1,9 +1,9 @@
 [
   {"id":"NPC-FIRST-SPEAKER","role":"first-speaker","factionId":null,"status":"unconscious","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
-  {"id":"NPC-FAC-001-OFFICIAL","role":"senior-official","factionId":"FAC-001","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
-  {"id":"NPC-FAC-002-OFFICIAL","role":"senior-official","factionId":"FAC-002","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
-  {"id":"NPC-FAC-003-OFFICIAL","role":"senior-official","factionId":"FAC-003","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
-  {"id":"NPC-FAC-004-OFFICIAL","role":"senior-official","factionId":"FAC-004","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
-  {"id":"NPC-FAC-005-OFFICIAL","role":"senior-official","factionId":"FAC-005","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
-  {"id":"NPC-FAC-006-OFFICIAL","role":"senior-official","factionId":"FAC-006","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"}
+  {"id":"NPC-FAC-001-OFFICIAL","role":"faction-leader-council-representative","factionId":"FAC-001","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
+  {"id":"NPC-FAC-002-OFFICIAL","role":"faction-leader-council-representative","factionId":"FAC-002","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
+  {"id":"NPC-FAC-003-OFFICIAL","role":"faction-leader-council-representative","factionId":"FAC-003","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
+  {"id":"NPC-FAC-004-OFFICIAL","role":"faction-leader-council-representative","factionId":"FAC-004","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
+  {"id":"NPC-FAC-005-OFFICIAL","role":"faction-leader-council-representative","factionId":"FAC-005","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"},
+  {"id":"NPC-FAC-006-OFFICIAL","role":"faction-leader-council-representative","factionId":"FAC-006","status":"available","initialReputation":0,"initialLocationId":"LOC-COUNCIL-CROWN"}
 ]
