@@ -14,6 +14,8 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - Tear crossing is one-way. No temporary Tears exist. Special one-way travel through open Tears may eventually exist, but nobody currently knows how.
 - The Wayfarer Pact does not enter or explore the Tear. Its scavengers and specialists recover, identify, adapt, and trade materials, weapons, relics, and other objects that emerge from it inside Velmora.
 - Raw Tear-magic leaves the First Speaker unconscious and unable to continue coordinating the six factions. Finding a replacement becomes an opening conflict, but the replacement and the events that produce them may differ between campaign runs.
+- The Tear sits at Velmora's center. It begins relatively small at the campaign opening and grows as the story advances.
+- Possible approaches to the Tear include containing, stabilizing, studying, harnessing, redirecting, sealing, controlling, transforming, or destroying it. These are possible player and faction directions, not predetermined outcomes.
 
 ## Mechanical scaffolding—not canon
 
@@ -22,6 +24,8 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - The provisional 15% Tear-arrival check and 70/23/7 rarity weights.
 - The four generic scene templates whose IDs begin with `TPL-SCAFFOLD`.
 - Simulation profiles and abstract milestones.
+- The `Guarded Central Avenue` name and its exact map function.
+- The exact name, shape, and connection layout of the current `Tear Containment Ring` node. A contained central Tear is canon; this particular map implementation remains provisional until the location section is approved.
 
 These parts exist so the engine can run, branch, and be tested. They may be replaced by approved content without changing canon.
 
