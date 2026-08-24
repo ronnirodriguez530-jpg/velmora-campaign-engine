@@ -1,8 +1,80 @@
 [
-  {"id":"FAC-001","name":"League of Thorns","initialCondition":2,"service":"Beast defense and creature materials"},
-  {"id":"FAC-002","name":"Aurorus Circle","initialCondition":2,"service":"Magical power, relic knowledge, and ancient texts"},
-  {"id":"FAC-003","name":"Wayfarer Pact","initialCondition":2,"service":"Recovery, identification, adaptation, and trade of materials, weapons, relics, and other objects that emerge from the Tear inside Velmora"},
-  {"id":"FAC-004","name":"House Chrysalis","initialCondition":2,"service":"Healing, mutation treatment, and biological research"},
-  {"id":"FAC-005","name":"Hands of Velmora","initialCondition":2,"service":"Distribution, labor, peacekeeping, and repairs"},
-  {"id":"FAC-006","name":"Order of Glass","initialCondition":2,"service":"Records, evidence, and cross-faction intelligence"}
+  {
+    "id": "FAC-001",
+    "name": "League of Thorns",
+    "initialCondition": 2,
+    "service": "Beast defense and creature materials",
+    "districtIdentity": {
+      "mapSector": "4 to 6 o'clock",
+      "colors": ["Ox-blood #6E1F2A", "Thorn green #304A3A", "Black iron #1A1C1D"],
+      "environment": "A hard fortified ward of kennels, training courts, butcher sheds, trophy-marked gates, and reinforced roofs built to survive beast alarms.",
+      "wayOfLife": "Days move by patrol bells, hunts, repairs, and preparation. Proven skill earns respect faster than rank, and nearly every household knows what to do when something breaches the streets.",
+      "landmark": "Thorn Bastion"
+    }
+  },
+  {
+    "id": "FAC-002",
+    "name": "Aurorus Circle",
+    "initialCondition": 2,
+    "service": "Magical power, relic knowledge, and ancient texts",
+    "districtIdentity": {
+      "mapSector": "12 to 2 o'clock",
+      "colors": ["Midnight blue #18233F", "Aurora violet #684F8F", "Pale gold #D6BC72"],
+      "environment": "A vertical district of sealed libraries, observatories, conduit towers, and carefully lit courts where rare magical equipment is protected behind elegant stone and metalwork.",
+      "wayOfLife": "Power is rationed, knowledge is guarded, and study is treated as public necessity and private privilege. Residents live around regulated experiments, archive schedules, and energy allotments.",
+      "landmark": "The Starvault"
+    }
+  },
+  {
+    "id": "FAC-003",
+    "name": "Wayfarer Pact",
+    "initialCondition": 2,
+    "service": "Recovery, identification, adaptation, and trade of materials, weapons, relics, and other objects that emerge from the Tear inside Velmora",
+    "districtIdentity": {
+      "mapSector": "6 to 8 o'clock",
+      "colors": ["Rift rust #8A4B32", "Weathered teal #376B68", "Canvas tan #B7A680"],
+      "environment": "A patchwork ward of sorting yards, salvage markets, test sheds, caravans, and buildings repaired with materials that do not always belong to the same world.",
+      "wayOfLife": "Everything arriving from the Tear is inspected, argued over, adapted, or traded. Families and crews value usefulness, safe handling, and the ability to make an unfamiliar object serve a local need.",
+      "landmark": "The Patchwork Exchange"
+    }
+  },
+  {
+    "id": "FAC-004",
+    "name": "House Chrysalis",
+    "initialCondition": 2,
+    "service": "Healing, mutation treatment, and biological research",
+    "districtIdentity": {
+      "mapSector": "2 to 4 o'clock",
+      "colors": ["Bone ivory #D9D1BE", "Altered amber #A96735", "Medicinal moss #536B4A"],
+      "environment": "A humid ward of clinics, glasshouses, medicinal gardens, recovery courts, and screened laboratories where altered life is treated and studied.",
+      "wayOfLife": "Treatment and experimentation exist side by side. Residents track symptoms, cultivate remedies, and live with visible alteration more openly than the rest of Velmora.",
+      "landmark": "The Chrysalis Conservatory"
+    }
+  },
+  {
+    "id": "FAC-005",
+    "name": "Hands of Velmora",
+    "initialCondition": 2,
+    "service": "Distribution, labor, peacekeeping, and repairs",
+    "districtIdentity": {
+      "mapSector": "8 to 10 o'clock",
+      "colors": ["Kiln brick #8A3F36", "Work ochre #B58A45", "Warm plaster #D8CBAF"],
+      "environment": "The densest lived-in ward, packed with workshops, communal kitchens, cisterns, storehouses, repair yards, markets, and practical housing.",
+      "wayOfLife": "Work crews keep food, water, heat, roads, and peace moving between factions. Life is communal, shift-driven, noisy, and grounded in the belief that survival belongs to everyone who contributes.",
+      "landmark": "The Common Forge"
+    }
+  },
+  {
+    "id": "FAC-006",
+    "name": "Order of Glass",
+    "initialCondition": 2,
+    "service": "Records, evidence, and cross-faction intelligence",
+    "districtIdentity": {
+      "mapSector": "10 to 12 o'clock",
+      "colors": ["Smoke gray #474B55", "Mirror silver #AEB7C2", "Cold glass blue #52718A"],
+      "environment": "A quiet angular ward of archives, mirrored watchrooms, narrow lanes, evidence vaults, and high windows designed to observe more than they reveal.",
+      "wayOfLife": "Records, permits, testimony, and rumor shape daily life. Residents speak carefully, value privacy, and understand that information can protect the city or quietly control it.",
+      "landmark": "The Glass Archive"
+    }
+  }
 ]

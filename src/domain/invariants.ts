@@ -18,8 +18,10 @@ export function validateContent(content: VelmoraContent): void {
 
   assert(content.factions.length === 6, "Exactly six factions are required");
   assert(content.factions.every((faction) => faction.initialCondition >= 0 && faction.initialCondition <= 4), "Faction condition must be 0-4");
+  assert(content.factions.every((faction) => faction.districtIdentity.colors.length === 3), "Each faction district requires exactly three map colors");
+  assert(content.factions.every((faction) => faction.districtIdentity.environment.length > 0 && faction.districtIdentity.wayOfLife.length > 0 && faction.districtIdentity.landmark.length > 0), "Each faction district requires an environment, way of life, and landmark");
 
-  assert(content.characters.length === 7, "Exactly seven essential NPC slots are required");
+  assert(content.characters.length === 8, "Exactly eight essential NPC slots are required");
   assert(content.characters.every((character) => character.initialReputation >= -2 && character.initialReputation <= 2), "NPC reputation must be -2 to 2");
 
   const factionIds = new Set(content.factions.map((faction) => faction.id));
@@ -27,6 +29,7 @@ export function validateContent(content: VelmoraContent): void {
   assert(factionIds.size === content.factions.length, "Faction IDs must be unique");
   assert(locationIds.size === content.locations.length, "Location IDs must be unique");
   assert(locationIds.has(content.campaign.initialLocationId), "Initial location does not exist");
+  assert(content.locations.every((location) => location.mapPosition.length > 0 && location.environment.length > 0), "Each location requires a map position and environment");
 
   for (const location of content.locations) {
     for (const connection of location.connections) {

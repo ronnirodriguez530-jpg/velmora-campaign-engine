@@ -23,6 +23,13 @@ export type FactionDefinition = {
   name: string;
   initialCondition: number;
   service: string;
+  districtIdentity: {
+    mapSector: string;
+    colors: string[];
+    environment: string;
+    wayOfLife: string;
+    landmark: string;
+  };
 };
 
 export type LocationDefinition = {
@@ -31,6 +38,8 @@ export type LocationDefinition = {
   district: string;
   connections: string[];
   perspectiveTags: string[];
+  mapPosition: string;
+  environment: string;
 };
 
 export type CharacterDefinition = {

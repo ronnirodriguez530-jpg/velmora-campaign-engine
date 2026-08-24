@@ -66,6 +66,7 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         id: faction.id,
         name: faction.name,
         service: faction.service,
+        districtIdentity: faction.districtIdentity,
         condition: context.factionConditions.find((item) => item.factionId === faction.id)?.condition ?? 2,
         progress: context.factionPathProgress.find((item) => item.factionId === faction.id)?.progress ?? 0
       })),

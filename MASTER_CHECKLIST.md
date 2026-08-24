@@ -40,6 +40,9 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Containment is guarded by an independent force attached to the First Speaker's office rather than a faction force
 - [x] First Speaker's senior deputy maintains operational command of containment and routine administration after the attack without inheriting the Speaker's political authority
 - [x] Six faction leaders collectively hold political authority until a replacement First Speaker is chosen
+- [x] Hybrid containment design: wall, six controlled gates, circulation road, and magical anchors
+- [x] Engine-readable district positions, palettes, environments, ways of life, and landmarks for all six faction wedges
+- [x] First Speaker's senior deputy represented as an essential variable NPC slot rather than a ghost role
 - [ ] Final approved city geography, districts, interiors, important landmarks, and exact containment design
 - [ ] Canon review confirming contradictions and open decisions
 
