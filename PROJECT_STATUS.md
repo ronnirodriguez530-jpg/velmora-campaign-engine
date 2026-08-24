@@ -2,7 +2,7 @@
 
 ## Current phase
 
-Foundation reconciliation after the ghost-feature audit.
+World-canon foundation complete; campaign structure and authored content are next.
 
 ## Completed
 
@@ -50,7 +50,7 @@ Every simulation reached Resolution after the same amount of abstract faction pr
 
 ## Verified NPC storage checkpoint
 
-- General NPC records persist separately from the seven fixed authored-character slots.
+- General NPC records persist separately from the eight fixed authored-character slots.
 - Active, known, and background categories are enforced by the database.
 - Approved relevance signals produce deterministic category decisions.
 - Category changes retain identity and create both category history and engine events.
@@ -128,13 +128,13 @@ Every simulation reached Resolution after the same amount of abstract faction pr
 
 ## Active checkpoint
 
-The real implementation boundary is recorded in `GHOST_FEATURE_AUDIT.md`. The application shell and limited continuity scaffold work; the DM Core rules remain design-only.
+The real implementation boundary is recorded in `GHOST_FEATURE_AUDIT.md`. The application shell, limited continuity scaffold, and bounded NPC Engine foundation work; the complete DM Core remains unimplemented.
 
-The first NPC Engine checkpoint now implements persistent NPC records, active/known/background categories, automatic category decisions from approved relevance signals, and recorded category-change history. NPC memory, relationships, generation, reference retrieval, the Context Gate, and Campaign Master NPC authority remain unimplemented.
+The approved top-level Velmora geography and district identities are stored in engine-readable faction and location data. The eight essential authored-character slots identify offices only; their campaign identities and personalities remain unfinished.
 
 ## Next phase—do not skip ahead
 
-Run a real-provider NPC playtest before adding restricted reveals, death resolution, or additional NPC authority.
+Proceed to Section 2 of `MASTER_CHECKLIST.md`: establish the minimum campaign structure and authored opening before adding more engine authority.
 
 ## Later
 

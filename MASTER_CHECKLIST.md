@@ -12,7 +12,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 
 ## Level 1 — Playable foundation
 
-### 1. World canon — Partial
+### 1. World canon — Complete foundation
 
 - [x] Velmora premise, tone, Tear, Endless Surge, and survival premise
 - [x] Six-wedge city structure and crown position
@@ -35,7 +35,6 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Rare Level 3 abilities arise through approved opportunities and sources, never automatic random assignment; permanent player acquisition requires choice and approval
 - [x] Each faction leader also serves as that faction's Sixfold Council representative
 - [x] First Speaker and six faction leaders are variable campaign-generated identities attached to persistent fixed offices
-- [ ] Approved faction-specific generation constraints for the seven leadership offices
 - [x] Fortified containment zone exists around the central Tear under the public justification of safety
 - [x] Containment is guarded by an independent force attached to the First Speaker's office rather than a faction force
 - [x] First Speaker's senior deputy maintains operational command of containment and routine administration after the attack without inheriting the Speaker's political authority
@@ -43,8 +42,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Hybrid containment design: wall, six controlled gates, circulation road, and magical anchors
 - [x] Engine-readable district positions, palettes, environments, ways of life, and landmarks for all six faction wedges
 - [x] First Speaker's senior deputy represented as an essential variable NPC slot rather than a ghost role
-- [ ] Final approved city geography, districts, interiors, important landmarks, and exact containment design
-- [ ] Canon review confirming contradictions and open decisions
+- [x] Approved top-level city geography, district order, initial landmarks, neutral axis, and containment design
+- [x] Canon review confirming contradictions are removed and later decisions are assigned to their proper sections
 
 ### 2. Campaign structure and authored content — Missing
 
@@ -60,17 +59,18 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [ ] Choice junctions, consequences, failures, and recovery paths
 - [ ] Final-truth candidates and player-choice resolution
 - [ ] End states that preserve player agency
-- [x] Minimum opening leadership cast fixed at the First Speaker and six faction leaders, with identities generated per campaign
+- [x] Minimum opening authority cast fixed at the First Speaker, senior deputy, and six faction leaders, with identities generated per campaign
 - [ ] Additional recurring roles required by the authored questlines
 
 ### 3. Locations and world content — Partial
 
 - [x] Nine top-level locations and connection graph
 - [x] Validated movement between connected locations
-- [ ] District identities, functions, risks, and points of interest
+- [x] District identities, functions, map positions, palettes, ways of life, and one foundation landmark each
+- [ ] Additional district risks and points of interest required by the opening campaign
 - [ ] Interiors and sublocations needed by the opening campaign
-- [ ] Location context and perspective filtering
-- [ ] Actual Tear creatures, altered life, magical events, relics, and fragments
+- [x] Top-level location context and current/connected-location perspective filtering
+- [ ] Mechanically usable Tear creatures, altered life, magical events, relics, and fragments
 - [x] Initial power families, high-tier rift directions, creature roster, set-piece reserve, and creature name bank curated in `content/velmora/POWER_CREATURE_CATALOG.md`
 - [x] Foundation relics, high-tier rift relics, institutional magic-tech, and scrap-magic equipment curated in `content/velmora/RELIC_MAGIC_TECH_CATALOG.md`
 - [ ] Content placement rules that keep expansion inside Velmora
@@ -109,6 +109,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [ ] Restricted-fact reveal events
 - [ ] High-consequence NPC death resolution
 - [ ] Essential authored NPC identities and personalities
+- [ ] Faction-specific generation constraints for the First Speaker, senior deputy, and six faction-leader offices
 - [ ] Real-provider NPC behavior playtest
 
 ### 7. Core action and dice rules — Designed

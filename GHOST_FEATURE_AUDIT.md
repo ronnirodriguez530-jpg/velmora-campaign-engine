@@ -17,7 +17,7 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 1. Local Node browser server bound to `127.0.0.1`.
 2. Browser navigation between Story, Character, Quests, Factions, Locations, Inventory, History, and Settings.
 3. Named campaign creation, reopening, and SQLite persistence.
-4. Authored foundation loading and validation for six factions, nine locations, four stages, and seven fixed character slots.
+4. Authored foundation loading and validation for six factions, nine locations, four stages, and eight fixed character slots.
 5. Current-location and directly-connected-location lookup.
 6. Fixed authored-character presence lookup by current location.
 7. Deterministic generic scene placement, persistence, and reuse.
@@ -50,8 +50,8 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 
 ### Characters and NPCs
 
-- `character_state` stores only ID, status, reputation, location, and an unused replacement-character field for seven fixed authored slots.
-- The seven content records contain roles and faction links, not complete NPC identities or personalities.
+- `character_state` stores only ID, status, reputation, location, and an unused replacement-character field for eight fixed authored slots.
+- The eight content records contain roles and faction links, not complete NPC identities or personalities.
 - There is no player-character record or character-creation flow.
 - A general `npc_records` registry now preserves minimal identity, origin, faction, location, role, status, relevance turn, and storage category.
 - Automatic category decisions, recorded transitions, knowledge/belief separation, personal memory storage, directional relationship storage, adaptive Context Gate, curated reference retrieval, constrained minor-NPC generation, persistent novelty, lifecycle/archival, complete NPC rollback, bounded creation, and bounded live NPC consequence management work. Restricted-fact reveal events, high-consequence death resolution, and a real-provider playtest do not exist yet.
@@ -71,7 +71,7 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 
 ### Locations
 
-- Nine top-level locations and a reciprocal connection graph exist.
+- Nine top-level locations, their approved map positions and environments, and a reciprocal connection graph exist.
 - Player movement between directly connected authored locations can be validated and committed.
 - Current-location consequences can be stored as text.
 - There are no interiors, sublocations, temporary-location lifecycle, dynamic location creation, or location context gate.
@@ -101,7 +101,7 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 
 - Current and connected locations and characters physically present at the current location are filtered.
 - All faction conditions/path counters and the three most recent Tear arrivals are still sent in the Director context.
-- No relevance-ranked retrieval system exists for NPCs, quests, items, secrets, or campaign memory.
+- Relevance-ranked NPC retrieval exists through the NPC Context Gate. Equivalent retrieval for quests, items, secrets, and campaign memory does not exist.
 
 ## Design-only features
 
@@ -118,8 +118,6 @@ Everything in `DM_CORE_RULES_V1.md` is approved design, not implemented code. Th
 9. XP event recording, milestone advancement, and the later skill-tree module.
 10. Progressive-disclosure combat and tracker UI.
 
-The proposed NPC Context Gate is also design-only. It is not yet present in `DM_CORE_RULES_V1.md` or implemented in the database.
-
 ## Completely absent systems
 
 1. Validated restricted-fact reveal events and dedicated high-consequence NPC death resolution.
@@ -130,7 +128,7 @@ The proposed NPC Context Gate is also design-only. It is not yet present in `DM_
 6. Ability/power catalog and character ability ownership.
 7. XP, level, milestone, or skill-tree storage and behavior.
 8. Quest lifecycle application logic and authored quest content.
-9. Actual creatures, relics, powers, world fragments, and Tear payload content.
+9. Mechanical creature, relic, power, world-fragment, and Tear-payload records; curated content catalogs exist but cannot yet act on game state.
 10. Final-truth candidates and player-choice resolution logic.
 11. DM training/reference retrieval, example library, or open-licensed rules ingestion.
 12. Adaptive learning, player-preference modeling, and DM behavior adjustment.

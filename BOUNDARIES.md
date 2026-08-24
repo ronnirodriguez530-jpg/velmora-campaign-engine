@@ -53,8 +53,6 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - The provisional 15% Tear-arrival check and 70/23/7 rarity weights.
 - The four generic scene templates whose IDs begin with `TPL-SCAFFOLD`.
 - Simulation profiles and abstract milestones.
-- The `Guarded Central Avenue` name and its exact map function.
-- The exact name, shape, and connection layout of the current `Tear Containment Ring` node. A contained central Tear is canon; this particular map implementation remains provisional until the location section is approved.
 
 These parts exist so the engine can run, branch, and be tested. They may be replaced by approved content without changing canon.
 
@@ -67,7 +65,7 @@ These parts exist so the engine can run, branch, and be tested. They may be repl
 ## Deferred content
 
 - Named quests and their actual milestones.
-- Specific powers, creatures, major beings, relics, and world fragments.
+- Final mechanics, statistics, and campaign placement for the curated powers, creatures, relics, and magic-tech content.
 - Final truth candidates and final outcomes.
 - Exact faction relationships and detailed faction leadership.
 - Final Tear frequency and probability tuning.
