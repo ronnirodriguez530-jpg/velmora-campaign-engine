@@ -32,6 +32,8 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - Alterations use a three-level scale parallel to Tear rarity: Level 1 is common and minor, Level 2 is uncommon and significant, and Level 3 is rare and major. The level measures severity and complexity; exact duration, treatment, and evolution belong to the later alteration system.
 - An alteration may affect the body, magical abilities, the mind, or a combination. Its timing is not a fixed story beat; eligible alteration events are selected randomly from an approved bounded catalog.
 - The alteration system remains simple: each event needs only a level, affected area or areas, and a concise effect. Random generation cannot invent new permanent mechanics outside the approved catalog.
+- Relics may be surviving objects from Velmora's old world, objects arriving from other worlds through void-rifts, or objects newly created inside Velmora.
+- A relic's approved catalog entry must define its origin, capabilities, limits, and risks before the Campaign Master may use it mechanically.
 
 ## Mechanical scaffolding—not canon
 

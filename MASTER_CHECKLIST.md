@@ -30,7 +30,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] High-tier magic is controllable but initially costly and risky, with burden reducible through experience, technique, equipment, or magic-tech
 - [x] Magical alterations may be temporary, treatable, permanent, or evolving and use a common/uncommon/rare Level 1-3 scale
 - [x] Alterations may affect body, abilities, mind, or combinations and occur through bounded random eligible events rather than preset timing
-- [ ] Remaining canon boundaries for relics, creatures, and rare abilities
+- [x] Relics may be old-world survivors, void-rift arrivals, or newly created inside Velmora
+- [ ] Remaining canon boundaries for creatures and rare abilities
 - [ ] Named faction leadership and essential recurring characters
 - [ ] Final approved city geography, districts, interiors, important landmarks, and containment infrastructure
 - [ ] Canon review confirming contradictions and open decisions
