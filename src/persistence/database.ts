@@ -19,6 +19,9 @@ import type {
   NpcStatus,
   PlayerPower,
   PlayerInventoryItem,
+  PlayerProgression,
+  ProgressionMilestone,
+  CharacterAdvancement,
   NpcRelationship,
   PlayerCharacter,
   RelationshipQuality,
@@ -61,6 +64,11 @@ export type StateSnapshot = {
   playerCharacter?: PlayerCharacter | null;
   playerPowers?: PlayerPower[];
   playerInventory?: PlayerInventoryItem[];
+  progression?: {
+    state: PlayerProgression;
+    milestones: ProgressionMilestone[];
+    advancements: CharacterAdvancement[];
+  };
 };
 
 export function openDatabase(path: string): DatabaseSync {
@@ -574,6 +582,41 @@ function migrate(db: DatabaseSync): void {
     `);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(22, ?)").run(new Date().toISOString());
   }
+  const migrationTwentyThree = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 23").get() as { present: number } | undefined;
+  if (!migrationTwentyThree) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS player_progression (
+        campaign_id TEXT PRIMARY KEY,
+        earned_advancements INTEGER NOT NULL DEFAULT 0 CHECK(earned_advancements >= 0),
+        spent_advancements INTEGER NOT NULL DEFAULT 0 CHECK(spent_advancements >= 0 AND spent_advancements <= earned_advancements),
+        updated_turn INTEGER NOT NULL,
+        FOREIGN KEY (campaign_id) REFERENCES player_characters(campaign_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS progression_milestones (
+        campaign_id TEXT NOT NULL,
+        milestone_id TEXT NOT NULL,
+        basis_type TEXT NOT NULL CHECK(basis_type IN ('quest','faction','story','discovery')),
+        basis_id TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        awarded_turn INTEGER NOT NULL,
+        PRIMARY KEY (campaign_id, milestone_id),
+        UNIQUE (campaign_id, basis_type, basis_id),
+        FOREIGN KEY (campaign_id) REFERENCES player_characters(campaign_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS character_advancements (
+        campaign_id TEXT NOT NULL,
+        advancement_id TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK(kind IN ('ability_score','skill_proficiency')),
+        target TEXT NOT NULL,
+        previous_value INTEGER,
+        new_value INTEGER,
+        applied_turn INTEGER NOT NULL,
+        PRIMARY KEY (campaign_id, advancement_id),
+        FOREIGN KEY (campaign_id) REFERENCES player_characters(campaign_id) ON DELETE CASCADE
+      );
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(23, ?)").run(new Date().toISOString());
+  }
 }
 
 const STAGE_ORDER = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 } as const;
@@ -826,6 +869,61 @@ export function persistPlayerInventoryItem(db: DatabaseSync, item: PlayerInvento
       item.acquisitionSource,
       item.acquiredTurn,
       item.updatedTurn
+    );
+}
+
+export function getPlayerProgression(db: DatabaseSync, campaignId: string): PlayerProgression {
+  const row = db.prepare(`SELECT campaign_id AS campaignId, earned_advancements AS earnedAdvancements,
+      spent_advancements AS spentAdvancements, updated_turn AS updatedTurn
+    FROM player_progression WHERE campaign_id = ?`).get(campaignId) as Omit<PlayerProgression, "availableAdvancements"> | undefined;
+  if (!row) return { campaignId, earnedAdvancements: 0, spentAdvancements: 0, availableAdvancements: 0, updatedTurn: 0 };
+  return { ...row, availableAdvancements: row.earnedAdvancements - row.spentAdvancements };
+}
+
+export function persistPlayerProgression(db: DatabaseSync, progression: PlayerProgression): void {
+  db.prepare(`INSERT INTO player_progression(campaign_id, earned_advancements, spent_advancements, updated_turn)
+      VALUES(?, ?, ?, ?)
+      ON CONFLICT(campaign_id) DO UPDATE SET
+        earned_advancements = excluded.earned_advancements,
+        spent_advancements = excluded.spent_advancements,
+        updated_turn = excluded.updated_turn`)
+    .run(progression.campaignId, progression.earnedAdvancements, progression.spentAdvancements, progression.updatedTurn);
+}
+
+export function listProgressionMilestones(db: DatabaseSync, campaignId: string): ProgressionMilestone[] {
+  return db.prepare(`SELECT campaign_id AS campaignId, milestone_id AS milestoneId,
+      basis_type AS basisType, basis_id AS basisId, summary, awarded_turn AS awardedTurn
+    FROM progression_milestones WHERE campaign_id = ? ORDER BY awarded_turn, milestone_id`)
+    .all(campaignId) as ProgressionMilestone[];
+}
+
+export function listCharacterAdvancements(db: DatabaseSync, campaignId: string): CharacterAdvancement[] {
+  return db.prepare(`SELECT campaign_id AS campaignId, advancement_id AS advancementId,
+      kind, target, previous_value AS previousValue, new_value AS newValue,
+      applied_turn AS appliedTurn
+    FROM character_advancements WHERE campaign_id = ? ORDER BY applied_turn, advancement_id`)
+    .all(campaignId) as CharacterAdvancement[];
+}
+
+export function persistProgressionMilestone(db: DatabaseSync, milestone: ProgressionMilestone): void {
+  db.prepare(`INSERT INTO progression_milestones(
+      campaign_id, milestone_id, basis_type, basis_id, summary, awarded_turn
+    ) VALUES(?, ?, ?, ?, ?, ?)`)
+    .run(milestone.campaignId, milestone.milestoneId, milestone.basisType, milestone.basisId, milestone.summary, milestone.awardedTurn);
+}
+
+export function persistCharacterAdvancement(db: DatabaseSync, advancement: CharacterAdvancement): void {
+  db.prepare(`INSERT INTO character_advancements(
+      campaign_id, advancement_id, kind, target, previous_value, new_value, applied_turn
+    ) VALUES(?, ?, ?, ?, ?, ?, ?)`)
+    .run(
+      advancement.campaignId,
+      advancement.advancementId,
+      advancement.kind,
+      advancement.target,
+      advancement.previousValue,
+      advancement.newValue,
+      advancement.appliedTurn
     );
 }
 
@@ -1504,6 +1602,13 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
   const playerCharacter = getPlayerCharacter(db, campaignId) ?? null;
   const playerPowers = listPlayerPowers(db, campaignId);
   const playerInventory = listPlayerInventory(db, campaignId);
+  const progression = playerCharacter
+    ? {
+        state: getPlayerProgression(db, campaignId),
+        milestones: listProgressionMilestones(db, campaignId),
+        advancements: listCharacterAdvancements(db, campaignId)
+      }
+    : undefined;
   return {
     campaign,
     factions,
@@ -1514,7 +1619,8 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
     storyThreads,
     playerCharacter,
     playerPowers,
-    playerInventory
+    playerInventory,
+    progression
   };
 }
 
@@ -1603,6 +1709,14 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
     if (snapshot.playerInventory !== undefined) {
       db.prepare("DELETE FROM player_inventory WHERE campaign_id = ?").run(campaign.id);
       for (const item of snapshot.playerInventory) persistPlayerInventoryItem(db, item);
+    }
+    if (snapshot.progression !== undefined) {
+      db.prepare("DELETE FROM character_advancements WHERE campaign_id = ?").run(campaign.id);
+      db.prepare("DELETE FROM progression_milestones WHERE campaign_id = ?").run(campaign.id);
+      db.prepare("DELETE FROM player_progression WHERE campaign_id = ?").run(campaign.id);
+      persistPlayerProgression(db, snapshot.progression.state);
+      for (const milestone of snapshot.progression.milestones) persistProgressionMilestone(db, milestone);
+      for (const advancement of snapshot.progression.advancements) persistCharacterAdvancement(db, advancement);
     }
     if (snapshot.npcState) {
       db.prepare("DELETE FROM npc_relationship_qualities WHERE campaign_id = ?").run(campaign.id);

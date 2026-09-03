@@ -274,6 +274,35 @@ export type PlayerInventoryItem = {
   updatedTurn: number;
 };
 
+export type MilestoneBasisType = "quest" | "faction" | "story" | "discovery";
+
+export type ProgressionMilestone = {
+  campaignId: string;
+  milestoneId: string;
+  basisType: MilestoneBasisType;
+  basisId: string;
+  summary: string;
+  awardedTurn: number;
+};
+
+export type PlayerProgression = {
+  campaignId: string;
+  earnedAdvancements: number;
+  spentAdvancements: number;
+  availableAdvancements: number;
+  updatedTurn: number;
+};
+
+export type CharacterAdvancement = {
+  campaignId: string;
+  advancementId: string;
+  kind: "ability_score" | "skill_proficiency";
+  target: AbilityKey | SkillKey;
+  previousValue: number | null;
+  newValue: number | null;
+  appliedTurn: number;
+};
+
 export type PerspectiveContext = {
   campaignId: string;
   seed: string;
@@ -296,6 +325,7 @@ export type PerspectiveContext = {
   playerCharacter: PlayerCharacter | null;
   playerPowers: Array<PlayerPower & { definition: PowerDefinition }>;
   playerInventory: Array<PlayerInventoryItem & { definition: ItemDefinition }>;
+  playerProgression: PlayerProgression;
   playerKnownStoryThreads: StoryThread[];
   visibleOpeningPressure: OpeningPressureDefinition | null;
 };

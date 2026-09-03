@@ -182,13 +182,18 @@ Implemented power scope: one sustained magical effect may be active at a time, a
 
 Implemented item scope: eight bounded definitions prove every first-release item category. Weapons have no damage yet, consumables have no healing value, and the economy does not exist. See `ITEM_SYSTEM_V1.md`.
 
-### 11. Advancement — Missing
+### 11. Advancement — Working foundation
 
-- [ ] Simple first-release progression method
-- [ ] XP or milestone event storage
-- [ ] Character improvement boundaries
+- [x] Story-driven first-release milestone progression method
+- [x] Persistent unique milestone, advancement-total, and improvement-history storage
+- [x] Explicit player approval before advancement spending
+- [x] Ability-score and new-skill improvement boundaries with an ability cap of 18
+- [x] Derived ability modifiers, health, and defense recalculated after improvement
+- [x] Player-context retrieval, save compatibility, and one-turn rollback
 - [ ] Ability and equipment progression connections
 - [ ] Later skill-tree module kept separate until prerequisites exist
+
+Implemented progression scope: each unique validated major milestone awards one advancement opportunity. Milestone awards remain internal-only until the Quest Engine can verify completed source records. See `PROGRESSION_SYSTEM_V1.md`.
 
 ### 12. Quest Engine — Partial scaffold
 
@@ -281,7 +286,7 @@ Implemented item scope: eight bounded definitions prove every first-release item
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 68 of 68 tests
+- [x] Current automated suite passes 71 of 71 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -380,7 +385,7 @@ Implemented item scope: eight bounded definitions prove every first-release item
 
 ## Current position
 
-Velmora has completed the working foundations through step 4 plus independently tested power and inventory slices of step 5. Minimum power and item definitions, persistent ownership, sustained-power state, equipment slots, defense bonuses, consumption, context retrieval, and rollback now exist. Progression, quests, combat effects, complete power/item use, the economy, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5. Minimum power, item, and story-driven progression data now exist with persistent ownership, explicit player approvals where required, context retrieval, save compatibility, and rollback. Full power/item effects, the economy, and broader progression remain incomplete. The next fixed build target is step 6: the generative Quest Engine and validated reusable quest structures. Combat and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

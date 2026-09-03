@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { DirectorPlanningContext, PerspectiveContext, VelmoraContent } from "../domain/types.ts";
-import { getCampaign, getCampaignBlueprint, getPlayerCharacter, getSceneForTurnAndLocation, listCharactersAtLocation, listFactionConditions, listFactionPathProgress, listLocationConsequences, listPresentCharacterStates, listPublicWorldFacts, listRecentTearArrivals, listRelevantStoryThreads } from "../persistence/database.ts";
+import { getCampaign, getCampaignBlueprint, getPlayerCharacter, getPlayerProgression, getSceneForTurnAndLocation, listCharactersAtLocation, listFactionConditions, listFactionPathProgress, listLocationConsequences, listPresentCharacterStates, listPublicWorldFacts, listRecentTearArrivals, listRelevantStoryThreads } from "../persistence/database.ts";
 import { buildNpcContext } from "../npc/npc-context-gate.ts";
 import { listOwnedPlayerPowers } from "./power-system.ts";
 import { listOwnedInventory } from "./inventory-system.ts";
@@ -54,6 +54,7 @@ export function buildPerspectiveContext(
     playerCharacter: getPlayerCharacter(db, campaign.id) ?? null,
     playerPowers: listOwnedPlayerPowers(db, content, campaign.id),
     playerInventory: listOwnedInventory(db, content, campaign.id),
+    playerProgression: getPlayerProgression(db, campaign.id),
     playerKnownStoryThreads: listRelevantStoryThreads(db, campaign.id, campaign.stage, currentLocation.id, "player"),
     visibleOpeningPressure: campaign.stage === "opening" && campaign.turn === 0 ? blueprint.openingPressure : null
   };
