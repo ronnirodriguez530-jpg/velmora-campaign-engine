@@ -5,7 +5,7 @@ import { isMajorPlayerAction } from "./action-classifier.ts";
 import { appendEvent, captureSnapshot, getCampaign, insertCheckpoint } from "../persistence/database.ts";
 import { validateToolRequest } from "../tools/validator.ts";
 import { executeToolRequest } from "../tools/executor.ts";
-import { buildPerspectiveContext } from "./context-builder.ts";
+import { buildDirectorPlanningContext } from "./context-builder.ts";
 import { evaluateStageProgression } from "./stage-progression.ts";
 import { maybePersistTearArrival } from "./tear-event-generator.ts";
 
@@ -18,7 +18,7 @@ async function requestValidPlan(
   campaignName: string,
   playerInput: string
 ) {
-  const context = buildPerspectiveContext(db, content, campaignName);
+  const context = buildDirectorPlanningContext(db, content, campaignName);
   let feedback: string[] | undefined;
   for (let attempt = 1; attempt <= MAX_DIRECTOR_ATTEMPTS; attempt += 1) {
     const plan = await director.planTurn(context, playerInput, feedback);
@@ -28,6 +28,18 @@ async function requestValidPlan(
       }
       if (plan.toolRequests.filter((request) => request.type === "manage_npc_turn").length > 20) {
         throw new Error("A turn may manage at most twenty directly affected NPCs");
+      }
+      const threadRequests = plan.toolRequests.filter((request) => request.type === "manage_story_thread");
+      if (threadRequests.length > 4) {
+        throw new Error("A turn may manage at most four story threads");
+      }
+      const sourceIds = threadRequests.map((request) => request.threadId);
+      if (new Set(sourceIds).size !== sourceIds.length) {
+        throw new Error("A story thread may be managed at most once per turn");
+      }
+      const replacementIds = threadRequests.flatMap((request) => request.replacement ? [request.replacement.threadId] : []);
+      if (new Set(replacementIds).size !== replacementIds.length) {
+        throw new Error("Replacement story thread IDs must be unique within a turn");
       }
       for (const request of plan.toolRequests) validateToolRequest(db, content, context.campaignId, request);
       return plan;

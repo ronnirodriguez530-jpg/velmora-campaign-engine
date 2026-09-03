@@ -82,6 +82,40 @@ export type OpeningSpawnDefinition = {
   immediatePressure: string;
 };
 
+export type OpeningPressureDefinition = {
+  id: string;
+  title: string;
+  summary: string;
+  threatLevel: 1 | 2;
+  tags: string[];
+};
+
+export type FactionPressureDefinition = {
+  id: string;
+  summary: string;
+};
+
+export type ClueRouteDefinition = {
+  id: string;
+  summary: string;
+};
+
+export type ReversalDefinition = {
+  id: string;
+  summary: string;
+  minimumStage: Exclude<CampaignStage, "opening">;
+};
+
+export type StoryBlueprintPools = {
+  version: number;
+  openingPressures: OpeningPressureDefinition[];
+  factionPressures: FactionPressureDefinition[];
+  clueRoutes: ClueRouteDefinition[];
+  reversals: ReversalDefinition[];
+  clueRouteCount: number;
+  endgameMinimumStage: "resolution";
+};
+
 export type VelmoraContent = {
   campaign: CampaignDefinition;
   stages: StageDefinition[];
@@ -90,7 +124,20 @@ export type VelmoraContent = {
   characters: CharacterDefinition[];
   truths: TruthDefinition[];
   openingSpawns: OpeningSpawnDefinition[];
+  storyBlueprintPools: StoryBlueprintPools;
   sceneTemplates: SceneTemplate[];
+};
+
+export type CampaignBlueprint = {
+  campaignId: string;
+  version: number;
+  openingPressure: OpeningPressureDefinition;
+  focalFactionIds: [string, string];
+  factionPressure: FactionPressureDefinition;
+  clueRoutes: ClueRouteDefinition[];
+  reversal: ReversalDefinition;
+  endgameMinimumStage: "resolution";
+  createdTurn: 0;
 };
 
 export type SceneTemplate = {
@@ -121,6 +168,39 @@ export type PerspectiveContext = {
   recentTearArrivals: TearArrival[];
   npcContext: NpcContextPackage;
   publicFacts: WorldFact[];
+  playerKnownStoryThreads: StoryThread[];
+  visibleOpeningPressure: OpeningPressureDefinition | null;
+};
+
+export type StoryThreadKind = "main" | "faction" | "side" | "personal" | "mystery" | "dynamic";
+
+export type StoryThreadStatus = "dormant" | "active" | "blocked" | "resolved" | "failed";
+
+export type StoryThreadVisibility = "player" | "director";
+
+export type StoryThread = {
+  campaignId: string;
+  threadId: string;
+  kind: StoryThreadKind;
+  title: string;
+  summary: string;
+  status: StoryThreadStatus;
+  visibility: StoryThreadVisibility;
+  minimumStage: CampaignStage;
+  maximumStage: CampaignStage;
+  urgency: 0 | 1 | 2 | 3;
+  locationIds: string[];
+  factionIds: string[];
+  npcIds: string[];
+  recoveryPaths: string[];
+  createdTurn: number;
+  updatedTurn: number;
+  lastUsedTurn: number | null;
+};
+
+export type DirectorPlanningContext = PerspectiveContext & {
+  directorStoryThreads: StoryThread[];
+  campaignBlueprint: CampaignBlueprint;
 };
 
 export type QuestState = "locked" | "available" | "active" | "changed" | "completed" | "failed";
@@ -361,7 +441,28 @@ export type ManageNpcTurnRequest = {
   reason: string;
 };
 
-export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest;
+export type ManageStoryThreadRequest = {
+  type: "manage_story_thread";
+  threadId: string;
+  action: "activate" | "advance" | "block" | "resolve" | "fail" | "replace";
+  summary: string;
+  urgency: 0 | 1 | 2 | 3;
+  recoveryPathUsed: string | null;
+  replacement: {
+    threadId: string;
+    title: string;
+    summary: string;
+    kind: StoryThreadKind;
+    urgency: 0 | 1 | 2 | 3;
+    locationIds: string[];
+    factionIds: string[];
+    npcIds: string[];
+    recoveryPaths: string[];
+  } | null;
+  reason: string;
+};
+
+export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest | ManageStoryThreadRequest;
 
 export type DirectorTurnPlan = {
   summary: string;

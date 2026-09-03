@@ -1,0 +1,123 @@
+{
+  "version": 1,
+  "openingPressures": [
+    {
+      "id": "OPEN-PRESSURE-ANCHOR-CASCADE",
+      "title": "Containment Anchor Cascade",
+      "summary": "The strike destabilizes several Council Crown containment anchors, forcing immediate choices about evacuation, repair, and who receives protection first.",
+      "threatLevel": 2,
+      "tags": ["containment", "infrastructure", "evacuation"]
+    },
+    {
+      "id": "OPEN-PRESSURE-CREATURE-INCURSION",
+      "title": "Creature Incursion",
+      "summary": "Tear-born creatures enter the confused evacuation routes after the strike, dividing attention between rescue, defense, and preventing their movement deeper into the Crown.",
+      "threatLevel": 2,
+      "tags": ["creatures", "rescue", "defense"]
+    },
+    {
+      "id": "OPEN-PRESSURE-CROWN-FRACTURE",
+      "title": "Council Crown Fracture",
+      "summary": "Raw Tear-magic fractures part of the Council Crown, trapping separated groups and damaging routes needed by officials, guards, and civilians.",
+      "threatLevel": 2,
+      "tags": ["collapse", "rescue", "access"]
+    },
+    {
+      "id": "OPEN-PRESSURE-MISSING-DISPATCH",
+      "title": "Missing Emergency Dispatch",
+      "summary": "A critical sealed dispatch vanishes during the attack, leaving conflicting emergency orders and uncertainty over whether the loss was accidental or deliberate.",
+      "threatLevel": 1,
+      "tags": ["evidence", "authority", "mystery"]
+    },
+    {
+      "id": "OPEN-PRESSURE-ALTERATION-WAVE",
+      "title": "Alteration Wave",
+      "summary": "A wave of unstable magic alters people within the plaza at different intensities, creating an immediate medical crisis and fear of further change.",
+      "threatLevel": 2,
+      "tags": ["alteration", "medical", "panic"]
+    },
+    {
+      "id": "OPEN-PRESSURE-UNEQUAL-SEAL",
+      "title": "Unequal Emergency Seal",
+      "summary": "Emergency wards seal the plaza unevenly, protecting some sections while trapping others and cutting off the most direct routes to safety and command.",
+      "threatLevel": 1,
+      "tags": ["containment", "rescue", "authority"]
+    }
+  ],
+  "factionPressures": [
+    {
+      "id": "FACTION-PRESSURE-EMERGENCY-AUTHORITY",
+      "summary": "The factions disagree over who may direct an emergency when central authority is incapacitated."
+    },
+    {
+      "id": "FACTION-PRESSURE-SCARCE-RESOURCES",
+      "summary": "The factions compete over where scarce people, supplies, knowledge, and equipment should be committed first."
+    },
+    {
+      "id": "FACTION-PRESSURE-PUBLIC-DISCLOSURE",
+      "summary": "The factions disagree over what the public should be told and what knowledge is too dangerous or destabilizing to release."
+    },
+    {
+      "id": "FACTION-PRESSURE-CONTAINMENT-METHOD",
+      "summary": "The factions support incompatible methods for stabilizing the Tear and the city's containment system."
+    },
+    {
+      "id": "FACTION-PRESSURE-CIVILIAN-PRIORITY",
+      "summary": "The factions disagree over whether civilian continuity, institutional survival, research, or defense must receive priority."
+    },
+    {
+      "id": "FACTION-PRESSURE-RECOVERY-RIGHTS",
+      "summary": "The factions contest who may recover, study, secure, distribute, or conceal dangerous material arriving from the Tear."
+    }
+  ],
+  "clueRoutes": [
+    {
+      "id": "CLUE-WITNESS-CONTRADICTIONS",
+      "summary": "Conflicting but individually credible witness accounts reveal that the event was experienced differently from separate positions."
+    },
+    {
+      "id": "CLUE-PHYSICAL-RESIDUE",
+      "summary": "Persistent residue, damage, or material traces allow the event to be investigated through physical evidence."
+    },
+    {
+      "id": "CLUE-CONTAINMENT-RECORD",
+      "summary": "Containment readings and maintenance history preserve a technical route into the mystery."
+    },
+    {
+      "id": "CLUE-REDACTED-RECORDS",
+      "summary": "Missing, altered, stolen, or restricted records create an intelligence route into the mystery."
+    },
+    {
+      "id": "CLUE-ALTERED-BIOLOGY",
+      "summary": "Symptoms and changes in affected life preserve a medical and biological route into the mystery."
+    },
+    {
+      "id": "CLUE-RECOVERED-OBJECT",
+      "summary": "An object displaced or changed by the Tear carries evidence that can be interpreted in more than one way."
+    }
+  ],
+  "reversals": [
+    {
+      "id": "REVERSAL-CONFLATED-EVENTS",
+      "summary": "Evidence believed to explain one event is discovered to combine traces from two separate causes.",
+      "minimumStage": "stabilization"
+    },
+    {
+      "id": "REVERSAL-PROTECTED-MOTIVE",
+      "summary": "A person protected as a victim or witness is found to have concealed a separate motive without necessarily causing the original disaster.",
+      "minimumStage": "stabilization"
+    },
+    {
+      "id": "REVERSAL-DISPLACED-PRESSURE",
+      "summary": "A successful local solution is revealed to have displaced pressure elsewhere in Velmora instead of removing it.",
+      "minimumStage": "stabilization"
+    },
+    {
+      "id": "REVERSAL-USEFUL-COST",
+      "summary": "A useful discovery remains genuinely valuable but carries a cost that changes who is willing to use it.",
+      "minimumStage": "stabilization"
+    }
+  ],
+  "clueRouteCount": 3,
+  "endgameMinimumStage": "resolution"
+}

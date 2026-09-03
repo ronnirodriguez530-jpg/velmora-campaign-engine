@@ -2,7 +2,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { CampaignDirector } from "../director/director.ts";
-import type { DirectorTurnPlan, PerspectiveContext, VelmoraContent } from "../domain/types.ts";
+import type { DirectorPlanningContext, DirectorTurnPlan, VelmoraContent } from "../domain/types.ts";
 import { createCampaign, getCampaign, listEvents, listFactionPathProgress, openDatabase } from "../persistence/database.ts";
 import { openPlayableMoment, submitPlayableAction } from "./gameplay-session.ts";
 
@@ -23,7 +23,7 @@ class SimulationDirector implements CampaignDirector {
     return { intent: "inspect" as const, summary: "Simulation preview", suggestedActions: ["Continue", "Reconsider"] as [string, string], allowsFreeText: true as const };
   }
 
-  async planTurn(context: PerspectiveContext): Promise<DirectorTurnPlan> {
+  async planTurn(context: DirectorPlanningContext): Promise<DirectorTurnPlan> {
     const target = this.#factions[context.turn % this.#factions.length];
     const progress = context.factionPathProgress.find((path) => path.factionId === target)?.progress ?? 0;
     return {

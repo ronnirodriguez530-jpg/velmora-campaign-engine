@@ -11,3 +11,16 @@ export function seededChoice<T>(seed: string, values: readonly T[]): T {
   if (values.length === 0) throw new Error("Cannot select from an empty list");
   return values[seededInteger(seed, 0, values.length - 1)]!;
 }
+
+export function seededSample<T>(seed: string, values: readonly T[], count: number): T[] {
+  if (!Number.isInteger(count) || count < 0 || count > values.length) throw new Error("Invalid seeded sample size");
+  return values
+    .map((value, index) => ({
+      value,
+      index,
+      rank: createHash("sha256").update(`${seed}:${index}`).digest("hex")
+    }))
+    .sort((a, b) => a.rank.localeCompare(b.rank) || a.index - b.index)
+    .slice(0, count)
+    .map((entry) => entry.value);
+}

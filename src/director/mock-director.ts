@@ -1,5 +1,5 @@
 import type { CampaignDirector } from "./director.ts";
-import type { DirectorContext, DirectorPreview, DirectorTurnPlan, PerspectiveContext, ScenePackage, StoryPresentation, ToolRequest } from "../domain/types.ts";
+import type { DirectorContext, DirectorPlanningContext, DirectorPreview, DirectorTurnPlan, PerspectiveContext, ScenePackage, StoryPresentation, ToolRequest } from "../domain/types.ts";
 
 export class MockDirector implements CampaignDirector {
   readonly source = "diagnostic" as const;
@@ -22,7 +22,7 @@ export class MockDirector implements CampaignDirector {
     };
   }
 
-  async planTurn(context: PerspectiveContext, playerInput: string): Promise<DirectorTurnPlan> {
+  async planTurn(context: DirectorPlanningContext, playerInput: string): Promise<DirectorTurnPlan> {
     const normalized = playerInput.toLowerCase();
     const toolRequests: ToolRequest[] = [];
     if (normalized.includes("support league")) {

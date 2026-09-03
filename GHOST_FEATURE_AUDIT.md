@@ -37,7 +37,11 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 21. NPC lifecycle and archival with normally permanent death, explicit transition history, and complete NPC-state rollback coverage.
 22. Live-turn NPC integration: filtered NPC context reaches the Campaign Master, which may propose one engine-validated minor NPC request per committed turn.
 23. NPC Turn Manager with bounded memory, adjacent player-standing, relationship qualities, existing public-fact learning, non-death status, connected movement, and involvement/category updates.
-24. Current automated suite: 36 of 36 tests passing.
+24. Persistent story-thread ledger with player/Director visibility, stage and location relevance, urgency, involved-entity links, recovery paths, and rollback capture.
+25. Separate player-facing and Director-only story-thread retrieval, preventing hidden planning threads from entering scene-presentation context.
+26. Deterministic per-campaign blueprint generation with variable opening pressure, focal faction tension, multiple clue routes, later reversal, and a Resolution-only endgame gate.
+27. Persistent hidden blueprint retrieval for Director planning, automatic initial-thread seeding, and safe projection of only the immediate visible crisis into opening-scene context.
+28. Current automated suite: 40 of 40 tests passing.
 
 ## Partial or scaffolded
 
@@ -89,6 +93,7 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 - The generic templates contain abstract conflict/objective keys rather than authored scenes or quest structure.
 - Stage progression is driven by provisional counters and produces uniform simulations.
 - There are no truth candidates, no truth-selection logic, no main quests, no faction quests, and no side quests.
+- The seeded campaign blueprint, initial thread seeding, context separation, and visible opening-pressure projection now exist. There is no validated thread-management authority yet, so the cloud Director cannot advance, block, resolve, retire, or replace generated threads during play.
 
 ### Browser pages and trackers
 
@@ -127,10 +132,10 @@ Everything in `DM_CORE_RULES_V1.md` is approved design, not implemented code. Th
 5. Inventory/item storage and equipment state.
 6. Ability/power catalog and character ability ownership.
 7. XP, level, milestone, or skill-tree storage and behavior.
-8. Quest lifecycle application logic and authored quest content.
+8. Generative quest lifecycle application logic, reusable validated quest structures, and campaign-specific quest creation.
 9. Mechanical creature, relic, power, world-fragment, and Tear-payload records; curated content catalogs exist but cannot yet act on game state.
 10. Final-truth candidates and player-choice resolution logic.
-11. DM training/reference retrieval, example library, or open-licensed rules ingestion.
+11. Story/DM training and reference retrieval beyond the existing NPC-only library, including examples or open-licensed structural guidance.
 12. Adaptive learning, player-preference modeling, and DM behavior adjustment.
 13. Independent live-world activity. The playable engine advances only in response to committed player actions; the multi-path Simulation Runner is isolated test machinery.
 14. Silly Mode and override history.

@@ -51,25 +51,30 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Approved top-level city geography, district order, initial landmarks, neutral axis, and containment design
 - [x] Canon review confirming contradictions are removed and later decisions are assigned to their proper sections
 
-### 2. Campaign structure and authored content — Missing
+### 2. Generative campaign structure and protected story canon — Partial
 
-- [ ] Campaign premise and playable opening
+- [x] Generative opening-pressure foundation connected to the initial scene without exposing the hidden campaign blueprint
 - [x] Opening convergence and witnessed inciting event: public address in Council Plaza during the First Speaker's attack and the Surge's failure to end
 - [x] Six fully concrete, engine-validated Council Crown spawn situations mapped to permanent d6 results
 - [ ] Player-clicked opening d6 selection and saved outcome, implemented with the core dice system
 - [x] Variable opening conflict over replacing the incapacitated First Speaker
 - [ ] Replacement candidates and selection events generated from approved campaign conditions rather than one preset outcome
 - [x] First Speaker's hidden transformation, false recovery, intermittent control, and escalating influence established as a campaign conflict
-- [ ] Transformation clues, branches, interventions, consequences, and possible outcomes
-- [ ] Major campaign spine with acts or stages
-- [ ] Multiple main-quest paths
-- [ ] Six faction questlines
-- [ ] Reusable side-quest structure and initial authored side quests
-- [ ] Choice junctions, consequences, failures, and recovery paths
+- [ ] Approved pools and stage rules for transformation clues, interventions, consequences, and possible outcomes
+- [x] Seeded, stage-gated campaign blueprint foundation with variable opening pressure, focal faction tension, three clue routes, a later reversal, and a Resolution-only endgame gate
+- [x] Persistent story-thread ledger foundation with visibility, stage, location, urgency, recovery-path, and rollback-safe records
+- [x] Validated Director tools for activating, advancing, blocking, resolving, failing, and replacing story threads during play
+- [x] Replacement routes must consume a recorded recovery path and inherit the source thread's visibility and stage gates
+- [ ] Validated creation of genuinely new player-created or campaign-generated story threads during play
+- [ ] Main-quest generator using approved canon, campaign conditions, and player-created goals
+- [ ] Faction-quest generator using faction agendas, local pressures, relationships, and current state
+- [ ] Reusable side-quest generator with objective, stakes, failure conditions, recovery routes, and consequences
+- [ ] Scene composer connected to active threads, quests, NPCs, factions, locations, and consequences
+- [ ] Choice junctions, consequences, failures, and recovery paths generated and validated during play
 - [ ] Final-truth candidates and player-choice resolution
 - [ ] End states that preserve player agency
 - [x] Minimum opening authority cast fixed at the First Speaker, senior deputy, and six faction leaders, with identities generated per campaign
-- [ ] Additional recurring roles required by the authored questlines
+- [ ] Additional recurring roles created on demand when generated questlines require them
 
 ### 3. Locations and world content — Partial
 
@@ -213,9 +218,15 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Basic story presentation storage
 - [ ] Complete DM operating rules
 - [ ] Scene narration connected to quests, characters, factions, and consequences
+- [x] Player-known and Director-only story-thread retrieval separated so hidden planning truth is not sent to scene narration
+- [x] Hidden campaign blueprint retrieval included only in Director planning context
+- [x] Campaign Master thread-control requests are bounded to four per turn and committed atomically with rollback support
 - [ ] Proper use of rolls, combat, abilities, items, and player freedom
 - [ ] Rules and campaign reference retrieval
-- [ ] Examples and evaluation tests for good DM behavior
+- [ ] Approved story-craft reference library for quests, mysteries, factions, consequences, pacing, and recovery
+- [ ] Examples and evaluation tests for coherent long-form DM behavior
+- [ ] Complete evaluation set for callbacks, varied paths, failure recovery, and stage-gated endgame pacing
+- [x] Mechanical tests for thread continuity, recovery-path replacement, hidden-context isolation, stage gates, rollback, and growing thread history
 - [ ] Recovery when provider output is invalid or repetitive
 - [ ] Real-provider end-to-end playtest
 
@@ -255,14 +266,15 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 36 of 36 tests
+- [x] Current automated suite passes 44 of 44 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
 - [ ] Real-provider behavior and regression evaluations
 - [ ] Browser interaction and accessibility testing
 - [ ] Save migration, corruption recovery, and updater testing
-- [ ] Performance and long-campaign endurance testing
+- [ ] Full performance and long-campaign endurance testing
+- [x] Initial 60-turn growing thread-history stress test keeps relevant Director context bounded
 
 ### 20. API configuration and security — Partial
 
@@ -335,11 +347,11 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 ## Fixed work order
 
 1. Reconcile project records and keep this checklist as the source of truth.
-2. Finish the minimum world canon and campaign spine.
+2. Finish the minimum protected world canon and implement the generative campaign blueprint/story-thread foundation.
 3. Build the player-character foundation.
 4. Implement core action and dice resolution.
 5. Establish and implement the minimum powers, items, and progression data.
-6. Build the Quest Engine and initial authored quests.
+6. Build the generative Quest Engine and validated reusable quest structures.
 7. Build the minimum combat vertical slice.
 8. Connect factions, Tear events, locations, and NPCs to quests and consequences.
 9. Complete the DM Core using only systems that actually exist.
@@ -352,4 +364,4 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 
 ## Current position
 
-Velmora is currently between steps 1 and 2. The world foundation, application shell, persistence layer, and NPC Engine foundation exist. The campaign spine, player character, quests, combat, powers, items, progression, and complete DM Core do not yet exist.
+Velmora is currently completing step 2. The world foundation, application shell, persistence layer, NPC Engine foundation, seeded campaign blueprint, story-thread ledger, hidden/player context separation, and validated thread-management tools exist. New-thread creation, player character, quests, combat, powers, items, progression, and the complete DM Core do not yet exist.

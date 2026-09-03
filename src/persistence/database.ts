@@ -1,8 +1,10 @@
 import { mkdirSync } from "node:fs";
 import { dirname } from "node:path";
 import { DatabaseSync } from "node:sqlite";
+import { createInitialBlueprintThreads, generateCampaignBlueprint } from "../application/campaign-blueprint-generator.ts";
 import type {
   BelievedState,
+  CampaignBlueprint,
   FactTruthStatus,
   FactVisibility,
   KnowledgeMethod,
@@ -21,6 +23,7 @@ import type {
   RelationshipTargetType,
   ScenePackage,
   StoryPresentation,
+  StoryThread,
   TearArrival,
   VelmoraContent,
   WorldFact
@@ -50,6 +53,7 @@ export type StateSnapshot = {
     relationships: NpcRelationship[];
     novelty: Array<{ fingerprint: string; npcId: string; createdTurn: number }>;
   };
+  storyThreads?: StoryThread[];
 };
 
 export function openDatabase(path: string): DatabaseSync {
@@ -382,6 +386,139 @@ function migrate(db: DatabaseSync): void {
     `);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(14, ?)").run(new Date().toISOString());
   }
+  const migrationFifteen = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 15").get() as { present: number } | undefined;
+  if (!migrationFifteen) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS story_threads (
+        campaign_id TEXT NOT NULL,
+        thread_id TEXT NOT NULL,
+        kind TEXT NOT NULL CHECK(kind IN ('main','faction','side','personal','mystery','dynamic')),
+        title TEXT NOT NULL,
+        summary TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('dormant','active','blocked','resolved','failed')),
+        visibility TEXT NOT NULL CHECK(visibility IN ('player','director')),
+        minimum_stage TEXT NOT NULL CHECK(minimum_stage IN ('opening','stabilization','escalation','resolution')),
+        maximum_stage TEXT NOT NULL CHECK(maximum_stage IN ('opening','stabilization','escalation','resolution')),
+        urgency INTEGER NOT NULL CHECK(urgency BETWEEN 0 AND 3),
+        location_ids_json TEXT NOT NULL,
+        faction_ids_json TEXT NOT NULL,
+        npc_ids_json TEXT NOT NULL,
+        recovery_paths_json TEXT NOT NULL,
+        created_turn INTEGER NOT NULL,
+        updated_turn INTEGER NOT NULL,
+        last_used_turn INTEGER,
+        PRIMARY KEY (campaign_id, thread_id),
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+      CREATE INDEX IF NOT EXISTS story_threads_relevance_idx
+        ON story_threads(campaign_id, status, urgency DESC, updated_turn DESC);
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(15, ?)").run(new Date().toISOString());
+  }
+  const migrationSixteen = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 16").get() as { present: number } | undefined;
+  if (!migrationSixteen) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS campaign_blueprints (
+        campaign_id TEXT PRIMARY KEY,
+        version INTEGER NOT NULL,
+        blueprint_json TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(16, ?)").run(new Date().toISOString());
+  }
+}
+
+const STAGE_ORDER = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 } as const;
+
+function storyThreadFromRow(row: Record<string, unknown>): StoryThread {
+  return {
+    campaignId: row.campaignId as string,
+    threadId: row.threadId as string,
+    kind: row.kind as StoryThread["kind"],
+    title: row.title as string,
+    summary: row.summary as string,
+    status: row.status as StoryThread["status"],
+    visibility: row.visibility as StoryThread["visibility"],
+    minimumStage: row.minimumStage as StoryThread["minimumStage"],
+    maximumStage: row.maximumStage as StoryThread["maximumStage"],
+    urgency: row.urgency as StoryThread["urgency"],
+    locationIds: JSON.parse(row.locationIdsJson as string) as string[],
+    factionIds: JSON.parse(row.factionIdsJson as string) as string[],
+    npcIds: JSON.parse(row.npcIdsJson as string) as string[],
+    recoveryPaths: JSON.parse(row.recoveryPathsJson as string) as string[],
+    createdTurn: row.createdTurn as number,
+    updatedTurn: row.updatedTurn as number,
+    lastUsedTurn: row.lastUsedTurn as number | null
+  };
+}
+
+export function persistStoryThread(db: DatabaseSync, thread: StoryThread): void {
+  if (STAGE_ORDER[thread.minimumStage] > STAGE_ORDER[thread.maximumStage]) {
+    throw new Error("Story thread minimum stage cannot follow its maximum stage");
+  }
+  if (!thread.title.trim() || !thread.summary.trim()) throw new Error("Story thread requires a title and summary");
+  db.prepare(`INSERT INTO story_threads(
+      campaign_id, thread_id, kind, title, summary, status, visibility,
+      minimum_stage, maximum_stage, urgency, location_ids_json, faction_ids_json,
+      npc_ids_json, recovery_paths_json, created_turn, updated_turn, last_used_turn
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(campaign_id, thread_id) DO UPDATE SET
+      kind = excluded.kind, title = excluded.title, summary = excluded.summary,
+      status = excluded.status, visibility = excluded.visibility,
+      minimum_stage = excluded.minimum_stage, maximum_stage = excluded.maximum_stage,
+      urgency = excluded.urgency, location_ids_json = excluded.location_ids_json,
+      faction_ids_json = excluded.faction_ids_json, npc_ids_json = excluded.npc_ids_json,
+      recovery_paths_json = excluded.recovery_paths_json, updated_turn = excluded.updated_turn,
+      last_used_turn = excluded.last_used_turn`)
+    .run(
+      thread.campaignId, thread.threadId, thread.kind, thread.title, thread.summary,
+      thread.status, thread.visibility, thread.minimumStage, thread.maximumStage,
+      thread.urgency, JSON.stringify(thread.locationIds), JSON.stringify(thread.factionIds),
+      JSON.stringify(thread.npcIds), JSON.stringify(thread.recoveryPaths), thread.createdTurn,
+      thread.updatedTurn, thread.lastUsedTurn
+    );
+}
+
+export function listStoryThreads(db: DatabaseSync, campaignId: string): StoryThread[] {
+  const rows = db.prepare(`SELECT campaign_id AS campaignId, thread_id AS threadId, kind, title, summary,
+      status, visibility, minimum_stage AS minimumStage, maximum_stage AS maximumStage,
+      urgency, location_ids_json AS locationIdsJson, faction_ids_json AS factionIdsJson,
+      npc_ids_json AS npcIdsJson, recovery_paths_json AS recoveryPathsJson,
+      created_turn AS createdTurn, updated_turn AS updatedTurn, last_used_turn AS lastUsedTurn
+    FROM story_threads WHERE campaign_id = ? ORDER BY thread_id`).all(campaignId) as Array<Record<string, unknown>>;
+  return rows.map(storyThreadFromRow);
+}
+
+export function listRelevantStoryThreads(
+  db: DatabaseSync,
+  campaignId: string,
+  stage: StoryThread["minimumStage"],
+  locationId: string,
+  visibility: StoryThread["visibility"],
+  limit = 12
+): StoryThread[] {
+  return listStoryThreads(db, campaignId)
+    .filter((thread) => thread.visibility === visibility)
+    .filter((thread) => thread.status !== "resolved" && thread.status !== "failed")
+    .filter((thread) => STAGE_ORDER[stage] >= STAGE_ORDER[thread.minimumStage] && STAGE_ORDER[stage] <= STAGE_ORDER[thread.maximumStage])
+    .filter((thread) => thread.locationIds.length === 0 || thread.locationIds.includes(locationId))
+    .sort((a, b) => Number(b.status === "active") - Number(a.status === "active") || b.urgency - a.urgency || b.updatedTurn - a.updatedTurn)
+    .slice(0, limit);
+}
+
+export function persistCampaignBlueprint(db: DatabaseSync, blueprint: CampaignBlueprint): void {
+  db.prepare(`INSERT INTO campaign_blueprints(campaign_id, version, blueprint_json, created_at)
+      VALUES(?, ?, ?, ?)
+      ON CONFLICT(campaign_id) DO NOTHING`)
+    .run(blueprint.campaignId, blueprint.version, JSON.stringify(blueprint), new Date().toISOString());
+}
+
+export function getCampaignBlueprint(db: DatabaseSync, campaignId: string): CampaignBlueprint | undefined {
+  const row = db.prepare("SELECT blueprint_json AS blueprintJson FROM campaign_blueprints WHERE campaign_id = ?")
+    .get(campaignId) as { blueprintJson: string } | undefined;
+  return row ? JSON.parse(row.blueprintJson) as CampaignBlueprint : undefined;
 }
 
 export function persistNpc(
@@ -981,6 +1118,9 @@ export function createCampaign(db: DatabaseSync, content: VelmoraContent, name: 
     for (const character of content.characters) {
       insertCharacter.run(id, character.id, character.status, character.initialReputation, character.initialLocationId);
     }
+    const blueprint = generateCampaignBlueprint(content, id, seed);
+    persistCampaignBlueprint(db, blueprint);
+    for (const thread of createInitialBlueprintThreads(blueprint)) persistStoryThread(db, thread);
     db.prepare("INSERT INTO event_log(campaign_id, turn, event_type, payload_json, created_at) VALUES(?, 0, 'campaign_created', ?, ?)")
       .run(id, JSON.stringify({ seed }), now);
     db.exec("COMMIT");
@@ -1002,6 +1142,14 @@ export function backfillAuthoredState(db: DatabaseSync, content: VelmoraContent)
   for (const character of content.characters) updateLocation.run(character.initialLocationId, character.id);
   const insertFactionPath = db.prepare("INSERT OR IGNORE INTO faction_path_state(campaign_id, faction_id, progress) SELECT id, ?, 0 FROM campaigns");
   for (const faction of content.factions) insertFactionPath.run(faction.id);
+  const campaigns = db.prepare("SELECT id, seed FROM campaigns").all() as Array<{ id: string; seed: string }>;
+  for (const campaign of campaigns) {
+    if (!getCampaignBlueprint(db, campaign.id)) {
+      const blueprint = generateCampaignBlueprint(content, campaign.id, campaign.seed);
+      persistCampaignBlueprint(db, blueprint);
+      for (const thread of createInitialBlueprintThreads(blueprint)) persistStoryThread(db, thread);
+    }
+  }
 }
 
 export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnapshot {
@@ -1044,13 +1192,15 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
   const novelty = db.prepare(`SELECT fingerprint, npc_id AS npcId, created_turn AS createdTurn
     FROM npc_novelty_ledger WHERE campaign_id = ? ORDER BY fingerprint`)
     .all(campaignId) as Array<{ fingerprint: string; npcId: string; createdTurn: number }>;
+  const storyThreads = listStoryThreads(db, campaignId);
   return {
     campaign,
     factions,
     characters,
     factionPaths,
     quests,
-    npcState: { records, designs, facts, knowledge, memories, relationships, novelty }
+    npcState: { records, designs, facts, knowledge, memories, relationships, novelty },
+    storyThreads
   };
 }
 
@@ -1116,6 +1266,8 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
     for (const path of snapshot.factionPaths ?? []) updateFactionPath.run(path.progress, campaign.id, path.factionId);
     const updateQuest = db.prepare("UPDATE quest_instances SET state = ? WHERE campaign_id = ? AND quest_id = ?");
     for (const quest of snapshot.quests ?? []) updateQuest.run(quest.state, campaign.id, quest.questId);
+    db.prepare("DELETE FROM story_threads WHERE campaign_id = ?").run(campaign.id);
+    for (const thread of snapshot.storyThreads ?? []) persistStoryThread(db, thread);
     if (snapshot.npcState) {
       db.prepare("DELETE FROM npc_relationship_qualities WHERE campaign_id = ?").run(campaign.id);
       db.prepare("DELETE FROM npc_relationships WHERE campaign_id = ?").run(campaign.id);

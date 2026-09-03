@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { PerspectiveContext, VelmoraContent } from "../domain/types.ts";
-import { getCampaign, getSceneForTurnAndLocation, listCharactersAtLocation, listFactionConditions, listFactionPathProgress, listLocationConsequences, listPresentCharacterStates, listPublicWorldFacts, listRecentTearArrivals } from "../persistence/database.ts";
+import type { DirectorPlanningContext, PerspectiveContext, VelmoraContent } from "../domain/types.ts";
+import { getCampaign, getCampaignBlueprint, getSceneForTurnAndLocation, listCharactersAtLocation, listFactionConditions, listFactionPathProgress, listLocationConsequences, listPresentCharacterStates, listPublicWorldFacts, listRecentTearArrivals, listRelevantStoryThreads } from "../persistence/database.ts";
 import { buildNpcContext } from "../npc/npc-context-gate.ts";
 
 export function buildPerspectiveContext(
@@ -24,6 +24,8 @@ export function buildPerspectiveContext(
     factionId: content.characters.find((character) => character.id === state.characterId)?.factionId ?? null
   }));
   const encounteredScene = getSceneForTurnAndLocation(db, campaign.id, campaign.turn, currentLocation.id) ?? null;
+  const blueprint = getCampaignBlueprint(db, campaign.id);
+  if (!blueprint) throw new Error(`Campaign ${campaign.id} is missing its hidden story blueprint`);
   return {
     campaignId: campaign.id,
     seed: campaign.seed,
@@ -46,6 +48,28 @@ export function buildPerspectiveContext(
       locationId: currentLocation.id,
       focusNpcIds: encounteredScene?.participantIds ?? []
     }),
-    publicFacts: listPublicWorldFacts(db, campaign.id)
+    publicFacts: listPublicWorldFacts(db, campaign.id),
+    playerKnownStoryThreads: listRelevantStoryThreads(db, campaign.id, campaign.stage, currentLocation.id, "player"),
+    visibleOpeningPressure: campaign.stage === "opening" && campaign.turn === 0 ? blueprint.openingPressure : null
+  };
+}
+
+export function buildDirectorPlanningContext(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignName: string
+): DirectorPlanningContext {
+  const perspective = buildPerspectiveContext(db, content, campaignName);
+  const campaignBlueprint = getCampaignBlueprint(db, perspective.campaignId)!;
+  return {
+    ...perspective,
+    campaignBlueprint,
+    directorStoryThreads: listRelevantStoryThreads(
+      db,
+      perspective.campaignId,
+      perspective.stage,
+      perspective.currentLocation.id,
+      "director"
+    )
   };
 }

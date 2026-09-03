@@ -1,9 +1,9 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { CloudDirector } from "../src/director/cloud-director.ts";
-import type { PerspectiveContext } from "../src/domain/types.ts";
+import type { DirectorPlanningContext } from "../src/domain/types.ts";
 
-const context: PerspectiveContext = {
+const context: DirectorPlanningContext = {
   campaignId: "SAVE-TEST",
   seed: "fixed-seed",
   stage: "opening",
@@ -21,7 +21,21 @@ const context: PerspectiveContext = {
   presentCharacters: [],
   recentTearArrivals: [],
   npcContext: { full: [], supporting: [], omittedCount: 0, budgetUsed: 0, budgetLimit: 36 },
-  publicFacts: []
+  publicFacts: [],
+  playerKnownStoryThreads: [],
+  visibleOpeningPressure: null,
+  directorStoryThreads: [],
+  campaignBlueprint: {
+    campaignId: "SAVE-TEST",
+    version: 1,
+    openingPressure: { id: "OPEN-TEST", title: "Test pressure", summary: "A bounded test pressure.", threatLevel: 1, tags: ["test"] },
+    focalFactionIds: ["FAC-001", "FAC-002"],
+    factionPressure: { id: "FACTION-TEST", summary: "A bounded faction pressure." },
+    clueRoutes: [{ id: "CLUE-TEST", summary: "A bounded clue route." }],
+    reversal: { id: "REVERSAL-TEST", summary: "A later bounded reversal.", minimumStage: "stabilization" },
+    endgameMinimumStage: "resolution",
+    createdTurn: 0
+  }
 };
 
 test("cloud Director submits a strict bounded plan without executing it", async () => {
@@ -42,6 +56,7 @@ test("cloud Director submits a strict bounded plan without executing it", async 
           locationConsequences: [],
           npcRequests: [],
           npcUpdates: [],
+          storyThreadUpdates: [],
           suggestedActions: ["Ask what the League needs", "Return to the avenue"],
           allowsFreeText: true
         })
@@ -83,6 +98,7 @@ test("cloud Director can request one bounded minor NPC without creating it direc
           reason: "The committed player search requires a persistent specialist."
         }],
         npcUpdates: [],
+        storyThreadUpdates: [],
         suggestedActions: ["Question the repairer", "Inspect the lamp"],
         allowsFreeText: true
       })

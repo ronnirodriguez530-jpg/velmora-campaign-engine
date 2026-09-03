@@ -2,7 +2,7 @@
 
 ## Current phase
 
-World-canon foundation complete; campaign structure and authored content are next.
+World-canon, generative campaign-blueprint foundation, and persistent story-memory foundation are complete; validated Story Engine authority is next.
 
 ## Completed
 
@@ -132,13 +132,35 @@ The real implementation boundary is recorded in `GHOST_FEATURE_AUDIT.md`. The ap
 
 The approved top-level Velmora geography and district identities are stored in engine-readable faction and location data. The eight essential authored-character slots identify offices only; their campaign identities and personalities remain unfinished.
 
-## Next phase—do not skip ahead
+## Verified Story Engine memory foundation
 
-Proceed to Section 2 of `MASTER_CHECKLIST.md`: establish the minimum campaign structure and authored opening before adding more engine authority.
+- Persistent story-thread records now store kind, status, player/Director visibility, allowed stage range, urgency, involved locations/factions/NPCs, recovery paths, and continuity turns.
+- Current-stage and current-location retrieval prevents premature or irrelevant threads from entering context.
+- Player-facing scene context receives only player-known threads. Director turn planning receives a separate hidden-thread packet, preventing the hidden First Speaker arc from leaking into narration merely because the Campaign Master needs it for planning.
+- Story-thread state is included in turn snapshots and rollback restoration.
+- This memory foundation remains covered by the current audited suite.
+- Validated thread-management authority remains unimplemented.
+
+## Verified seeded campaign-blueprint foundation
+
+- Each campaign seed deterministically selects one immediate opening pressure, two focal factions, one faction-pressure pattern, three distinct clue routes, and one later reversal.
+- The generated blueprint is persisted once per campaign and is reproducible from the same seed while varying substantially across different seeds.
+- The First Speaker's sustained takeover remains mechanically locked to Resolution, and selected reversals cannot enter during Opening.
+- Campaign creation automatically seeds a player-visible opening thread plus Director-only Speaker-transformation, faction-pressure, and dormant-reversal threads.
+- Initial scene placement receives only the selected visible opening crisis. Faction agendas, clue routes, reversal, and hidden Speaker truth remain outside player-facing narration context.
+- Existing campaigns receive a deterministic blueprint and initial threads through the authored-state backfill.
+- The audited suite passes 40 of 40 tests.
+- The blueprint currently provides structural direction; the validated tools that let the Campaign Master advance and revise threads during play remain the next implementation slice.
+
+## Corrected next phase—do not turn this into a prewritten campaign
+
+Proceed to Section 2 of `MASTER_CHECKLIST.md` and `STORY_ENGINE_V1.md`: implement validated story-thread management so the Campaign Master can develop the generated structure during play without rewriting protected canon.
+
+The user is not expected to author every scene, questline, NPC response, branch, or transition. Additional questions should be limited to protected canon, hard boundaries, and major story truths that the engine must not decide silently. The engine must generate and remember the playable campaign content.
 
 ## Later
 
-1. Implement the approved DM Core rules in dependency order.
+1. Implement the approved Story Engine and DM Core rules in dependency order.
 2. Connect the live Campaign Master and play-test a real campaign through the browser.
 3. Build the dedicated Advancement and Skill Tree module only after character roles and the ability catalog exist.
 

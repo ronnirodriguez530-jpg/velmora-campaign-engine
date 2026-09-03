@@ -11,7 +11,9 @@ export function generateScene(context: PerspectiveContext, content: VelmoraConte
   const selectionSeed = `${context.seed}|${context.stage}|${context.turn}|${context.currentLocation.id}`;
   const template = seededChoice(selectionSeed, validTemplates);
   const upperThreat = Math.min(template.maxThreatLevel, context.stageMaxThreatLevel);
-  const threatLevel = seededInteger(`${selectionSeed}|threat`, template.minThreatLevel, upperThreat);
+  const threatLevel = context.visibleOpeningPressure
+    ? Math.min(upperThreat, Math.max(template.minThreatLevel, context.visibleOpeningPressure.threatLevel))
+    : seededInteger(`${selectionSeed}|threat`, template.minThreatLevel, upperThreat);
   const suffix = createHash("sha256").update(`${selectionSeed}|${template.id}`).digest("hex").slice(0, 12).toUpperCase();
   const factionIds = context.currentLocation.district.startsWith("FAC-") ? [context.currentLocation.district] : [];
   return {
@@ -26,10 +28,11 @@ export function generateScene(context: PerspectiveContext, content: VelmoraConte
     ],
     factionIds,
     questLinks: [],
-    conflictKey: template.conflictKey,
-    objectiveKey: template.objectiveKey,
+    conflictKey: context.visibleOpeningPressure?.id ?? template.conflictKey,
+    objectiveKey: context.visibleOpeningPressure ? "respond_to_opening_pressure" : template.objectiveKey,
     threatLevel,
     visibleFacts: [
+      ...(context.visibleOpeningPressure ? [`opening-pressure:${context.visibleOpeningPressure.summary}`] : []),
       ...context.currentLocation.perspectiveTags.map((tag) => `location:${tag}`),
       ...context.persistentConsequences.map((consequence) => `consequence:${consequence}`)
     ],

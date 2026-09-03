@@ -69,6 +69,25 @@ export function validateContent(content: VelmoraContent): void {
   assert(content.openingSpawns.every((spawn) => spawn.locationId === content.campaign.initialLocationId), "Every opening spawn must remain inside the Council Crown");
   assert(content.openingSpawns.every((spawn) => spawn.spawnArea.length > 0 && spawn.entryReason.length > 0 && spawn.immediatePressure.length > 0), "Every opening spawn requires an area, entry reason, and immediate pressure");
 
+  const blueprintPools = content.storyBlueprintPools;
+  assert(blueprintPools.version >= 1, "Story blueprint pool version is required");
+  assert(blueprintPools.openingPressures.length >= 6, "The campaign blueprint requires at least six opening pressures");
+  assert(blueprintPools.openingPressures.every((pressure) => pressure.threatLevel >= 1 && pressure.threatLevel <= 2), "Opening pressures must respect the Opening-stage threat limit");
+  assert(blueprintPools.openingPressures.every((pressure) => pressure.title.length > 0 && pressure.summary.length > 0 && pressure.tags.length > 0), "Every opening pressure requires a title, summary, and tags");
+  assert(blueprintPools.factionPressures.length >= 4, "The campaign blueprint requires multiple faction-pressure patterns");
+  assert(blueprintPools.clueRoutes.length >= 4, "The campaign blueprint requires multiple clue routes");
+  assert(blueprintPools.clueRouteCount >= 2 && blueprintPools.clueRouteCount < blueprintPools.clueRoutes.length, "Clue-route count must preserve variation and multiple paths");
+  assert(blueprintPools.reversals.length >= 3, "The campaign blueprint requires multiple possible reversals");
+  assert(blueprintPools.reversals.every((reversal) => reversal.minimumStage !== "opening"), "Reversals cannot be scheduled during the Opening stage");
+  assert(blueprintPools.endgameMinimumStage === "resolution", "The First Speaker endgame must remain locked to Resolution");
+  const blueprintIds = [
+    ...blueprintPools.openingPressures.map((entry) => entry.id),
+    ...blueprintPools.factionPressures.map((entry) => entry.id),
+    ...blueprintPools.clueRoutes.map((entry) => entry.id),
+    ...blueprintPools.reversals.map((entry) => entry.id)
+  ];
+  assert(new Set(blueprintIds).size === blueprintIds.length, "Story blueprint pool IDs must be globally unique");
+
   assert(content.sceneTemplates.length >= 4, "At least one mechanical scene scaffold per campaign stage is required");
   for (const template of content.sceneTemplates) {
     assert(template.stages.length > 0, `Scene template ${template.id} requires a stage`);
