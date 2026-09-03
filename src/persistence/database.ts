@@ -22,6 +22,7 @@ import type {
   PlayerProgression,
   ProgressionMilestone,
   CharacterAdvancement,
+  QuestInstance,
   NpcRelationship,
   PlayerCharacter,
   RelationshipQuality,
@@ -50,7 +51,7 @@ export type StateSnapshot = {
   factions: Array<{ factionId: string; condition: number }>;
   characters: Array<{ characterId: string; status: string; reputation: number; locationId: string; replacementCharacterId: string | null }>;
   factionPaths: Array<{ factionId: string; progress: number }>;
-  quests: Array<{ questId: string; state: string }>;
+  quests: Array<QuestInstance | { questId: string; state: string }>;
   npcState?: {
     records: NpcRecord[];
     designs: NpcDesignProfile[];
@@ -713,6 +714,61 @@ export function getCampaignBlueprint(db: DatabaseSync, campaignId: string): Camp
   const row = db.prepare("SELECT blueprint_json AS blueprintJson FROM campaign_blueprints WHERE campaign_id = ?")
     .get(campaignId) as { blueprintJson: string } | undefined;
   return row ? JSON.parse(row.blueprintJson) as CampaignBlueprint : undefined;
+}
+
+function questFromRow(row: Record<string, unknown>): QuestInstance {
+  const stored = JSON.parse(row.dataJson as string) as QuestInstance;
+  return {
+    ...stored,
+    campaignId: String(row.campaignId),
+    questId: String(row.questId),
+    title: String(row.title),
+    questType: row.questType as QuestInstance["questType"],
+    state: row.state as QuestInstance["state"],
+    isTurningPoint: Number(row.isTurningPoint) === 1
+  };
+}
+
+export function persistQuestInstance(db: DatabaseSync, quest: QuestInstance): void {
+  db.prepare(`INSERT INTO quest_instances(
+      campaign_id, quest_id, title, quest_type, state, is_turning_point, outcome_limit, data_json
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(campaign_id, quest_id) DO UPDATE SET
+      title = excluded.title, quest_type = excluded.quest_type, state = excluded.state,
+      is_turning_point = excluded.is_turning_point, outcome_limit = excluded.outcome_limit,
+      data_json = excluded.data_json`)
+    .run(
+      quest.campaignId,
+      quest.questId,
+      quest.title,
+      quest.questType,
+      quest.state,
+      quest.isTurningPoint ? 1 : 0,
+      quest.outcomes.length,
+      JSON.stringify(quest)
+    );
+}
+
+export function listQuestInstances(db: DatabaseSync, campaignId: string): QuestInstance[] {
+  const rows = db.prepare(`SELECT campaign_id AS campaignId, quest_id AS questId, title,
+      quest_type AS questType, state, is_turning_point AS isTurningPoint,
+      data_json AS dataJson
+    FROM quest_instances WHERE campaign_id = ? ORDER BY quest_id`).all(campaignId) as Array<Record<string, unknown>>;
+  return rows.map(questFromRow);
+}
+
+export function listRelevantQuestInstances(
+  db: DatabaseSync,
+  campaignId: string,
+  stage: QuestInstance["minimumStage"],
+  visibility: QuestInstance["visibility"]
+): QuestInstance[] {
+  return listQuestInstances(db, campaignId)
+    .filter((quest) => quest.visibility === visibility)
+    .filter((quest) => visibility === "director" || quest.state !== "locked")
+    .filter((quest) => STAGE_ORDER[stage] >= STAGE_ORDER[quest.minimumStage] && STAGE_ORDER[stage] <= STAGE_ORDER[quest.maximumStage])
+    .sort((left, right) => right.updatedTurn - left.updatedTurn || left.questId.localeCompare(right.questId))
+    .slice(0, 12);
 }
 
 const PLAYER_ABILITIES = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] as const;
@@ -1570,8 +1626,7 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
     .all(campaignId) as StateSnapshot["characters"];
   const factionPaths = db.prepare("SELECT faction_id AS factionId, progress FROM faction_path_state WHERE campaign_id = ? ORDER BY faction_id")
     .all(campaignId) as StateSnapshot["factionPaths"];
-  const quests = db.prepare("SELECT quest_id AS questId, state FROM quest_instances WHERE campaign_id = ? ORDER BY quest_id")
-    .all(campaignId) as StateSnapshot["quests"];
+  const quests = listQuestInstances(db, campaignId);
   const records = db.prepare(`SELECT campaign_id AS campaignId, npc_id AS npcId, name, category, origin,
       faction_id AS factionId, location_id AS locationId, role, status,
       lifecycle_state AS lifecycleState, created_turn AS createdTurn,
@@ -1691,8 +1746,14 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
     }
     const updateFactionPath = db.prepare("UPDATE faction_path_state SET progress = ? WHERE campaign_id = ? AND faction_id = ?");
     for (const path of snapshot.factionPaths ?? []) updateFactionPath.run(path.progress, campaign.id, path.factionId);
-    const updateQuest = db.prepare("UPDATE quest_instances SET state = ? WHERE campaign_id = ? AND quest_id = ?");
-    for (const quest of snapshot.quests ?? []) updateQuest.run(quest.state, campaign.id, quest.questId);
+    const snapshotQuests = snapshot.quests ?? [];
+    if (snapshotQuests.every((quest) => "campaignId" in quest)) {
+      db.prepare("DELETE FROM quest_instances WHERE campaign_id = ?").run(campaign.id);
+      for (const quest of snapshotQuests) persistQuestInstance(db, quest as QuestInstance);
+    } else {
+      const updateQuest = db.prepare("UPDATE quest_instances SET state = ? WHERE campaign_id = ? AND quest_id = ?");
+      for (const quest of snapshotQuests) updateQuest.run(quest.state, campaign.id, quest.questId);
+    }
     db.prepare("DELETE FROM story_threads WHERE campaign_id = ?").run(campaign.id);
     for (const thread of snapshot.storyThreads ?? []) persistStoryThread(db, thread);
     if (snapshot.playerCharacter !== undefined) {

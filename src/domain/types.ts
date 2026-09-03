@@ -326,6 +326,7 @@ export type PerspectiveContext = {
   playerPowers: Array<PlayerPower & { definition: PowerDefinition }>;
   playerInventory: Array<PlayerInventoryItem & { definition: ItemDefinition }>;
   playerProgression: PlayerProgression;
+  playerQuests: QuestInstance[];
   playerKnownStoryThreads: StoryThread[];
   visibleOpeningPressure: OpeningPressureDefinition | null;
 };
@@ -362,10 +363,58 @@ export type StoryThread = {
 
 export type DirectorPlanningContext = PerspectiveContext & {
   directorStoryThreads: StoryThread[];
+  directorQuests: QuestInstance[];
   campaignBlueprint: CampaignBlueprint;
 };
 
+export type QuestType = "main" | "faction" | "side" | "personal" | "dynamic" | "fragment";
 export type QuestState = "locked" | "available" | "active" | "changed" | "completed" | "failed";
+export type QuestVisibility = "player" | "director";
+export type QuestObjectiveState = "pending" | "active" | "completed" | "failed";
+export type QuestFailureMode = "recoverable" | "warned_deadline" | "irreversible_choice" | "major_world_event";
+
+export type QuestObjective = {
+  objectiveId: string;
+  summary: string;
+  state: QuestObjectiveState;
+};
+
+export type QuestOutcome = {
+  outcomeId: string;
+  summary: string;
+  consequenceSeeds: string[];
+};
+
+export type QuestInstance = {
+  campaignId: string;
+  questId: string;
+  title: string;
+  summary: string;
+  questType: QuestType;
+  state: QuestState;
+  visibility: QuestVisibility;
+  sourceThreadId: string;
+  minimumStage: CampaignStage;
+  maximumStage: CampaignStage;
+  issuerId: string | null;
+  locationIds: string[];
+  factionIds: string[];
+  npcIds: string[];
+  objectives: QuestObjective[];
+  stakes: string;
+  outcomes: QuestOutcome[];
+  failureMode: QuestFailureMode;
+  warningSignals: string[];
+  neglectTriggers: string[];
+  recoveryPaths: string[];
+  prerequisiteQuestIds: string[];
+  linkedQuestIds: string[];
+  truthEvidenceIds: string[];
+  isTurningPoint: boolean;
+  selectedOutcomeId: string | null;
+  createdTurn: number;
+  updatedTurn: number;
+};
 
 export type NpcCategory = "active" | "known" | "background";
 

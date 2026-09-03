@@ -195,16 +195,22 @@ Implemented item scope: eight bounded definitions prove every first-release item
 
 Implemented progression scope: each unique validated major milestone awards one advancement opportunity. Milestone awards remain internal-only until the Quest Engine can verify completed source records. See `PROGRESSION_SYSTEM_V1.md`.
 
-### 12. Quest Engine — Partial scaffold
+### 12. Quest Engine — Partial
 
 - [x] Basic quest-instance table
-- [ ] Authored quest data format
-- [ ] Creation, discovery, activation, update, completion, and failure
-- [ ] Objectives, branches, prerequisites, and consequences
-- [ ] Main, faction, and side-quest classification
-- [ ] Quest perspective filtering and Campaign Master tools
-- [ ] Quest rollback and save compatibility
+- [x] Strict generated-quest data contract with stable IDs and existing story-thread provenance
+- [x] Persistent creation, prerequisite availability, activation, objective updates, completion, and recoverable failure
+- [x] Objectives, stakes, prerequisites, meaningful neglect triggers, warnings, recovery paths, and consequence seeds
+- [x] Exactly two major outcomes for normal quests and three only for urgency-backed turning points
+- [x] Main, faction, side, personal, dynamic, and fragment classification
+- [x] Player and Director perspective filtering with bounded retrieval
+- [x] Complete quest-ledger snapshot, rollback, and legacy snapshot compatibility
+- [ ] Seeded main, faction, and side-quest generation from current campaign conditions
+- [ ] Campaign Master quest tools and atomic consequence application
+- [ ] Verified milestone rewards and altered recovery-quest generation
 - [ ] Functional Quest page and actionable notifications
+
+Implemented quest scope: the durable contract and lifecycle work, but the Campaign Master cannot generate or manage quests yet. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
 ### 13. Faction Engine — Partial scaffold
 
@@ -286,7 +292,7 @@ Implemented progression scope: each unique validated major milestone awards one 
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 71 of 71 tests
+- [x] Current automated suite passes 76 of 76 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -385,7 +391,7 @@ Implemented progression scope: each unique validated major milestone awards one 
 
 ## Current position
 
-Velmora has completed the working foundations through step 5. Minimum power, item, and story-driven progression data now exist with persistent ownership, explicit player approvals where required, context retrieval, save compatibility, and rollback. Full power/item effects, the economy, and broader progression remain incomplete. The next fixed build target is step 6: the generative Quest Engine and validated reusable quest structures. Combat and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the first durable Quest Engine slice of step 6. The strict quest contract, persistent lifecycle, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, and rollback now exist. Seeded quest composition, Campaign Master quest tools, consequence application, milestone integration, combat, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 
