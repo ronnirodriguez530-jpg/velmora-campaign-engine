@@ -21,6 +21,21 @@ The first quest checkpoint provides:
 - Creation, activation, objective updates, completion, and recoverable failure
 - Atomic quest updates, event history, bounded context retrieval, save compatibility, and rollback
 
+## Working checkpoint 2
+
+The seeded quest composer now turns any active story thread into a validated quest structure:
+
+- The same campaign seed, source thread, and sequence always reproduce the same structure
+- Different seeds select among reusable investigate, protect, negotiate, and recovery patterns
+- Main, faction, side, personal, dynamic, and fragment types derive from the source thread
+- Player-visible threads create available quests; hidden threads create locked Director-only quests
+- Current locations, involved factions and NPCs, stage gates, and recovery paths carry forward
+- Each source thread may have only one unresolved quest at a time
+- Completed quests become prerequisites and links for later quests on the same thread
+- Every generated quest defaults to recoverable failure, meaningful neglect triggers, and exactly two outcomes
+
+The composer supplies story structure rather than finished prose. The Campaign Master remains responsible for interpreting objectives through the live world state and player choices.
+
 ## Branching rule
 
 Normal quests have exactly two major outcomes. Only a marked turning-point quest backed by an urgency-three story thread may have three. Smaller variations belong in consequence state rather than additional major branches.
@@ -44,8 +59,6 @@ Recoverable failure requires at least one recorded route forward. Permanent fail
 
 ## Still required
 
-- Seeded reusable quest composer using current story threads and campaign conditions
-- Specialized main, faction, and side-quest generation
 - Validated Campaign Master quest tools
 - Consequence application and recovery-quest replacement
 - Verified milestone rewards from completed turning points or major objectives

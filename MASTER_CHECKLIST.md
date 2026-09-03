@@ -70,9 +70,9 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Created-thread provenance records the exact player input, location, NPC, faction, or source thread that caused it
 - [x] Live creation cannot invent a new main plot, bypass the protected First Speaker arc, change visibility rules, or exceed current stage authority
 - [x] Unresolved generated threads are capped and retrieved through the existing bounded relevance context
-- [ ] Main-quest generator using approved canon, campaign conditions, and player-created goals
-- [ ] Faction-quest generator using faction agendas, local pressures, relationships, and current state
-- [ ] Reusable side-quest generator with objective, stakes, failure conditions, recovery routes, and consequences
+- [x] Main-quest generator using approved canon, campaign conditions, and player-created goals
+- [x] Faction-quest generator using faction agendas, local pressures, relationships, and current state
+- [x] Reusable side-quest generator with objective, stakes, failure conditions, recovery routes, and consequences
 - [ ] Scene composer connected to active threads, quests, NPCs, factions, locations, and consequences
 - [ ] Choice junctions, consequences, failures, and recovery paths generated and validated during play
 - [ ] Final-truth candidates and player-choice resolution
@@ -205,12 +205,12 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Main, faction, side, personal, dynamic, and fragment classification
 - [x] Player and Director perspective filtering with bounded retrieval
 - [x] Complete quest-ledger snapshot, rollback, and legacy snapshot compatibility
-- [ ] Seeded main, faction, and side-quest generation from current campaign conditions
+- [x] Seeded main, faction, side, personal, dynamic, and fragment quest generation from active story threads
 - [ ] Campaign Master quest tools and atomic consequence application
 - [ ] Verified milestone rewards and altered recovery-quest generation
 - [ ] Functional Quest page and actionable notifications
 
-Implemented quest scope: the durable contract and lifecycle work, but the Campaign Master cannot generate or manage quests yet. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+Implemented quest scope: the durable contract, lifecycle, and seeded reusable quest composer work. It deterministically derives validated quest structures from active story threads while preserving stage and visibility boundaries. The Campaign Master cannot invoke or manage those quests yet. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
 ### 13. Faction Engine — Partial scaffold
 
@@ -292,7 +292,7 @@ Implemented quest scope: the durable contract and lifecycle work, but the Campai
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 76 of 76 tests
+- [x] Current automated suite passes 80 of 80 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -391,7 +391,7 @@ Implemented quest scope: the durable contract and lifecycle work, but the Campai
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the first durable Quest Engine slice of step 6. The strict quest contract, persistent lifecycle, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, and rollback now exist. Seeded quest composition, Campaign Master quest tools, consequence application, milestone integration, combat, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the first two Quest Engine slices of step 6. The strict quest contract, persistent lifecycle, seeded thread-to-quest composition, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, and rollback now exist. Campaign Master quest tools, consequence application, milestone integration, combat, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 
