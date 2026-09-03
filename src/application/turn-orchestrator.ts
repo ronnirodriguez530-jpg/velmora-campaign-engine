@@ -48,6 +48,14 @@ async function requestValidPlan(
       if (new Set(createdIds).size !== createdIds.length) throw new Error("Created story thread IDs must be unique within a turn");
       const allNewIds = [...replacementIds, ...createdIds];
       if (new Set(allNewIds).size !== allNewIds.length) throw new Error("All new story thread IDs must be unique within a turn");
+      const questGenerations = plan.toolRequests.filter((request) => request.type === "generate_quest");
+      if (questGenerations.length > 2) throw new Error("A turn may generate at most two quests");
+      const questSourceIds = questGenerations.map((request) => request.sourceThreadId);
+      if (new Set(questSourceIds).size !== questSourceIds.length) throw new Error("A story thread may generate at most one quest per turn");
+      const questUpdates = plan.toolRequests.filter((request) => request.type === "manage_quest");
+      if (questUpdates.length > 4) throw new Error("A turn may manage at most four quests");
+      const questIds = questUpdates.map((request) => request.questId);
+      if (new Set(questIds).size !== questIds.length) throw new Error("A quest may be managed at most once per turn");
       for (const request of plan.toolRequests) validateToolRequest(db, content, context.campaignId, request);
       return plan;
     } catch (error) {

@@ -94,6 +94,14 @@ type SubmittedPlan = {
     recoveryPaths: string[];
     reason: string;
   }>;
+  questGenerations: Array<{ sourceThreadId: string; reason: string }>;
+  questUpdates: Array<{
+    questId: string;
+    action: "make_available" | "activate" | "complete_objective" | "fail_objective" | "complete" | "fail_recoverably";
+    objectiveId: string | null;
+    outcomeId: string | null;
+    reason: string;
+  }>;
   suggestedActions: [string, string];
   allowsFreeText: true;
 };
@@ -322,6 +330,37 @@ const PLAN_TOOL = {
           additionalProperties: false
         }
       },
+      questGenerations: {
+        type: "array",
+        maxItems: 2,
+        description: "Generate a validated quest from an active supplied story thread. The engine owns its structure, secrecy, stage range, and stable IDs.",
+        items: {
+          type: "object",
+          properties: {
+            sourceThreadId: { type: "string" },
+            reason: { type: "string" }
+          },
+          required: ["sourceThreadId", "reason"],
+          additionalProperties: false
+        }
+      },
+      questUpdates: {
+        type: "array",
+        maxItems: 4,
+        description: "Manage supplied quests only when the player's action justifies the exact lifecycle transition. Complete requires one recorded outcome.",
+        items: {
+          type: "object",
+          properties: {
+            questId: { type: "string" },
+            action: { type: "string", enum: ["make_available", "activate", "complete_objective", "fail_objective", "complete", "fail_recoverably"] },
+            objectiveId: { anyOf: [{ type: "string" }, { type: "null" }] },
+            outcomeId: { anyOf: [{ type: "string" }, { type: "null" }] },
+            reason: { type: "string" }
+          },
+          required: ["questId", "action", "objectiveId", "outcomeId", "reason"],
+          additionalProperties: false
+        }
+      },
       suggestedActions: {
         type: "array",
         items: { type: "string" },
@@ -330,7 +369,7 @@ const PLAN_TOOL = {
       },
       allowsFreeText: { type: "boolean", enum: [true] }
     },
-    required: ["summary", "majorActionProposal", "factionChanges", "npcReputationChanges", "movements", "factionPathAdvances", "locationConsequences", "npcRequests", "npcUpdates", "storyThreadUpdates", "storyThreadCreations", "suggestedActions", "allowsFreeText"],
+    required: ["summary", "majorActionProposal", "factionChanges", "npcReputationChanges", "movements", "factionPathAdvances", "locationConsequences", "npcRequests", "npcUpdates", "storyThreadUpdates", "storyThreadCreations", "questGenerations", "questUpdates", "suggestedActions", "allowsFreeText"],
     additionalProperties: false
   }
 } as const;
@@ -361,6 +400,7 @@ Use the supplied npcContext for portrayal. A full NPC may use only that NPC's su
 For existing NPCs directly affected by the turn, submit a bounded npcUpdate. Record only memories and relationship changes justified by the player's action. Standing may move only one step. New knowledge must reference an existing supplied public fact; never invent a fact or reveal a restricted fact. Ordinary NPC updates may not cause death. Mark involvement as ends when that NPC should leave the foreground; category changes are owned by the engine.
 Manage story continuity through storyThreadUpdates. Advance only a thread materially changed by the player's action. Activate dormant threads when play reaches them; block a route only if it retains a recovery path; resolve only when its promise is actually answered. Replace a broken route only by consuming one of that thread's exact recoveryPaths. A replacement is a route around the same story problem, not permission to invent a new canon truth. Never alter visibility or stage limits, and never surface a Director-only thread in player-visible narration.
 Create a new thread only when this turn genuinely produces durable unfinished business. Use storyThreadCreations for a player_goal, witnessed_consequence, npc_commitment, faction_development, or a branch from an unresolved supplied thread. Every creation must cite its exact basis and include a recovery path. Never create a main thread, new canon truth, predetermined answer, unsupported conspiracy, or early version of a later-stage event. Player goals, witnessed consequences, and NPC commitments remain player-visible. Unwitnessed faction developments remain Director-only. Existing-thread branches inherit the source's visibility and may not outlive its stage gate.
+Use questGenerations only to ask the engine to build a quest from an active supplied story thread; do not write the quest yourself. Use questUpdates only for a transition justified by the current action. Resolve one active objective at a time. Complete a quest only after every objective is complete and select exactly one of its recorded outcomes. Outcome consequences must be submitted through the ordinary validated faction, NPC, location, or story-thread tools in the same plan so the engine commits the outcome and its effects atomically. Fail recoverably only when the supplied quest records a recovery path; never invent permanent failure authority.
 If actionResolution is automatic, honor its reason, including when the declared intent is impossible. If actionResolution contains a roll, resolve the action in strict accordance with that outcome. Success with a cost achieves the immediate intent but introduces a proportional complication. Failure changes the situation and preserves a credible recovery route instead of simply stopping play. Critical results remain proportional and never accomplish the impossible or break canon.
 Always call submit_turn_plan exactly once. Provide exactly two suggested actions while allowing free text. If validation feedback is supplied, repair only the rejected fields.`;
 
@@ -379,11 +419,13 @@ function parseSubmittedPlan(value: unknown): DirectorTurnPlan {
   const plan = value as Partial<SubmittedPlan>;
   if (typeof plan.summary !== "string" || plan.summary.trim().length === 0) throw new Error("Cloud Director plan requires a summary");
   if (typeof plan.majorActionProposal !== "boolean") throw new Error("Cloud Director plan requires majorActionProposal");
-  if (!Array.isArray(plan.factionChanges) || !Array.isArray(plan.npcReputationChanges) || !Array.isArray(plan.movements) || !Array.isArray(plan.factionPathAdvances) || !Array.isArray(plan.locationConsequences) || !Array.isArray(plan.npcRequests) || !Array.isArray(plan.npcUpdates) || !Array.isArray(plan.storyThreadUpdates) || !Array.isArray(plan.storyThreadCreations)) throw new Error("Cloud Director plan requires change arrays");
+  if (!Array.isArray(plan.factionChanges) || !Array.isArray(plan.npcReputationChanges) || !Array.isArray(plan.movements) || !Array.isArray(plan.factionPathAdvances) || !Array.isArray(plan.locationConsequences) || !Array.isArray(plan.npcRequests) || !Array.isArray(plan.npcUpdates) || !Array.isArray(plan.storyThreadUpdates) || !Array.isArray(plan.storyThreadCreations) || !Array.isArray(plan.questGenerations) || !Array.isArray(plan.questUpdates)) throw new Error("Cloud Director plan requires change arrays");
   if (plan.npcRequests.length > 1) throw new Error("Cloud Director may request at most one minor NPC per turn");
   if (plan.npcUpdates.length > 20) throw new Error("Cloud Director may update at most twenty affected NPCs per turn");
   if (plan.storyThreadUpdates.length > 4) throw new Error("Cloud Director may update at most four story threads per turn");
   if (plan.storyThreadCreations.length > 2) throw new Error("Cloud Director may create at most two story threads per turn");
+  if (plan.questGenerations.length > 2) throw new Error("Cloud Director may generate at most two quests per turn");
+  if (plan.questUpdates.length > 4) throw new Error("Cloud Director may update at most four quests per turn");
   if (!Array.isArray(plan.suggestedActions) || plan.suggestedActions.length !== 2 || !plan.suggestedActions.every((item) => typeof item === "string")) {
     throw new Error("Cloud Director plan requires exactly two suggested actions");
   }
@@ -398,6 +440,8 @@ function parseSubmittedPlan(value: unknown): DirectorTurnPlan {
     ...plan.npcUpdates.map((change) => ({ type: "manage_npc_turn" as const, ...change })),
     ...plan.storyThreadUpdates.map((change) => ({ type: "manage_story_thread" as const, ...change })),
     ...plan.storyThreadCreations.map((change) => ({ type: "create_story_thread" as const, ...change })),
+    ...plan.questGenerations.map((change) => ({ type: "generate_quest" as const, ...change })),
+    ...plan.questUpdates.map((change) => ({ type: "manage_quest" as const, ...change })),
     ...plan.movements.map((change) => ({ type: "move_player" as const, ...change }))
   ];
   return {

@@ -3,6 +3,8 @@ import { getCharacterReputation, getFactionCondition, getFactionPathProgress } f
 import type { DatabaseSync } from "node:sqlite";
 import { validateNpcTurnUpdate } from "../npc/npc-turn-manager.ts";
 import { validateStoryThreadCreation, validateStoryThreadUpdate } from "../application/story-thread-manager.ts";
+import { validateGeneratedQuest } from "../application/quest-generator.ts";
+import { validateQuestManagement } from "../application/quest-system.ts";
 
 export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, campaignId: string, request: ToolRequest): void {
   if (request.reason.trim().length < 3) throw new Error("Tool request requires a meaningful reason");
@@ -75,6 +77,16 @@ export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, c
 
   if (request.type === "create_story_thread") {
     validateStoryThreadCreation(db, content, campaignId, request);
+    return;
+  }
+
+  if (request.type === "generate_quest") {
+    validateGeneratedQuest(db, content, campaignId, request.sourceThreadId);
+    return;
+  }
+
+  if (request.type === "manage_quest") {
+    validateQuestManagement(db, campaignId, request);
     return;
   }
 

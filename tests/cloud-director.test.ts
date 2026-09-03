@@ -93,6 +93,8 @@ test("cloud Director submits a strict bounded plan without executing it", async 
           npcUpdates: [],
           storyThreadUpdates: [],
           storyThreadCreations: [],
+          questGenerations: [],
+          questUpdates: [],
           suggestedActions: ["Ask what the League needs", "Return to the avenue"],
           allowsFreeText: true
         })
@@ -136,6 +138,8 @@ test("cloud Director can request one bounded minor NPC without creating it direc
         npcUpdates: [],
         storyThreadUpdates: [],
         storyThreadCreations: [],
+        questGenerations: [],
+        questUpdates: [],
         suggestedActions: ["Question the repairer", "Inspect the lamp"],
         allowsFreeText: true
       })
@@ -178,6 +182,8 @@ test("cloud Director can propose one sourced non-main story thread", async () =>
           recoveryPaths: ["A survivor can provide another lead."],
           reason: "The player explicitly accepted unfinished responsibility."
         }],
+        questGenerations: [],
+        questUpdates: [],
         suggestedActions: ["Follow the rescue route", "Question survivors"],
         allowsFreeText: true
       })
@@ -204,4 +210,36 @@ test("cloud Campaign Master presents a grounded story scene", async () => {
   assert.equal(presentation.source, "cloud");
   assert.equal(presentation.sceneId, scene.id);
   assert.equal(presentation.suggestedActions.length, 2);
+});
+
+test("cloud Director can request engine-owned quest generation", async () => {
+  const fakeFetch = async () => new Response(JSON.stringify({
+    output: [{
+      type: "function_call",
+      name: "submit_turn_plan",
+      arguments: JSON.stringify({
+        summary: "The opening pressure becomes a concrete objective.",
+        majorActionProposal: true,
+        factionChanges: [],
+        npcReputationChanges: [],
+        movements: [],
+        factionPathAdvances: [],
+        locationConsequences: [],
+        npcRequests: [],
+        npcUpdates: [],
+        storyThreadUpdates: [],
+        storyThreadCreations: [],
+        questGenerations: [{
+          sourceThreadId: "THREAD-OPENING-PRESSURE",
+          reason: "The active visible crisis needs a playable quest structure."
+        }],
+        questUpdates: [],
+        suggestedActions: ["Accept the objective", "Study the immediate danger"],
+        allowsFreeText: true
+      })
+    }]
+  }), { status: 200, headers: { "content-type": "application/json" } });
+  const plan = await new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch }).planTurn(context, "respond to the crisis");
+  assert.equal(plan.toolRequests.length, 1);
+  assert.equal(plan.toolRequests[0]?.type, "generate_quest");
 });

@@ -1,5 +1,5 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { CampaignStage, QuestInstance, QuestObjectiveState, StoryThread, VelmoraContent } from "../domain/types.ts";
+import type { CampaignStage, ManageQuestRequest, QuestInstance, QuestObjectiveState, StoryThread, VelmoraContent } from "../domain/types.ts";
 import { appendEvent, listQuestInstances, listStoryThreads, persistQuestInstance } from "../persistence/database.ts";
 
 const STAGE_ORDER: Record<CampaignStage, number> = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 };
@@ -133,9 +133,14 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
   return sourceThread;
 }
 
-export function createQuestInstance(db: DatabaseSync, content: VelmoraContent, campaignId: string, input: CreateQuestInput): QuestInstance {
+export function applyQuestCreation(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignId: string,
+  turn: number,
+  input: CreateQuestInput
+): QuestInstance {
   validateQuestCreation(db, content, campaignId, input);
-  const { turn } = getCampaignState(db, campaignId);
   const quest: QuestInstance = {
     ...input,
     title: input.title.trim(),
@@ -155,21 +160,27 @@ export function createQuestInstance(db: DatabaseSync, content: VelmoraContent, c
     createdTurn: turn,
     updatedTurn: turn
   };
+  persistQuestInstance(db, quest);
+  appendEvent(db, campaignId, turn, "quest_created", {
+    questId: quest.questId,
+    questType: quest.questType,
+    sourceThreadId: quest.sourceThreadId,
+    visibility: quest.visibility
+  });
+  return getQuest(db, campaignId, quest.questId);
+}
+
+export function createQuestInstance(db: DatabaseSync, content: VelmoraContent, campaignId: string, input: CreateQuestInput): QuestInstance {
+  const { turn } = getCampaignState(db, campaignId);
   db.exec("BEGIN IMMEDIATE");
   try {
-    persistQuestInstance(db, quest);
-    appendEvent(db, campaignId, turn, "quest_created", {
-      questId: quest.questId,
-      questType: quest.questType,
-      sourceThreadId: quest.sourceThreadId,
-      visibility: quest.visibility
-    });
+    const quest = applyQuestCreation(db, content, campaignId, turn, input);
     db.exec("COMMIT");
+    return quest;
   } catch (error) {
     db.exec("ROLLBACK");
     throw error;
   }
-  return getQuest(db, campaignId, quest.questId);
 }
 
 export function makeQuestAvailable(db: DatabaseSync, campaignId: string, questId: string): QuestInstance {
@@ -237,4 +248,93 @@ export function failQuestRecoverably(db: DatabaseSync, campaignId: string, quest
   const turn = getCampaignState(db, campaignId).turn;
   const updated: QuestInstance = { ...quest, state: "failed", updatedTurn: turn };
   return commitQuestUpdate(db, updated, "quest_failed_recoverably", { questId, recoveryPaths: quest.recoveryPaths });
+}
+
+export function validateQuestManagement(
+  db: DatabaseSync,
+  campaignId: string,
+  request: ManageQuestRequest
+): QuestInstance {
+  const quest = getQuest(db, campaignId, request.questId);
+  const campaign = getCampaignState(db, campaignId);
+  const requiresObjective = request.action === "complete_objective" || request.action === "fail_objective";
+  const requiresOutcome = request.action === "complete";
+  if (requiresObjective !== (request.objectiveId !== null)) {
+    throw new Error("This quest action has an invalid objective selection");
+  }
+  if (requiresOutcome !== (request.outcomeId !== null)) {
+    throw new Error("This quest action has an invalid outcome selection");
+  }
+
+  if (request.action === "make_available") {
+    if (quest.state !== "locked") throw new Error("Only a locked quest can become available");
+    if (STAGE_ORDER[campaign.stage] < STAGE_ORDER[quest.minimumStage] || STAGE_ORDER[campaign.stage] > STAGE_ORDER[quest.maximumStage]) {
+      throw new Error("Quest is outside its permitted campaign stage");
+    }
+    const quests = new Map(listQuestInstances(db, campaignId).map((candidate) => [candidate.questId, candidate]));
+    if (quest.prerequisiteQuestIds.some((requiredId) => quests.get(requiredId)?.state !== "completed")) {
+      throw new Error("Quest prerequisites are not complete");
+    }
+  } else if (request.action === "activate") {
+    if (quest.state !== "available") throw new Error("Only an available quest can be activated");
+  } else if (requiresObjective) {
+    if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can update objectives");
+    const objective = quest.objectives.find((candidate) => candidate.objectiveId === request.objectiveId);
+    if (!objective) throw new Error(`Unknown quest objective ${request.objectiveId}`);
+    if (objective.state !== "active") throw new Error("Only the active quest objective can be resolved");
+  } else if (request.action === "complete") {
+    if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can be completed");
+    if (quest.objectives.some((objective) => objective.state !== "completed")) throw new Error("Every quest objective must be completed first");
+    if (!quest.outcomes.some((outcome) => outcome.outcomeId === request.outcomeId)) throw new Error(`Unknown quest outcome ${request.outcomeId}`);
+  } else if (request.action === "fail_recoverably") {
+    if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can fail");
+    if (quest.failureMode !== "recoverable" || quest.recoveryPaths.length === 0) {
+      throw new Error("Permanent quest failure requires verified deadline, choice, or world-event authority");
+    }
+  }
+  return quest;
+}
+
+export function applyQuestManagement(
+  db: DatabaseSync,
+  campaignId: string,
+  turn: number,
+  request: ManageQuestRequest
+): QuestInstance {
+  const quest = validateQuestManagement(db, campaignId, request);
+  let updated: QuestInstance;
+  let eventType: string;
+  let payload: Record<string, unknown> = { questId: quest.questId };
+
+  if (request.action === "make_available") {
+    updated = { ...quest, state: "available", updatedTurn: turn };
+    eventType = "quest_available";
+    payload = { ...payload, prerequisiteQuestIds: quest.prerequisiteQuestIds };
+  } else if (request.action === "activate") {
+    const objectives = quest.objectives.map((objective, index) => index === 0 ? { ...objective, state: "active" as const } : objective);
+    updated = { ...quest, state: "active", objectives, updatedTurn: turn };
+    eventType = "quest_activated";
+  } else if (request.action === "complete_objective" || request.action === "fail_objective") {
+    const objectiveState = request.action === "complete_objective" ? "completed" as const : "failed" as const;
+    const objectives = quest.objectives.map((objective) => objective.objectiveId === request.objectiveId ? { ...objective, state: objectiveState } : objective);
+    if (objectiveState === "completed") {
+      const nextPendingIndex = objectives.findIndex((objective) => objective.state === "pending");
+      if (nextPendingIndex >= 0) objectives[nextPendingIndex] = { ...objectives[nextPendingIndex]!, state: "active" };
+    }
+    updated = { ...quest, objectives, state: objectiveState === "failed" ? "changed" : quest.state, updatedTurn: turn };
+    eventType = "quest_objective_updated";
+    payload = { ...payload, objectiveId: request.objectiveId, state: objectiveState };
+  } else if (request.action === "complete") {
+    updated = { ...quest, state: "completed", selectedOutcomeId: request.outcomeId, updatedTurn: turn };
+    eventType = "quest_completed";
+    payload = { ...payload, outcomeId: request.outcomeId };
+  } else {
+    updated = { ...quest, state: "failed", updatedTurn: turn };
+    eventType = "quest_failed_recoverably";
+    payload = { ...payload, recoveryPaths: quest.recoveryPaths };
+  }
+
+  persistQuestInstance(db, updated);
+  appendEvent(db, campaignId, turn, eventType, payload);
+  return getQuest(db, campaignId, quest.questId);
 }

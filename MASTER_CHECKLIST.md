@@ -193,7 +193,7 @@ Implemented item scope: eight bounded definitions prove every first-release item
 - [ ] Ability and equipment progression connections
 - [ ] Later skill-tree module kept separate until prerequisites exist
 
-Implemented progression scope: each unique validated major milestone awards one advancement opportunity. Milestone awards remain internal-only until the Quest Engine can verify completed source records. See `PROGRESSION_SYSTEM_V1.md`.
+Implemented progression scope: each unique validated major milestone awards one advancement opportunity. The Quest Engine can verify completed turning-point sources; major-objective designation remains unfinished. See `PROGRESSION_SYSTEM_V1.md`.
 
 ### 12. Quest Engine — Partial
 
@@ -206,11 +206,11 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Player and Director perspective filtering with bounded retrieval
 - [x] Complete quest-ledger snapshot, rollback, and legacy snapshot compatibility
 - [x] Seeded main, faction, side, personal, dynamic, and fragment quest generation from active story threads
-- [ ] Campaign Master quest tools and atomic consequence application
+- [x] Campaign Master quest tools and atomic outcome/consequence application
 - [ ] Verified milestone rewards and altered recovery-quest generation
 - [ ] Functional Quest page and actionable notifications
 
-Implemented quest scope: the durable contract, lifecycle, and seeded reusable quest composer work. It deterministically derives validated quest structures from active story threads while preserving stage and visibility boundaries. The Campaign Master cannot invoke or manage those quests yet. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+Implemented quest scope: the durable contract, lifecycle, seeded reusable composer, and bounded Campaign Master quest controls work. Quest outcomes and justified world consequences commit together through the atomic turn pipeline while preserving stage, prerequisite, visibility, and recovery boundaries. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
 Verified progression bridge: a completed preapproved turning-point quest with a recorded outcome can award one advancement opportunity. Ordinary or incomplete quests and duplicate awards are rejected. Major-objective designation and recovery-quest replacement remain unfinished.
 
@@ -294,7 +294,7 @@ Verified progression bridge: a completed preapproved turning-point quest with a 
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 81 of 81 tests
+- [x] Current automated suite passes 85 of 85 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -393,7 +393,7 @@ Verified progression bridge: a completed preapproved turning-point quest with a 
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the first Quest Engine slices of step 6. The strict quest contract, persistent lifecycle, seeded thread-to-quest composition, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, and verified turning-point progression awards now exist. Campaign Master quest tools, consequence application, major-objective awards, recovery replacement, combat, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the core Quest Engine slices of step 6. The strict quest contract, persistent lifecycle, seeded thread-to-quest composition, bounded Campaign Master quest controls, atomic outcome consequences, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, and verified turning-point progression awards now exist. Major-objective awards, altered recovery-quest replacement, the Quest page, combat, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

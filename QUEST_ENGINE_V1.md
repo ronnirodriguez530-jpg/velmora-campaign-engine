@@ -40,6 +40,19 @@ The composer supplies story structure rather than finished prose. The Campaign M
 
 Completed turning-point quests can now award one advancement opportunity through a verified quest record. The award requires a completed quest, a selected recorded outcome, and the preapproved turning-point flag. Incomplete and ordinary quests cannot award progression automatically, and duplicate source awards remain blocked.
 
+## Working checkpoint 3B
+
+The live Campaign Master can now request bounded quest operations through the validated turn pipeline:
+
+- Generate an engine-owned quest from an active supplied story thread
+- Make a locked quest available after its prerequisites and stage gate are satisfied
+- Activate an available quest
+- Complete or fail one currently active objective
+- Complete a quest with exactly one recorded outcome
+- Fail a recoverable quest only when it already contains a recovery path
+
+A turn may generate at most two quests and manage at most four, with each source thread or quest used only once per turn. Quest completion and its requested faction, NPC, location, or story-thread consequences share the existing atomic world-turn transaction. If any requested change fails validation or execution, none of the quest or consequence changes commit.
+
 ## Branching rule
 
 Normal quests have exactly two major outcomes. Only a marked turning-point quest backed by an urgency-three story thread may have three. Smaller variations belong in consequence state rather than additional major branches.
@@ -58,12 +71,11 @@ Recoverable failure requires at least one recorded route forward. Permanent fail
 - A quest cannot exceed its source thread's visibility or campaign-stage range.
 - Locked player quests remain outside player context until their prerequisites are satisfied and they become available.
 - Director-only quests remain outside player narration.
-- Quest consequence seeds describe possible durable changes but do not apply them without validated engine tools.
-- Quest completion does not yet award progression automatically.
+- Quest consequence seeds remain proposals; the Campaign Master must express justified durable effects through validated tools in the same atomic turn.
+- Only completed preapproved turning points can currently award quest progression automatically.
 
 ## Still required
 
-- Validated Campaign Master quest tools
-- Consequence application and recovery-quest replacement
+- Altered recovery-quest replacement
 - Major-objective milestone designation and awards
 - Quest notifications and browser page

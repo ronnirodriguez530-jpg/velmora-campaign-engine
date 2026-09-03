@@ -3,7 +3,7 @@ import type { CreateQuestInput } from "./quest-system.ts";
 import type { QuestType, StoryThread, VelmoraContent } from "../domain/types.ts";
 import { listQuestInstances, listStoryThreads } from "../persistence/database.ts";
 import { seededChoice } from "./seeded-random.ts";
-import { createQuestInstance } from "./quest-system.ts";
+import { applyQuestCreation, createQuestInstance, validateQuestCreation } from "./quest-system.ts";
 
 type QuestPattern = {
   key: string;
@@ -138,4 +138,23 @@ export function generateQuestFromThread(
   threadId: string
 ) {
   return createQuestInstance(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId));
+}
+
+export function validateGeneratedQuest(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignId: string,
+  threadId: string
+): void {
+  validateQuestCreation(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId));
+}
+
+export function applyGeneratedQuest(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignId: string,
+  threadId: string,
+  turn: number
+) {
+  return applyQuestCreation(db, content, campaignId, turn, composeQuestFromThread(db, content, campaignId, threadId));
 }

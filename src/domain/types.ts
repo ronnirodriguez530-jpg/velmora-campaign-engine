@@ -691,7 +691,22 @@ export type CreateStoryThreadRequest = {
   reason: string;
 };
 
-export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest | ManageStoryThreadRequest | CreateStoryThreadRequest;
+export type GenerateQuestRequest = {
+  type: "generate_quest";
+  sourceThreadId: string;
+  reason: string;
+};
+
+export type ManageQuestRequest = {
+  type: "manage_quest";
+  questId: string;
+  action: "make_available" | "activate" | "complete_objective" | "fail_objective" | "complete" | "fail_recoverably";
+  objectiveId: string | null;
+  outcomeId: string | null;
+  reason: string;
+};
+
+export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest | ManageStoryThreadRequest | CreateStoryThreadRequest | GenerateQuestRequest | ManageQuestRequest;
 
 export type DirectorTurnPlan = {
   summary: string;
