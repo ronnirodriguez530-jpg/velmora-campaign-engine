@@ -274,7 +274,7 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 50 of 50 tests
+- [x] Current automated suite passes 60 of 60 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -373,4 +373,8 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 
 ## Current position
 
-Velmora is currently completing step 2. The world foundation, application shell, persistence layer, NPC Engine foundation, seeded campaign blueprint, story-thread ledger, hidden/player context separation, validated thread tools, and the single-player-character foundation exist. Quests, combat, powers, items, progression, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 4. The world foundation, application shell, persistence layer, NPC Engine foundation, seeded campaign blueprint, story-thread ledger, hidden/player context separation, validated thread tools, single-player-character foundation, and core action/dice resolution exist. Work is now beginning on step 5: minimum powers, items, and progression data. Quests, combat, usable powers, usable items, progression, and the complete DM Core do not yet exist.
+
+## Checkpoint discipline
+
+Each completed implementation section must update this checklist, pass the full automated suite, receive a local Git commit, and be pushed to the public GitHub `main` branch before the section is reported complete. Partial work must remain clearly marked partial and must not be described as playable functionality.
