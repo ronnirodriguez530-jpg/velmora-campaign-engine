@@ -104,6 +104,19 @@ export function validateContent(content: VelmoraContent): void {
     }
   }
 
+  assert(content.items.length >= 7, "The first-release item catalog requires at least seven bounded items");
+  assert(new Set(content.items.map((item) => item.id)).size === content.items.length, "Item IDs must be unique");
+  for (const item of content.items) {
+    assert(item.id.startsWith("ITM-"), `Item ${item.id} requires a stable ITM identifier`);
+    assert(item.name.trim().length > 0 && item.summary.trim().length > 0, `Item ${item.id} requires a name and summary`);
+    assert(["weapon", "armor", "shield", "consumable", "tool", "relic", "quest"].includes(item.category), `Item ${item.id} has an invalid category`);
+    assert(Number.isInteger(item.maxStack) && item.maxStack >= 1 && item.maxStack <= 99, `Item ${item.id} has an invalid stack limit`);
+    assert(item.stackable || item.maxStack === 1, `Non-stackable item ${item.id} must have a maximum stack of one`);
+    assert(item.defenseBonus >= 0 && item.defenseBonus <= 2, `Item ${item.id} defense bonus must be 0-2`);
+    assert(item.equipmentSlot !== null || item.defenseBonus === 0, `Unequippable item ${item.id} cannot grant defense`);
+    assert(item.tags.length > 0 && item.limits.length > 0, `Item ${item.id} requires tags and explicit limits`);
+  }
+
   assert(content.sceneTemplates.length >= 4, "At least one mechanical scene scaffold per campaign stage is required");
   for (const template of content.sceneTemplates) {
     assert(template.stages.length > 0, `Scene template ${template.id} requires a stage`);

@@ -1,0 +1,98 @@
+[
+  {
+    "id": "ITM-FIELD-KNIFE",
+    "name": "Field Knife",
+    "category": "weapon",
+    "summary": "A durable close-range tool and weapon common in Velmora.",
+    "stackable": false,
+    "maxStack": 1,
+    "equipmentSlot": "main_hand",
+    "defenseBonus": 0,
+    "tags": ["mundane", "close-range", "tool"],
+    "limits": ["Damage and attack properties remain unavailable until combat rules exist."]
+  },
+  {
+    "id": "ITM-SCRAP-CROSSBOW",
+    "name": "Scrap Crossbow",
+    "category": "weapon",
+    "summary": "A repairable ranged weapon assembled for the city's limited supply lines.",
+    "stackable": false,
+    "maxStack": 1,
+    "equipmentSlot": "main_hand",
+    "defenseBonus": 0,
+    "tags": ["mundane", "ranged", "scrap-built"],
+    "limits": ["Ammunition, range, damage, and reload rules remain unavailable until combat exists."]
+  },
+  {
+    "id": "ITM-REINFORCED-COAT",
+    "name": "Reinforced Coat",
+    "category": "armor",
+    "summary": "Layered everyday protection that grants a small defense increase without powered armor.",
+    "stackable": false,
+    "maxStack": 1,
+    "equipmentSlot": "body",
+    "defenseBonus": 1,
+    "tags": ["mundane", "light-armor", "protective"],
+    "limits": ["Grants only its listed defense bonus and provides no immunity or damage reduction."]
+  },
+  {
+    "id": "ITM-WARDED-RIOT-SHIELD",
+    "name": "Warded Riot Shield",
+    "category": "shield",
+    "summary": "A salvaged riot shield fitted with a rechargeable barrier rune.",
+    "stackable": false,
+    "maxStack": 1,
+    "equipmentSlot": "off_hand",
+    "defenseBonus": 1,
+    "tags": ["magic-tech", "shield", "scrap-built"],
+    "limits": ["Grants only its listed defense bonus until blocking and charge rules exist."]
+  },
+  {
+    "id": "ITM-FIRST-AID-WRAP",
+    "name": "First-Aid Wrap",
+    "category": "consumable",
+    "summary": "A single-use bundle for stabilizing and dressing ordinary injuries.",
+    "stackable": true,
+    "maxStack": 5,
+    "equipmentSlot": null,
+    "defenseBonus": 0,
+    "tags": ["medical", "single-use", "mundane"],
+    "limits": ["Can be consumed, but healing values remain unavailable until recovery rules exist."]
+  },
+  {
+    "id": "ITM-RIFT-DETECTOR",
+    "name": "Rift Detector",
+    "category": "tool",
+    "summary": "Institutional magic-tech that measures nearby dimensional instability.",
+    "stackable": false,
+    "maxStack": 1,
+    "equipmentSlot": "utility",
+    "defenseBonus": 0,
+    "tags": ["magic-tech", "detection", "containment"],
+    "limits": ["Detects instability only in the current scene and cannot reveal hidden story truth."]
+  },
+  {
+    "id": "ITM-NULL-LANTERN",
+    "name": "Null Lantern",
+    "category": "relic",
+    "summary": "A relic that suppresses weak magic inside its light.",
+    "stackable": false,
+    "maxStack": 1,
+    "equipmentSlot": "off_hand",
+    "defenseBonus": 0,
+    "tags": ["relic", "suppression", "containment"],
+    "limits": ["Cannot suppress the central Tear, a stage-locked truth, or magic above its eventual approved strength."]
+  },
+  {
+    "id": "ITM-SEALED-COUNCIL-RECORDS",
+    "name": "Sealed Council Records",
+    "category": "quest",
+    "summary": "Official records whose meaning depends on the quest or story thread that introduced them.",
+    "stackable": false,
+    "maxStack": 1,
+    "equipmentSlot": null,
+    "defenseBonus": 0,
+    "tags": ["quest", "evidence", "council"],
+    "limits": ["Possession does not reveal the records' contents or create a quest without validated story authority."]
+  }
+]

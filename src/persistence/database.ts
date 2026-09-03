@@ -18,6 +18,7 @@ import type {
   NpcRecord,
   NpcStatus,
   PlayerPower,
+  PlayerInventoryItem,
   NpcRelationship,
   PlayerCharacter,
   RelationshipQuality,
@@ -59,6 +60,7 @@ export type StateSnapshot = {
   storyThreads?: StoryThread[];
   playerCharacter?: PlayerCharacter | null;
   playerPowers?: PlayerPower[];
+  playerInventory?: PlayerInventoryItem[];
 };
 
 export function openDatabase(path: string): DatabaseSync {
@@ -553,6 +555,25 @@ function migrate(db: DatabaseSync): void {
     `);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(21, ?)").run(new Date().toISOString());
   }
+  const migrationTwentyTwo = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 22").get() as { present: number } | undefined;
+  if (!migrationTwentyTwo) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS player_inventory (
+        campaign_id TEXT NOT NULL,
+        item_id TEXT NOT NULL,
+        quantity INTEGER NOT NULL CHECK(quantity BETWEEN 1 AND 99),
+        equipped_slot TEXT CHECK(equipped_slot IS NULL OR equipped_slot IN ('main_hand','off_hand','body','utility')),
+        acquisition_source TEXT NOT NULL CHECK(acquisition_source IN ('starting','found','reward','purchased','crafted','given')),
+        acquired_turn INTEGER NOT NULL,
+        updated_turn INTEGER NOT NULL,
+        PRIMARY KEY (campaign_id, item_id),
+        FOREIGN KEY (campaign_id) REFERENCES player_characters(campaign_id) ON DELETE CASCADE
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS player_one_item_per_slot_idx
+        ON player_inventory(campaign_id, equipped_slot) WHERE equipped_slot IS NOT NULL;
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(22, ?)").run(new Date().toISOString());
+  }
 }
 
 const STAGE_ORDER = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 } as const;
@@ -778,6 +799,33 @@ export function persistPlayerPower(db: DatabaseSync, power: PlayerPower): void {
       power.active ? 1 : 0,
       power.acquiredTurn,
       power.activatedTurn
+    );
+}
+
+export function listPlayerInventory(db: DatabaseSync, campaignId: string): PlayerInventoryItem[] {
+  return db.prepare(`SELECT campaign_id AS campaignId, item_id AS itemId, quantity,
+      equipped_slot AS equippedSlot, acquisition_source AS acquisitionSource,
+      acquired_turn AS acquiredTurn, updated_turn AS updatedTurn
+    FROM player_inventory WHERE campaign_id = ? ORDER BY item_id`)
+    .all(campaignId) as PlayerInventoryItem[];
+}
+
+export function persistPlayerInventoryItem(db: DatabaseSync, item: PlayerInventoryItem): void {
+  db.prepare(`INSERT INTO player_inventory(
+      campaign_id, item_id, quantity, equipped_slot, acquisition_source, acquired_turn, updated_turn
+    ) VALUES(?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(campaign_id, item_id) DO UPDATE SET
+      quantity = excluded.quantity, equipped_slot = excluded.equipped_slot,
+      acquisition_source = excluded.acquisition_source, acquired_turn = excluded.acquired_turn,
+      updated_turn = excluded.updated_turn`)
+    .run(
+      item.campaignId,
+      item.itemId,
+      item.quantity,
+      item.equippedSlot,
+      item.acquisitionSource,
+      item.acquiredTurn,
+      item.updatedTurn
     );
 }
 
@@ -1455,6 +1503,7 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
   const storyThreads = listStoryThreads(db, campaignId);
   const playerCharacter = getPlayerCharacter(db, campaignId) ?? null;
   const playerPowers = listPlayerPowers(db, campaignId);
+  const playerInventory = listPlayerInventory(db, campaignId);
   return {
     campaign,
     factions,
@@ -1464,7 +1513,8 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
     npcState: { records, designs, facts, knowledge, memories, relationships, novelty },
     storyThreads,
     playerCharacter,
-    playerPowers
+    playerPowers,
+    playerInventory
   };
 }
 
@@ -1549,6 +1599,10 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
     if (snapshot.playerPowers !== undefined) {
       db.prepare("DELETE FROM player_powers WHERE campaign_id = ?").run(campaign.id);
       for (const power of snapshot.playerPowers) persistPlayerPower(db, power);
+    }
+    if (snapshot.playerInventory !== undefined) {
+      db.prepare("DELETE FROM player_inventory WHERE campaign_id = ?").run(campaign.id);
+      for (const item of snapshot.playerInventory) persistPlayerInventoryItem(db, item);
     }
     if (snapshot.npcState) {
       db.prepare("DELETE FROM npc_relationship_qualities WHERE campaign_id = ?").run(campaign.id);

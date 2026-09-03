@@ -126,6 +126,7 @@ export type VelmoraContent = {
   openingSpawns: OpeningSpawnDefinition[];
   storyBlueprintPools: StoryBlueprintPools;
   powers: PowerDefinition[];
+  items: ItemDefinition[];
   sceneTemplates: SceneTemplate[];
 };
 
@@ -246,6 +247,33 @@ export type PlayerPower = {
   activatedTurn: number | null;
 };
 
+export type ItemCategory = "weapon" | "armor" | "shield" | "consumable" | "tool" | "relic" | "quest";
+export type EquipmentSlot = "main_hand" | "off_hand" | "body" | "utility";
+export type ItemAcquisitionSource = "starting" | "found" | "reward" | "purchased" | "crafted" | "given";
+
+export type ItemDefinition = {
+  id: string;
+  name: string;
+  category: ItemCategory;
+  summary: string;
+  stackable: boolean;
+  maxStack: number;
+  equipmentSlot: EquipmentSlot | null;
+  defenseBonus: number;
+  tags: string[];
+  limits: string[];
+};
+
+export type PlayerInventoryItem = {
+  campaignId: string;
+  itemId: string;
+  quantity: number;
+  equippedSlot: EquipmentSlot | null;
+  acquisitionSource: ItemAcquisitionSource;
+  acquiredTurn: number;
+  updatedTurn: number;
+};
+
 export type PerspectiveContext = {
   campaignId: string;
   seed: string;
@@ -267,6 +295,7 @@ export type PerspectiveContext = {
   publicFacts: WorldFact[];
   playerCharacter: PlayerCharacter | null;
   playerPowers: Array<PlayerPower & { definition: PowerDefinition }>;
+  playerInventory: Array<PlayerInventoryItem & { definition: ItemDefinition }>;
   playerKnownStoryThreads: StoryThread[];
   visibleOpeningPressure: OpeningPressureDefinition | null;
 };

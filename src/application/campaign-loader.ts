@@ -19,6 +19,7 @@ export async function loadVelmoraContent(root: string): Promise<VelmoraContent> 
     openingSpawns: await readJson(join(base, "opening-spawns.json")),
     storyBlueprintPools: await readJson(join(base, "story-blueprint-pools.json")),
     powers: await readJson(join(base, "powers.json")),
+    items: await readJson(join(base, "items.json")),
     sceneTemplates: await readJson(join(base, "templates", "scene-templates.json"))
   };
   validateContent(content);

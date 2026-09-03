@@ -168,15 +168,19 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 
 Implemented power scope: one sustained magical effect may be active at a time, and activating another ends the first. Instant and fixed-duration effects do not use that slot. Damage interruption, unconsciousness, combat values, proposal UI, and upgrades remain unavailable until their prerequisite systems exist. See `POWER_SYSTEM_V1.md`.
 
-### 10. Inventory, equipment, and economy — Missing
+### 10. Inventory, equipment, and economy — Partial
 
 - [x] Initial relic and magic-tech idea bank curated with base, restricted, and later categories
-- [ ] Item and inventory storage
-- [ ] Weapons, armor, shields, consumables, and quest items
-- [ ] Equipment effects and usage rules
-- [ ] Relic classification and ownership
+- [x] Minimum engine-readable item catalog spanning weapons, armor, shields, consumables, tools, relics, and quest items
+- [x] Persistent item ownership, bounded quantities, acquisition source, event history, context retrieval, and rollback
+- [x] Equipment slots, slot replacement, and bounded defense recalculation
+- [x] Consumable quantity handling without inventing healing effects
+- [x] Initial relic classification and persistent ownership
+- [ ] Combat, healing, charge, durability, and other equipment-use effects
 - [ ] Faction goods and basic city economy
 - [ ] Rewards, scarcity, acquisition, loss, and recovery
+
+Implemented item scope: eight bounded definitions prove every first-release item category. Weapons have no damage yet, consumables have no healing value, and the economy does not exist. See `ITEM_SYSTEM_V1.md`.
 
 ### 11. Advancement — Missing
 
@@ -277,7 +281,7 @@ Implemented power scope: one sustained magical effect may be active at a time, a
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 64 of 64 tests
+- [x] Current automated suite passes 68 of 68 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -376,7 +380,7 @@ Implemented power scope: one sustained magical effect may be active at a time, a
 
 ## Current position
 
-Velmora has completed the working foundations through step 4 and the first independently tested power-system slice of step 5. The world foundation, application shell, persistence layer, NPC Engine foundation, seeded campaign blueprint, story-thread ledger, hidden/player context separation, validated thread tools, single-player-character foundation, core action/dice resolution, minimum power definitions, persistent power ownership, and sustained-power state exist. Inventory, equipment, progression, quests, combat effects, complete power resolution, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 4 plus independently tested power and inventory slices of step 5. Minimum power and item definitions, persistent ownership, sustained-power state, equipment slots, defense bonuses, consumption, context retrieval, and rollback now exist. Progression, quests, combat effects, complete power/item use, the economy, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 
