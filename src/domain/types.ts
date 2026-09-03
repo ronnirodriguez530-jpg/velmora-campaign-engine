@@ -24,6 +24,22 @@ export type FactionDefinition = {
   name: string;
   initialCondition: number;
   service: string;
+  hiddenStructure?: {
+    publicFace: string;
+    trueAuthority: string;
+    leadershipRule: string;
+    doctrine: string;
+    methods: string[];
+    publicAwareness: {
+      unawarePercent: number;
+      speculationPercent: number;
+      suspicionPercent: number;
+      knowsAndKeepsQuietPercent: number;
+      speculationMeaning: string;
+      suspicionMeaning: string;
+      knowledgeMeaning: string;
+    };
+  };
   districtIdentity: {
     mapSector: string;
     colors: string[];

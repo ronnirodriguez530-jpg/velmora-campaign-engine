@@ -68,12 +68,28 @@
     "id": "FAC-006",
     "name": "Order of Glass",
     "initialCondition": 2,
-    "service": "Records, evidence, and cross-faction intelligence",
+    "service": "Records, evidence, diplomacy, and the discreet recovery of information and important objects",
+    "hiddenStructure": {
+      "publicFace": "A wealthy and cultured civic district governed by respectable officials and known for its estates, galleries, banks, theaters, luxury markets, and careful recordkeeping.",
+      "trueAuthority": "A covert guild of spies and thieves controls appointments, commerce, intelligence, and major decisions beneath the ordinary public government.",
+      "leadershipRule": "The faction leader serves publicly as a polished Sixfold Council official while secretly directing the guild that holds the district's real power.",
+      "doctrine": "Nothing in Velmora should happen without the Order knowing about it.",
+      "methods": ["informant networks", "infiltration and disguise", "targeted theft", "surveillance", "coded exchanges", "blackmail and leverage"],
+      "publicAwareness": {
+        "unawarePercent": 75,
+        "speculationPercent": 15,
+        "suspicionPercent": 5,
+        "knowsAndKeepsQuietPercent": 5,
+        "speculationMeaning": "They have heard rumors about organized thieves, informants, or hidden influence but treat the stories as gossip, exaggeration, or local folklore.",
+        "suspicionMeaning": "They have noticed missing objects, impossible access, repeated coincidences, or controlled officials and believe an organized covert power probably exists without possessing direct proof.",
+        "knowledgeMeaning": "They have direct proof or personal involvement and keep quiet through membership, loyalty, protection, fear, debt, or leverage."
+      }
+    },
     "districtIdentity": {
       "mapSector": "10 to 12 o'clock",
-      "colors": ["Smoke gray #474B55", "Mirror silver #AEB7C2", "Cold glass blue #52718A"],
-      "environment": "A quiet angular ward of archives, mirrored watchrooms, narrow lanes, evidence vaults, and high windows designed to observe more than they reveal.",
-      "wayOfLife": "Records, permits, testimony, and rumor shape daily life. Residents speak carefully, value privacy, and understand that information can protect the city or quietly control it.",
+      "colors": ["Midnight sapphire #18324A", "Mirror silver #AEB7C2", "Gilded champagne #C7A968"],
+      "environment": "A polished ward of glass-roofed galleries, estates, banks, theaters, luxury markets, mirrored halls, and immaculate civic offices. Service passages, roof routes, concealed doors, and listening rooms form a second district beneath the visible one.",
+      "wayOfLife": "Most residents live ordinary lives among wealth, fashion, performances, trade, and formal civic administration. Beneath that surface, informants watch the streets, thieves cross private thresholds, and secrets move through coded exchanges controlled by the hidden guild.",
       "landmark": "The Glass Archive"
     }
   }

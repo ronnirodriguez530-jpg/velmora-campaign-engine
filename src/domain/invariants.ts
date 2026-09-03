@@ -22,6 +22,14 @@ export function validateContent(content: VelmoraContent): void {
   assert(content.factions.every((faction) => faction.initialCondition >= 0 && faction.initialCondition <= 4), "Faction condition must be 0-4");
   assert(content.factions.every((faction) => faction.districtIdentity.colors.length === 3), "Each faction district requires exactly three map colors");
   assert(content.factions.every((faction) => faction.districtIdentity.environment.length > 0 && faction.districtIdentity.wayOfLife.length > 0 && faction.districtIdentity.landmark.length > 0), "Each faction district requires an environment, way of life, and landmark");
+  const orderOfGlass = content.factions.find((faction) => faction.id === "FAC-006");
+  assert(orderOfGlass?.hiddenStructure !== undefined, "The Order of Glass requires its approved hidden guild structure");
+  assert(orderOfGlass.hiddenStructure.publicFace.length > 0 && orderOfGlass.hiddenStructure.trueAuthority.length > 0, "The Order of Glass requires both a public face and true authority");
+  assert(orderOfGlass.hiddenStructure.leadershipRule.length > 0 && orderOfGlass.hiddenStructure.doctrine.length > 0, "The Order of Glass requires a leadership rule and doctrine");
+  assert(orderOfGlass.hiddenStructure.methods.length >= 4, "The Order of Glass requires a concrete covert method set");
+  const glassAwareness = orderOfGlass.hiddenStructure.publicAwareness;
+  assert(glassAwareness.unawarePercent + glassAwareness.speculationPercent + glassAwareness.suspicionPercent + glassAwareness.knowsAndKeepsQuietPercent === 100, "Order of Glass public-awareness percentages must total 100");
+  assert(glassAwareness.unawarePercent === 75 && glassAwareness.speculationPercent === 15 && glassAwareness.suspicionPercent === 5 && glassAwareness.knowsAndKeepsQuietPercent === 5, "Order of Glass public-awareness distribution must remain at the approved 75/15/5/5 split");
   const approvedSectors = new Map([
     ["FAC-002", "12 to 2 o'clock"],
     ["FAC-004", "2 to 4 o'clock"],

@@ -76,8 +76,8 @@
     "name": "Glass Wedge",
     "district": "FAC-006",
     "connections": ["LOC-COUNCIL-CROWN", "LOC-CONTAINMENT-RING", "LOC-DIST-WAYFARER", "LOC-DIST-AURORUS"],
-    "perspectiveTags": ["district", "records", "secrets", "observation"],
+    "perspectiveTags": ["district", "luxury", "secrets", "espionage"],
     "mapPosition": "10 to 12 o'clock",
-    "environment": "Smoke-gray stone, mirror-silver details, cold-blue glass, quiet lanes, evidence vaults, watchrooms, and the Glass Archive create a district that observes more than it reveals."
+    "environment": "Midnight-sapphire glass, mirror-silver details, gilded estates, galleries, banks, theaters, and luxury markets create an image of effortless wealth. Hidden passages, rooftop routes, listening rooms, safehouses, and the Glass Archive support the spy-and-thief guild controlling the district beneath its respectable government."
   }
 ]

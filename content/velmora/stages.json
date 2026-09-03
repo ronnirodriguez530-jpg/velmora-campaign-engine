@@ -3,28 +3,28 @@
     "id": "STG-OPENING",
     "key": "opening",
     "order": 1,
-    "anchor": "The Endless Surge begins around the still relatively small central Tear, raw Tear-magic critically wounds and leaves the First Speaker unconscious, Velmora loses central coordination, and a variable conflict begins over who will replace him.",
+    "anchor": "The Endless Surge begins around the still relatively small central Tear. Raw Tear-magic leaves the First Speaker unconscious and secretly begins a crystalline transformation, Velmora loses central coordination, and a variable conflict begins over who will replace him.",
     "maxThreatLevel": 2
   },
   {
     "id": "STG-STABILIZATION",
     "key": "stabilization",
     "order": 2,
-    "anchor": "Velmora survives the initial disaster and establishes temporary emergency order while the central Tear continues growing and the player advances two faction paths.",
+    "anchor": "Velmora establishes temporary emergency order while the central Tear continues growing. The First Speaker appears to recover, but brief periods of complete outside control, missing memory, and subtle cracks begin beneath the public recovery as the player advances two faction paths.",
     "maxThreatLevel": 3
   },
   {
     "id": "STG-ESCALATION",
     "key": "escalation",
     "order": 3,
-    "anchor": "The expanding Tear releases higher forms of magic, beings, and creatures into Velmora, reshaping the city around the player's established path and the approaches to the Tear that remain possible.",
+    "anchor": "The expanding Tear releases higher forms of magic, beings, and creatures into Velmora. The crystalline entity holds the First Speaker for longer periods and deliberately manipulates access to the city's containment system, while discoveries and player choices determine which approaches to the Tear remain possible.",
     "maxThreatLevel": 5
   },
   {
     "id": "STG-RESOLUTION",
     "key": "resolution",
     "order": 4,
-    "anchor": "The player reaches the source of the Endless Surge inside Velmora, chooses among the apocalypse truths their actions kept possible, and determines the final condition of the Tear, the six factions, and the city.",
+    "anchor": "Only now can the crystalline entity attempt sustained control of the First Speaker, the Tear, and Velmora's containment system. The player chooses among the truths and responses their actions kept possible and determines the final condition of the Speaker, the Tear, the six factions, and the city.",
     "maxThreatLevel": 5
   }
 ]

@@ -22,8 +22,14 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Central Tear begins relatively small, grows through the campaign, and supports multiple possible approaches rather than one fixed outcome
 - [x] Single central Tear may cause temporary void-rift wormholes from random worlds or locations, while remaining the only true Tear
 - [x] Tear event generator may schedule arrivals and void-rift events but cannot create a second true Tear or general outward exploration routes
-- [x] Void-rifts progress from chance events to selected entity-opened events and eventually controlled Order of Glass openings without traversal
-- [x] Order of Glass is unknowingly empowered by an unnamed void entity whose bargain increasingly corrupts its informed leader
+- [x] Void-rifts progress from chance events to selected entity-opened events and attempted controlled openings through the transformed First Speaker and containment system
+- [x] Opening attack secretly begins the First Speaker's transformation by an unnamed crystalline void entity
+- [x] First Speaker remains alive through a false recovery with brief complete-control episodes, missing memory, and gradually visible cracks
+- [x] Entity influence is locked to the four campaign stages so sustained takeover and endgame authority cannot occur early
+- [x] Order of Glass has no mandatory bargain or predetermined allegiance to the entity
+- [x] Order of Glass rebuilt as a luxury civic facade governed underneath by a spy-and-thief guild
+- [x] Order leader publicly serves on the Sixfold Council while secretly directing the guild; ordinary district life and officials remain intact
+- [x] Order of Glass awareness fixed at 75% unaware, 15% speculative, 5% suspicious, and 5% informed but silent
 - [x] Wayfarer Pact operates inside Velmora on objects emerging from the Tear rather than entering it
 - [x] Magic may be innate, invented, magic-technological, discovered, taken, taught, or made
 - [x] Highest-tier magic originates from the central Tear or its void-rifts, and no true magic masters currently exist
@@ -48,13 +54,13 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 ### 2. Campaign structure and authored content — Missing
 
 - [ ] Campaign premise and playable opening
-- [x] Opening location and witnessed inciting event: Council Crown during the First Speaker's attack and the Surge's failure to end
-- [x] Six fixed, engine-validated Council Crown spawn situations mapped to d6 results
+- [x] Opening convergence and witnessed inciting event: public address in Council Plaza during the First Speaker's attack and the Surge's failure to end
+- [x] Six fully concrete, engine-validated Council Crown spawn situations mapped to permanent d6 results
 - [ ] Player-clicked opening d6 selection and saved outcome, implemented with the core dice system
 - [x] Variable opening conflict over replacing the incapacitated First Speaker
 - [ ] Replacement candidates and selection events generated from approved campaign conditions rather than one preset outcome
-- [x] Order of Glass leader's hidden bargain and escalating influence established as a campaign conflict
-- [ ] Order bargain branches, interventions, consequences, and possible outcomes
+- [x] First Speaker's hidden transformation, false recovery, intermittent control, and escalating influence established as a campaign conflict
+- [ ] Transformation clues, branches, interventions, consequences, and possible outcomes
 - [ ] Major campaign spine with acts or stages
 - [ ] Multiple main-quest paths
 - [ ] Six faction questlines
