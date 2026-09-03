@@ -22,6 +22,7 @@ const context: DirectorPlanningContext = {
   recentTearArrivals: [],
   npcContext: { full: [], supporting: [], omittedCount: 0, budgetUsed: 0, budgetLimit: 36 },
   publicFacts: [],
+  playerCharacter: null,
   playerKnownStoryThreads: [],
   visibleOpeningPressure: null,
   directorStoryThreads: [],
@@ -37,6 +38,40 @@ const context: DirectorPlanningContext = {
     createdTurn: 0
   }
 };
+
+test("cloud Director requests a bounded hidden-DC action check", async () => {
+  let sentBody: Record<string, unknown> | undefined;
+  const fakeFetch = async (_input: string | URL | Request, init?: RequestInit) => {
+    sentBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    return new Response(JSON.stringify({
+      output: [{
+        type: "function_call",
+        name: "assess_player_action",
+        arguments: JSON.stringify({
+          resolution: "check",
+          category: "skill",
+          ability: "dexterity",
+          skill: "stealth",
+          difficulty: "hard",
+          mode: "advantage",
+          stakes: "Cross unseen or alert the patrol while retaining an escape route.",
+          reason: "The patrol makes the attempt uncertain and meaningful."
+        })
+      }]
+    }));
+  };
+  const director = new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch });
+  const assessment = await director.assessAction(context, "Slip past the patrol");
+  assert.equal(assessment.resolution, "check");
+  if (assessment.resolution === "check") {
+    assert.equal(assessment.skill, "stealth");
+    assert.equal(assessment.difficulty, "hard");
+    assert.equal(assessment.mode, "advantage");
+  }
+  const tool = (sentBody?.tools as Array<Record<string, unknown>>)[0];
+  assert.equal(tool.name, "assess_player_action");
+  assert.equal(tool.strict, true);
+});
 
 test("cloud Director submits a strict bounded plan without executing it", async () => {
   let sentBody: Record<string, unknown> | undefined;
@@ -57,6 +92,7 @@ test("cloud Director submits a strict bounded plan without executing it", async 
           npcRequests: [],
           npcUpdates: [],
           storyThreadUpdates: [],
+          storyThreadCreations: [],
           suggestedActions: ["Ask what the League needs", "Return to the avenue"],
           allowsFreeText: true
         })
@@ -99,6 +135,7 @@ test("cloud Director can request one bounded minor NPC without creating it direc
         }],
         npcUpdates: [],
         storyThreadUpdates: [],
+        storyThreadCreations: [],
         suggestedActions: ["Question the repairer", "Inspect the lamp"],
         allowsFreeText: true
       })
@@ -107,6 +144,48 @@ test("cloud Director can request one bounded minor NPC without creating it direc
   const plan = await new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch }).planTurn(context, "find the repairer");
   assert.equal(plan.toolRequests.length, 1);
   assert.equal(plan.toolRequests[0]?.type, "request_minor_npc");
+});
+
+test("cloud Director can propose one sourced non-main story thread", async () => {
+  const fakeFetch = async () => new Response(JSON.stringify({
+    output: [{
+      type: "function_call",
+      name: "submit_turn_plan",
+      arguments: JSON.stringify({
+        summary: "The player commits to a rescue that cannot be completed immediately.",
+        majorActionProposal: true,
+        factionChanges: [],
+        npcReputationChanges: [],
+        movements: [],
+        factionPathAdvances: [],
+        locationConsequences: [],
+        npcRequests: [],
+        npcUpdates: [],
+        storyThreadUpdates: [],
+        storyThreadCreations: [{
+          threadId: "THREAD-PLAYER-RESCUE-PROMISE",
+          origin: "player_goal",
+          basisId: "player_input",
+          kind: "personal",
+          title: "A Rescue Promise",
+          summary: "The player promised to continue an unfinished rescue.",
+          visibility: "player",
+          maximumStage: "stabilization",
+          urgency: 2,
+          locationIds: ["LOC-COUNCIL-CROWN"],
+          factionIds: [],
+          npcIds: [],
+          recoveryPaths: ["A survivor can provide another lead."],
+          reason: "The player explicitly accepted unfinished responsibility."
+        }],
+        suggestedActions: ["Follow the rescue route", "Question survivors"],
+        allowsFreeText: true
+      })
+    }]
+  }), { status: 200, headers: { "content-type": "application/json" } });
+  const plan = await new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch }).planTurn(context, "I promise to finish the rescue");
+  assert.equal(plan.toolRequests.length, 1);
+  assert.equal(plan.toolRequests[0]?.type, "create_story_thread");
 });
 
 test("cloud Campaign Master presents a grounded story scene", async () => {

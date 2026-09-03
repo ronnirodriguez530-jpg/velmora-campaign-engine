@@ -102,7 +102,7 @@ async function main(): Promise<void> {
     if (command === "cloud-turn") {
       const input = rest.join(" ").trim();
       if (!input) throw new Error("Cloud turn command requires a player action");
-      const result = await runPlayerAction(db, content, cloudDirectorFromEnvironment(), name, input);
+      const result = await submitPlayableAction(db, content, cloudDirectorFromEnvironment(), name, input);
       console.log(JSON.stringify(result, null, 2));
       return;
     }

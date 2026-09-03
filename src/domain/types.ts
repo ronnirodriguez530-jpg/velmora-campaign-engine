@@ -149,6 +149,76 @@ export type SceneTemplate = {
   maxThreatLevel: number;
 };
 
+export type AbilityKey = "strength" | "dexterity" | "constitution" | "intelligence" | "wisdom" | "charisma";
+
+export type SkillKey = "acrobatics" | "animal_handling" | "arcana" | "athletics" | "deception" | "history" | "insight" | "intimidation" | "investigation" | "medicine" | "nature" | "perception" | "performance" | "persuasion" | "religion" | "sleight_of_hand" | "stealth" | "survival";
+
+export type CheckDifficulty = "easy" | "standard" | "hard" | "extreme";
+export type RollMode = "normal" | "advantage" | "disadvantage";
+export type CheckCategory = "ability" | "skill" | "saving_throw";
+export type RollOutcome = "critical_success" | "success" | "success_with_cost" | "failure" | "critical_failure";
+
+export type ActionAssessment =
+  | { resolution: "automatic"; reason: string }
+  | {
+      resolution: "check";
+      category: CheckCategory;
+      ability: AbilityKey;
+      skill: SkillKey | null;
+      difficulty: CheckDifficulty;
+      mode: RollMode;
+      stakes: string;
+      reason: string;
+    };
+
+export type ActionRollResolution = {
+  checkId: string;
+  category: CheckCategory;
+  ability: AbilityKey;
+  skill: SkillKey | null;
+  mode: RollMode;
+  dice: number[];
+  keptDie: number;
+  modifier: number;
+  total: number;
+  outcome: RollOutcome;
+  stakes: string;
+};
+
+export type ActionResolution =
+  | { kind: "automatic"; reason: string }
+  | { kind: "rolled"; roll: ActionRollResolution };
+
+export type PendingActionCheckView = {
+  checkId: string;
+  category: CheckCategory;
+  ability: AbilityKey;
+  skill: SkillKey | null;
+  mode: RollMode;
+  modifier: number;
+  proficiencyApplied: boolean;
+  stakes: string;
+};
+
+export type PlayerCharacter = {
+  campaignId: string;
+  characterId: "PC-001";
+  creationVersion: 1;
+  name: string;
+  identityNotes: string;
+  abilityScores: Record<AbilityKey, number>;
+  abilityModifiers: Record<AbilityKey, number>;
+  skillProficiencies: SkillKey[];
+  saveProficiencies: AbilityKey[];
+  proficiencyBonus: 2;
+  maxHp: number;
+  currentHp: number;
+  armorBonus: number;
+  defense: number;
+  createdTurn: number;
+  updatedTurn: number;
+};
+
 export type PerspectiveContext = {
   campaignId: string;
   seed: string;
@@ -168,6 +238,7 @@ export type PerspectiveContext = {
   recentTearArrivals: TearArrival[];
   npcContext: NpcContextPackage;
   publicFacts: WorldFact[];
+  playerCharacter: PlayerCharacter | null;
   playerKnownStoryThreads: StoryThread[];
   visibleOpeningPressure: OpeningPressureDefinition | null;
 };
@@ -178,6 +249,8 @@ export type StoryThreadStatus = "dormant" | "active" | "blocked" | "resolved" | 
 
 export type StoryThreadVisibility = "player" | "director";
 
+export type StoryThreadOrigin = "blueprint" | "player_goal" | "witnessed_consequence" | "existing_thread_branch" | "faction_development" | "npc_commitment";
+
 export type StoryThread = {
   campaignId: string;
   threadId: string;
@@ -186,6 +259,8 @@ export type StoryThread = {
   summary: string;
   status: StoryThreadStatus;
   visibility: StoryThreadVisibility;
+  origin: StoryThreadOrigin;
+  basisId: string | null;
   minimumStage: CampaignStage;
   maximumStage: CampaignStage;
   urgency: 0 | 1 | 2 | 3;
@@ -462,7 +537,25 @@ export type ManageStoryThreadRequest = {
   reason: string;
 };
 
-export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest | ManageStoryThreadRequest;
+export type CreateStoryThreadRequest = {
+  type: "create_story_thread";
+  threadId: string;
+  origin: Exclude<StoryThreadOrigin, "blueprint">;
+  basisId: string;
+  kind: Exclude<StoryThreadKind, "main">;
+  title: string;
+  summary: string;
+  visibility: StoryThreadVisibility;
+  maximumStage: CampaignStage;
+  urgency: 0 | 1 | 2 | 3;
+  locationIds: string[];
+  factionIds: string[];
+  npcIds: string[];
+  recoveryPaths: string[];
+  reason: string;
+};
+
+export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest | ManageStoryThreadRequest | CreateStoryThreadRequest;
 
 export type DirectorTurnPlan = {
   summary: string;

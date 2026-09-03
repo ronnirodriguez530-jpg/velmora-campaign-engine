@@ -2,7 +2,7 @@ import type { ToolRequest, VelmoraContent } from "../domain/types.ts";
 import { getCharacterReputation, getFactionCondition, getFactionPathProgress } from "../persistence/database.ts";
 import type { DatabaseSync } from "node:sqlite";
 import { validateNpcTurnUpdate } from "../npc/npc-turn-manager.ts";
-import { validateStoryThreadUpdate } from "../application/story-thread-manager.ts";
+import { validateStoryThreadCreation, validateStoryThreadUpdate } from "../application/story-thread-manager.ts";
 
 export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, campaignId: string, request: ToolRequest): void {
   if (request.reason.trim().length < 3) throw new Error("Tool request requires a meaningful reason");
@@ -70,6 +70,11 @@ export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, c
 
   if (request.type === "manage_story_thread") {
     validateStoryThreadUpdate(db, content, campaignId, request);
+    return;
+  }
+
+  if (request.type === "create_story_thread") {
+    validateStoryThreadCreation(db, content, campaignId, request);
     return;
   }
 

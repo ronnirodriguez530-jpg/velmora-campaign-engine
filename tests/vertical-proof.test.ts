@@ -5,6 +5,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { openPlayableMoment, submitPlayableAction } from "../src/application/gameplay-session.ts";
+import { createPlayerCharacter } from "../src/application/player-character.ts";
 import { MockDirector } from "../src/director/mock-director.ts";
 import { countScenes, createCampaign, getCampaign, getFactionCondition, openDatabase, restorePreviousTurn } from "../src/persistence/database.ts";
 import { withOpeningTestTemplate } from "./test-content.ts";
@@ -15,6 +16,12 @@ test("test-fixture turn places, acts, saves, reopens, and rolls back", async () 
   const dbPath = join(dir, "proof.sqlite");
   let db = openDatabase(dbPath);
   const campaignId = createCampaign(db, content, "proof", "vertical-proof-seed");
+  createPlayerCharacter(db, campaignId, {
+    name: "Proof Character",
+    abilityScores: { strength: 15, dexterity: 14, constitution: 13, intelligence: 12, wisdom: 10, charisma: 8 },
+    skillProficiencies: ["athletics", "investigation", "perception", "stealth"],
+    saveProficiencies: ["strength", "wisdom"]
+  });
 
   const firstMoment = openPlayableMoment(db, content, "proof");
   assert.equal(firstMoment.reused, false);

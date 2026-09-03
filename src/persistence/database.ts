@@ -18,6 +18,7 @@ import type {
   NpcRecord,
   NpcStatus,
   NpcRelationship,
+  PlayerCharacter,
   RelationshipQuality,
   RelationshipStanding,
   RelationshipTargetType,
@@ -35,6 +36,7 @@ export type CampaignRow = {
   seed: string;
   stage: "opening" | "stabilization" | "escalation" | "resolution";
   turn: number;
+  stageEnteredTurn: number;
   currentLocationId: string;
 };
 
@@ -54,6 +56,7 @@ export type StateSnapshot = {
     novelty: Array<{ fingerprint: string; npcId: string; createdTurn: number }>;
   };
   storyThreads?: StoryThread[];
+  playerCharacter?: PlayerCharacter | null;
 };
 
 export function openDatabase(path: string): DatabaseSync {
@@ -428,6 +431,107 @@ function migrate(db: DatabaseSync): void {
     `);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(16, ?)").run(new Date().toISOString());
   }
+  const migrationSeventeen = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 17").get() as { present: number } | undefined;
+  if (!migrationSeventeen) {
+    const storyThreadColumns = db.prepare("PRAGMA table_info(story_threads)").all() as Array<{ name: string }>;
+    if (!storyThreadColumns.some((column) => column.name === "origin")) {
+      db.exec("ALTER TABLE story_threads ADD COLUMN origin TEXT NOT NULL DEFAULT 'blueprint'");
+    }
+    if (!storyThreadColumns.some((column) => column.name === "basis_id")) {
+      db.exec("ALTER TABLE story_threads ADD COLUMN basis_id TEXT");
+    }
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(17, ?)").run(new Date().toISOString());
+  }
+  const migrationEighteen = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 18").get() as { present: number } | undefined;
+  if (!migrationEighteen) {
+    const campaignColumns = db.prepare("PRAGMA table_info(campaigns)").all() as Array<{ name: string }>;
+    if (!campaignColumns.some((column) => column.name === "stage_entered_turn")) {
+      db.exec("ALTER TABLE campaigns ADD COLUMN stage_entered_turn INTEGER NOT NULL DEFAULT 0");
+      db.exec("UPDATE campaigns SET stage_entered_turn = turn");
+    }
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(18, ?)").run(new Date().toISOString());
+  }
+  const migrationNineteen = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 19").get() as { present: number } | undefined;
+  if (!migrationNineteen) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS player_characters (
+        campaign_id TEXT PRIMARY KEY,
+        character_id TEXT NOT NULL DEFAULT 'PC-001' CHECK(character_id = 'PC-001'),
+        creation_version INTEGER NOT NULL DEFAULT 1 CHECK(creation_version = 1),
+        name TEXT NOT NULL,
+        identity_notes TEXT NOT NULL DEFAULT '',
+        strength INTEGER NOT NULL CHECK(strength BETWEEN 1 AND 30),
+        dexterity INTEGER NOT NULL CHECK(dexterity BETWEEN 1 AND 30),
+        constitution INTEGER NOT NULL CHECK(constitution BETWEEN 1 AND 30),
+        intelligence INTEGER NOT NULL CHECK(intelligence BETWEEN 1 AND 30),
+        wisdom INTEGER NOT NULL CHECK(wisdom BETWEEN 1 AND 30),
+        charisma INTEGER NOT NULL CHECK(charisma BETWEEN 1 AND 30),
+        proficiency_bonus INTEGER NOT NULL DEFAULT 2 CHECK(proficiency_bonus = 2),
+        max_hp INTEGER NOT NULL CHECK(max_hp > 0),
+        current_hp INTEGER NOT NULL CHECK(current_hp >= 0 AND current_hp <= max_hp),
+        armor_bonus INTEGER NOT NULL DEFAULT 0 CHECK(armor_bonus BETWEEN 0 AND 4),
+        created_turn INTEGER NOT NULL,
+        updated_turn INTEGER NOT NULL,
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS player_skill_proficiencies (
+        campaign_id TEXT NOT NULL,
+        skill_key TEXT NOT NULL,
+        PRIMARY KEY (campaign_id, skill_key),
+        FOREIGN KEY (campaign_id) REFERENCES player_characters(campaign_id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS player_save_proficiencies (
+        campaign_id TEXT NOT NULL,
+        ability_key TEXT NOT NULL,
+        PRIMARY KEY (campaign_id, ability_key),
+        FOREIGN KEY (campaign_id) REFERENCES player_characters(campaign_id) ON DELETE CASCADE
+      );
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(19, ?)").run(new Date().toISOString());
+  }
+  const migrationTwenty = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 20").get() as { present: number } | undefined;
+  if (!migrationTwenty) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS pending_action_checks (
+        campaign_id TEXT PRIMARY KEY,
+        check_id TEXT NOT NULL UNIQUE,
+        player_input TEXT NOT NULL,
+        category TEXT NOT NULL CHECK(category IN ('ability','skill','saving_throw')),
+        ability TEXT NOT NULL,
+        skill TEXT,
+        difficulty TEXT NOT NULL CHECK(difficulty IN ('easy','standard','hard','extreme')),
+        dc INTEGER NOT NULL CHECK(dc IN (8,12,16,20)),
+        mode TEXT NOT NULL CHECK(mode IN ('normal','advantage','disadvantage')),
+        stakes TEXT NOT NULL,
+        modifier INTEGER NOT NULL,
+        proficiency_applied INTEGER NOT NULL CHECK(proficiency_applied IN (0,1)),
+        created_turn INTEGER NOT NULL,
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+      CREATE TABLE IF NOT EXISTS roll_records (
+        campaign_id TEXT NOT NULL,
+        roll_id TEXT NOT NULL,
+        check_id TEXT NOT NULL UNIQUE,
+        turn INTEGER NOT NULL,
+        category TEXT NOT NULL,
+        ability TEXT NOT NULL,
+        skill TEXT,
+        mode TEXT NOT NULL,
+        dice_json TEXT NOT NULL,
+        kept_die INTEGER NOT NULL CHECK(kept_die BETWEEN 1 AND 20),
+        modifier INTEGER NOT NULL,
+        total INTEGER NOT NULL,
+        difficulty TEXT NOT NULL,
+        dc INTEGER NOT NULL,
+        outcome TEXT NOT NULL CHECK(outcome IN ('critical_success','success','success_with_cost','failure','critical_failure')),
+        stakes TEXT NOT NULL,
+        created_at TEXT NOT NULL,
+        PRIMARY KEY (campaign_id, roll_id),
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(20, ?)").run(new Date().toISOString());
+  }
 }
 
 const STAGE_ORDER = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 } as const;
@@ -441,6 +545,8 @@ function storyThreadFromRow(row: Record<string, unknown>): StoryThread {
     summary: row.summary as string,
     status: row.status as StoryThread["status"],
     visibility: row.visibility as StoryThread["visibility"],
+    origin: (row.origin as StoryThread["origin"] | undefined) ?? "blueprint",
+    basisId: (row.basisId as string | null | undefined) ?? null,
     minimumStage: row.minimumStage as StoryThread["minimumStage"],
     maximumStage: row.maximumStage as StoryThread["maximumStage"],
     urgency: row.urgency as StoryThread["urgency"],
@@ -459,14 +565,17 @@ export function persistStoryThread(db: DatabaseSync, thread: StoryThread): void 
     throw new Error("Story thread minimum stage cannot follow its maximum stage");
   }
   if (!thread.title.trim() || !thread.summary.trim()) throw new Error("Story thread requires a title and summary");
+  const origin = thread.origin ?? "blueprint";
+  const basisId = thread.basisId ?? null;
   db.prepare(`INSERT INTO story_threads(
       campaign_id, thread_id, kind, title, summary, status, visibility,
-      minimum_stage, maximum_stage, urgency, location_ids_json, faction_ids_json,
+      origin, basis_id, minimum_stage, maximum_stage, urgency, location_ids_json, faction_ids_json,
       npc_ids_json, recovery_paths_json, created_turn, updated_turn, last_used_turn
-    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+    ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     ON CONFLICT(campaign_id, thread_id) DO UPDATE SET
       kind = excluded.kind, title = excluded.title, summary = excluded.summary,
       status = excluded.status, visibility = excluded.visibility,
+      origin = excluded.origin, basis_id = excluded.basis_id,
       minimum_stage = excluded.minimum_stage, maximum_stage = excluded.maximum_stage,
       urgency = excluded.urgency, location_ids_json = excluded.location_ids_json,
       faction_ids_json = excluded.faction_ids_json, npc_ids_json = excluded.npc_ids_json,
@@ -474,7 +583,7 @@ export function persistStoryThread(db: DatabaseSync, thread: StoryThread): void 
       last_used_turn = excluded.last_used_turn`)
     .run(
       thread.campaignId, thread.threadId, thread.kind, thread.title, thread.summary,
-      thread.status, thread.visibility, thread.minimumStage, thread.maximumStage,
+      thread.status, thread.visibility, origin, basisId, thread.minimumStage, thread.maximumStage,
       thread.urgency, JSON.stringify(thread.locationIds), JSON.stringify(thread.factionIds),
       JSON.stringify(thread.npcIds), JSON.stringify(thread.recoveryPaths), thread.createdTurn,
       thread.updatedTurn, thread.lastUsedTurn
@@ -483,7 +592,7 @@ export function persistStoryThread(db: DatabaseSync, thread: StoryThread): void 
 
 export function listStoryThreads(db: DatabaseSync, campaignId: string): StoryThread[] {
   const rows = db.prepare(`SELECT campaign_id AS campaignId, thread_id AS threadId, kind, title, summary,
-      status, visibility, minimum_stage AS minimumStage, maximum_stage AS maximumStage,
+      status, visibility, origin, basis_id AS basisId, minimum_stage AS minimumStage, maximum_stage AS maximumStage,
       urgency, location_ids_json AS locationIdsJson, faction_ids_json AS factionIdsJson,
       npc_ids_json AS npcIdsJson, recovery_paths_json AS recoveryPathsJson,
       created_turn AS createdTurn, updated_turn AS updatedTurn, last_used_turn AS lastUsedTurn
@@ -519,6 +628,97 @@ export function getCampaignBlueprint(db: DatabaseSync, campaignId: string): Camp
   const row = db.prepare("SELECT blueprint_json AS blueprintJson FROM campaign_blueprints WHERE campaign_id = ?")
     .get(campaignId) as { blueprintJson: string } | undefined;
   return row ? JSON.parse(row.blueprintJson) as CampaignBlueprint : undefined;
+}
+
+const PLAYER_ABILITIES = ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] as const;
+
+function abilityModifier(score: number): number {
+  return Math.floor((score - 10) / 2);
+}
+
+export function getPlayerCharacter(db: DatabaseSync, campaignId: string): PlayerCharacter | undefined {
+  const row = db.prepare(`SELECT campaign_id AS campaignId, character_id AS characterId,
+      creation_version AS creationVersion, name, identity_notes AS identityNotes,
+      strength, dexterity, constitution, intelligence, wisdom, charisma,
+      proficiency_bonus AS proficiencyBonus, max_hp AS maxHp, current_hp AS currentHp,
+      armor_bonus AS armorBonus, created_turn AS createdTurn, updated_turn AS updatedTurn
+    FROM player_characters WHERE campaign_id = ?`).get(campaignId) as Record<string, unknown> | undefined;
+  if (!row) return undefined;
+  const abilityScores = Object.fromEntries(PLAYER_ABILITIES.map((ability) => [ability, Number(row[ability])])) as PlayerCharacter["abilityScores"];
+  const abilityModifiers = Object.fromEntries(PLAYER_ABILITIES.map((ability) => [ability, abilityModifier(abilityScores[ability])])) as PlayerCharacter["abilityModifiers"];
+  const skillProficiencies = db.prepare("SELECT skill_key AS skillKey FROM player_skill_proficiencies WHERE campaign_id = ? ORDER BY skill_key")
+    .all(campaignId).map((entry) => (entry as { skillKey: PlayerCharacter["skillProficiencies"][number] }).skillKey);
+  const saveProficiencies = db.prepare("SELECT ability_key AS abilityKey FROM player_save_proficiencies WHERE campaign_id = ? ORDER BY ability_key")
+    .all(campaignId).map((entry) => (entry as { abilityKey: PlayerCharacter["saveProficiencies"][number] }).abilityKey);
+  const armorBonus = Number(row.armorBonus);
+  return {
+    campaignId: String(row.campaignId),
+    characterId: "PC-001",
+    creationVersion: 1,
+    name: String(row.name),
+    identityNotes: String(row.identityNotes),
+    abilityScores,
+    abilityModifiers,
+    skillProficiencies,
+    saveProficiencies,
+    proficiencyBonus: 2,
+    maxHp: Number(row.maxHp),
+    currentHp: Number(row.currentHp),
+    armorBonus,
+    defense: 10 + abilityModifiers.dexterity + armorBonus,
+    createdTurn: Number(row.createdTurn),
+    updatedTurn: Number(row.updatedTurn)
+  };
+}
+
+export function persistPlayerCharacter(db: DatabaseSync, character: PlayerCharacter): void {
+  const ownsTransaction = !db.isTransaction;
+  if (ownsTransaction) db.exec("BEGIN IMMEDIATE");
+  try {
+    db.prepare(`INSERT INTO player_characters(
+        campaign_id, character_id, creation_version, name, identity_notes,
+        strength, dexterity, constitution, intelligence, wisdom, charisma,
+        proficiency_bonus, max_hp, current_hp, armor_bonus, created_turn, updated_turn
+      ) VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      ON CONFLICT(campaign_id) DO UPDATE SET
+        character_id = excluded.character_id, creation_version = excluded.creation_version,
+        name = excluded.name, identity_notes = excluded.identity_notes,
+        strength = excluded.strength, dexterity = excluded.dexterity,
+        constitution = excluded.constitution, intelligence = excluded.intelligence,
+        wisdom = excluded.wisdom, charisma = excluded.charisma,
+        proficiency_bonus = excluded.proficiency_bonus, max_hp = excluded.max_hp,
+        current_hp = excluded.current_hp, armor_bonus = excluded.armor_bonus,
+        created_turn = excluded.created_turn, updated_turn = excluded.updated_turn`)
+      .run(
+        character.campaignId,
+        character.characterId,
+        character.creationVersion,
+        character.name,
+        character.identityNotes,
+        character.abilityScores.strength,
+        character.abilityScores.dexterity,
+        character.abilityScores.constitution,
+        character.abilityScores.intelligence,
+        character.abilityScores.wisdom,
+        character.abilityScores.charisma,
+        character.proficiencyBonus,
+        character.maxHp,
+        character.currentHp,
+        character.armorBonus,
+        character.createdTurn,
+        character.updatedTurn
+      );
+    db.prepare("DELETE FROM player_skill_proficiencies WHERE campaign_id = ?").run(character.campaignId);
+    db.prepare("DELETE FROM player_save_proficiencies WHERE campaign_id = ?").run(character.campaignId);
+    const insertSkill = db.prepare("INSERT INTO player_skill_proficiencies(campaign_id, skill_key) VALUES(?, ?)");
+    for (const skill of character.skillProficiencies) insertSkill.run(character.campaignId, skill);
+    const insertSave = db.prepare("INSERT INTO player_save_proficiencies(campaign_id, ability_key) VALUES(?, ?)");
+    for (const ability of character.saveProficiencies) insertSave.run(character.campaignId, ability);
+    if (ownsTransaction) db.exec("COMMIT");
+  } catch (error) {
+    if (ownsTransaction) db.exec("ROLLBACK");
+    throw error;
+  }
 }
 
 export function persistNpc(
@@ -1105,8 +1305,8 @@ export function createCampaign(db: DatabaseSync, content: VelmoraContent, name: 
   const now = new Date().toISOString();
   db.exec("BEGIN IMMEDIATE");
   try {
-    db.prepare(`INSERT INTO campaigns(id, name, seed, stage, turn, current_location_id, created_at, updated_at)
-      VALUES(?, ?, ?, ?, 0, ?, ?, ?)`)
+    db.prepare(`INSERT INTO campaigns(id, name, seed, stage, turn, stage_entered_turn, current_location_id, created_at, updated_at)
+      VALUES(?, ?, ?, ?, 0, 0, ?, ?, ?)`)
       .run(id, name, seed, content.campaign.initialStage, content.campaign.initialLocationId, now, now);
     const insertFaction = db.prepare("INSERT INTO faction_state(campaign_id, faction_id, condition) VALUES(?, ?, ?)");
     const insertFactionPath = db.prepare("INSERT INTO faction_path_state(campaign_id, faction_id, progress) VALUES(?, ?, 0)");
@@ -1132,7 +1332,7 @@ export function createCampaign(db: DatabaseSync, content: VelmoraContent, name: 
 }
 
 export function getCampaign(db: DatabaseSync, name: string): CampaignRow | undefined {
-  return db.prepare("SELECT id, name, seed, stage, turn, current_location_id AS currentLocationId FROM campaigns WHERE name = ?")
+  return db.prepare("SELECT id, name, seed, stage, turn, stage_entered_turn AS stageEnteredTurn, current_location_id AS currentLocationId FROM campaigns WHERE name = ?")
     .get(name) as CampaignRow | undefined;
 }
 
@@ -1153,7 +1353,7 @@ export function backfillAuthoredState(db: DatabaseSync, content: VelmoraContent)
 }
 
 export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnapshot {
-  const campaign = db.prepare("SELECT id, name, seed, stage, turn, current_location_id AS currentLocationId FROM campaigns WHERE id = ?")
+  const campaign = db.prepare("SELECT id, name, seed, stage, turn, stage_entered_turn AS stageEnteredTurn, current_location_id AS currentLocationId FROM campaigns WHERE id = ?")
     .get(campaignId) as CampaignRow | undefined;
   if (!campaign) throw new Error(`Campaign ${campaignId} does not exist`);
   const factions = db.prepare("SELECT faction_id AS factionId, condition FROM faction_state WHERE campaign_id = ? ORDER BY faction_id")
@@ -1193,6 +1393,7 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
     FROM npc_novelty_ledger WHERE campaign_id = ? ORDER BY fingerprint`)
     .all(campaignId) as Array<{ fingerprint: string; npcId: string; createdTurn: number }>;
   const storyThreads = listStoryThreads(db, campaignId);
+  const playerCharacter = getPlayerCharacter(db, campaignId) ?? null;
   return {
     campaign,
     factions,
@@ -1200,7 +1401,8 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
     factionPaths,
     quests,
     npcState: { records, designs, facts, knowledge, memories, relationships, novelty },
-    storyThreads
+    storyThreads,
+    playerCharacter
   };
 }
 
@@ -1253,8 +1455,15 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
 
   db.exec("BEGIN IMMEDIATE");
   try {
-    db.prepare("UPDATE campaigns SET stage = ?, turn = ?, current_location_id = ?, updated_at = ? WHERE id = ?")
-      .run(snapshot.campaign.stage, snapshot.campaign.turn, snapshot.campaign.currentLocationId, new Date().toISOString(), campaign.id);
+    db.prepare("UPDATE campaigns SET stage = ?, turn = ?, stage_entered_turn = ?, current_location_id = ?, updated_at = ? WHERE id = ?")
+      .run(
+        snapshot.campaign.stage,
+        snapshot.campaign.turn,
+        snapshot.campaign.stageEnteredTurn ?? snapshot.campaign.turn,
+        snapshot.campaign.currentLocationId,
+        new Date().toISOString(),
+        campaign.id
+      );
     const updateFaction = db.prepare("UPDATE faction_state SET condition = ? WHERE campaign_id = ? AND faction_id = ?");
     for (const faction of snapshot.factions) updateFaction.run(faction.condition, campaign.id, faction.factionId);
     const updateCharacter = db.prepare(`UPDATE character_state SET status = ?, reputation = ?, location_id = ?, replacement_character_id = ?
@@ -1268,6 +1477,13 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
     for (const quest of snapshot.quests ?? []) updateQuest.run(quest.state, campaign.id, quest.questId);
     db.prepare("DELETE FROM story_threads WHERE campaign_id = ?").run(campaign.id);
     for (const thread of snapshot.storyThreads ?? []) persistStoryThread(db, thread);
+    if (snapshot.playerCharacter !== undefined) {
+      if (snapshot.playerCharacter === null) {
+        db.prepare("DELETE FROM player_characters WHERE campaign_id = ?").run(campaign.id);
+      } else {
+        persistPlayerCharacter(db, snapshot.playerCharacter);
+      }
+    }
     if (snapshot.npcState) {
       db.prepare("DELETE FROM npc_relationship_qualities WHERE campaign_id = ?").run(campaign.id);
       db.prepare("DELETE FROM npc_relationships WHERE campaign_id = ?").run(campaign.id);

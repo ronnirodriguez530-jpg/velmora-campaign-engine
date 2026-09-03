@@ -1,5 +1,7 @@
 import type { CampaignDirector } from "./director.ts";
 import type {
+  ActionAssessment,
+  ActionResolution,
   DirectorContext,
   DirectorPlanningContext,
   DirectorPreview,
@@ -76,9 +78,47 @@ type SubmittedPlan = {
     } | null;
     reason: string;
   }>;
+  storyThreadCreations: Array<{
+    threadId: string;
+    origin: "player_goal" | "witnessed_consequence" | "existing_thread_branch" | "faction_development" | "npc_commitment";
+    basisId: string;
+    kind: "faction" | "side" | "personal" | "mystery" | "dynamic";
+    title: string;
+    summary: string;
+    visibility: "player" | "director";
+    maximumStage: "opening" | "stabilization" | "escalation" | "resolution";
+    urgency: 0 | 1 | 2 | 3;
+    locationIds: string[];
+    factionIds: string[];
+    npcIds: string[];
+    recoveryPaths: string[];
+    reason: string;
+  }>;
   suggestedActions: [string, string];
   allowsFreeText: true;
 };
+
+const ASSESS_ACTION_TOOL = {
+  type: "function",
+  name: "assess_player_action",
+  description: "Decide whether the player's stated action happens automatically or requires one meaningful d20 check.",
+  strict: true,
+  parameters: {
+    type: "object",
+    properties: {
+      resolution: { type: "string", enum: ["automatic", "check"] },
+      category: { anyOf: [{ type: "string", enum: ["ability", "skill", "saving_throw"] }, { type: "null" }] },
+      ability: { anyOf: [{ type: "string", enum: ["strength", "dexterity", "constitution", "intelligence", "wisdom", "charisma"] }, { type: "null" }] },
+      skill: { anyOf: [{ type: "string", enum: ["acrobatics", "animal_handling", "arcana", "athletics", "deception", "history", "insight", "intimidation", "investigation", "medicine", "nature", "perception", "performance", "persuasion", "religion", "sleight_of_hand", "stealth", "survival"] }, { type: "null" }] },
+      difficulty: { anyOf: [{ type: "string", enum: ["easy", "standard", "hard", "extreme"] }, { type: "null" }] },
+      mode: { anyOf: [{ type: "string", enum: ["normal", "advantage", "disadvantage"] }, { type: "null" }] },
+      stakes: { type: "string" },
+      reason: { type: "string" }
+    },
+    required: ["resolution", "category", "ability", "skill", "difficulty", "mode", "stakes", "reason"],
+    additionalProperties: false
+  }
+} as const;
 
 const PLAN_TOOL = {
   type: "function",
@@ -256,6 +296,32 @@ const PLAN_TOOL = {
           additionalProperties: false
         }
       },
+      storyThreadCreations: {
+        type: "array",
+        maxItems: 2,
+        description: "Create at most two new non-main threads only when the current player action produces a durable goal, witnessed consequence, NPC commitment, faction development, or branch from an unresolved thread.",
+        items: {
+          type: "object",
+          properties: {
+            threadId: { type: "string", description: "Stable unique uppercase identifier beginning THREAD-." },
+            origin: { type: "string", enum: ["player_goal", "witnessed_consequence", "existing_thread_branch", "faction_development", "npc_commitment"] },
+            basisId: { type: "string", description: "Exact existing location, faction, NPC, or thread ID that caused this thread; use player_input for a player goal." },
+            kind: { type: "string", enum: ["faction", "side", "personal", "mystery", "dynamic"] },
+            title: { type: "string" },
+            summary: { type: "string", description: "An unresolved goal, pressure, promise, or question; never a newly established hidden truth." },
+            visibility: { type: "string", enum: ["player", "director"] },
+            maximumStage: { type: "string", enum: ["opening", "stabilization", "escalation", "resolution"] },
+            urgency: { type: "integer", minimum: 0, maximum: 3 },
+            locationIds: { type: "array", items: { type: "string" }, maxItems: 8 },
+            factionIds: { type: "array", items: { type: "string" }, maxItems: 6 },
+            npcIds: { type: "array", items: { type: "string" }, maxItems: 8 },
+            recoveryPaths: { type: "array", items: { type: "string" }, minItems: 1, maxItems: 4 },
+            reason: { type: "string" }
+          },
+          required: ["threadId", "origin", "basisId", "kind", "title", "summary", "visibility", "maximumStage", "urgency", "locationIds", "factionIds", "npcIds", "recoveryPaths", "reason"],
+          additionalProperties: false
+        }
+      },
       suggestedActions: {
         type: "array",
         items: { type: "string" },
@@ -264,7 +330,7 @@ const PLAN_TOOL = {
       },
       allowsFreeText: { type: "boolean", enum: [true] }
     },
-    required: ["summary", "majorActionProposal", "factionChanges", "npcReputationChanges", "movements", "factionPathAdvances", "locationConsequences", "npcRequests", "npcUpdates", "storyThreadUpdates", "suggestedActions", "allowsFreeText"],
+    required: ["summary", "majorActionProposal", "factionChanges", "npcReputationChanges", "movements", "factionPathAdvances", "locationConsequences", "npcRequests", "npcUpdates", "storyThreadUpdates", "storyThreadCreations", "suggestedActions", "allowsFreeText"],
     additionalProperties: false
   }
 } as const;
@@ -288,14 +354,23 @@ const SCENE_TOOL = {
 
 const DIRECTOR_RULES = `You are the D&D-style Campaign Master and Story Brain for Velmora. The engine is the sole source of durable truth.
 The planning context includes player-visible state plus a hidden campaignBlueprint and directorStoryThreads. Use hidden material to preserve long-form structure, callbacks, and stage gates, but never reveal it merely because it appears in planning context. Reveal information only through events, evidence, and knowledge the player has actually reached. Do not invent mechanics, change authored canon, create travel through Tears, or mutate state directly.
+The supplied playerCharacter is the player's fixed identity and mechanical foundation. Portray the world responding to that character, but never choose the character's thoughts, dialogue, decisions, history, abilities, or actions for the player, and never redefine their recorded identity notes.
 You may create temporary sensory detail, dialogue, reactions, and immediate complications needed to make the current scene feel alive. Do not promote those details into permanent world facts unless the engine accepts a corresponding tool request.
 Narrate the result of the player's action as story, not as a technical summary. Propose only consequences justified by that action. Keep durable changes rare and bounded. A faction condition or NPC reputation may change by exactly one step. Advance a faction path only after a meaningful completed milestone; never invent the milestone's canon content.
 Use the supplied npcContext for portrayal. A full NPC may use only that NPC's supplied knowledge and beliefs. Prefer existing NPCs. Request at most one new minor NPC only when the player's action requires a persistent person who does not already exist; never use this to create a leader, major villain, canon authority, master, unique power holder, or predetermined plot answer. The request must use the current location.
 For existing NPCs directly affected by the turn, submit a bounded npcUpdate. Record only memories and relationship changes justified by the player's action. Standing may move only one step. New knowledge must reference an existing supplied public fact; never invent a fact or reveal a restricted fact. Ordinary NPC updates may not cause death. Mark involvement as ends when that NPC should leave the foreground; category changes are owned by the engine.
 Manage story continuity through storyThreadUpdates. Advance only a thread materially changed by the player's action. Activate dormant threads when play reaches them; block a route only if it retains a recovery path; resolve only when its promise is actually answered. Replace a broken route only by consuming one of that thread's exact recoveryPaths. A replacement is a route around the same story problem, not permission to invent a new canon truth. Never alter visibility or stage limits, and never surface a Director-only thread in player-visible narration.
+Create a new thread only when this turn genuinely produces durable unfinished business. Use storyThreadCreations for a player_goal, witnessed_consequence, npc_commitment, faction_development, or a branch from an unresolved supplied thread. Every creation must cite its exact basis and include a recovery path. Never create a main thread, new canon truth, predetermined answer, unsupported conspiracy, or early version of a later-stage event. Player goals, witnessed consequences, and NPC commitments remain player-visible. Unwitnessed faction developments remain Director-only. Existing-thread branches inherit the source's visibility and may not outlive its stage gate.
+If actionResolution is automatic, honor its reason, including when the declared intent is impossible. If actionResolution contains a roll, resolve the action in strict accordance with that outcome. Success with a cost achieves the immediate intent but introduces a proportional complication. Failure changes the situation and preserves a credible recovery route instead of simply stopping play. Critical results remain proportional and never accomplish the impossible or break canon.
 Always call submit_turn_plan exactly once. Provide exactly two suggested actions while allowing free text. If validation feedback is supplied, repair only the rejected fields.`;
 
+const ACTION_ASSESSMENT_RULES = `You are assessing one declared player action in Velmora before consequences are narrated.
+Call for a check only when the outcome is both uncertain and meaningful. Do not roll for ordinary movement, conversation, observation of obvious facts, harmless choices, or impossible actions. An impossible action is automatic only in the sense that no roll occurs; explain in the reason that it cannot achieve the stated result.
+For a check, choose one category and the single relevant ability. Skill checks must use their standard linked ability. Saving throws are reactive resistance, not voluntary attempts. Choose Easy 8, Standard 12, Hard 16, or Extreme 20 from the established world circumstances; never scale difficulty to oppose the character. Use advantage or disadvantage only when supplied circumstances clearly justify it; otherwise use normal. State the visible stakes without revealing the DC or hidden information.
+For automatic actions, return null for category, ability, skill, difficulty, and mode, and an empty stakes string. Call assess_player_action exactly once.`;
+
 const SCENE_RULES = `You are the D&D-style Campaign Master and Story Brain for Velmora. Present only the validated current scene and player-visible context supplied by the engine.
+The supplied playerCharacter is the player's fixed character. Use its recorded identity and abilities for grounding, but never narrate that character's unchosen thoughts, dialogue, decisions, history, or actions.
 Write an evocative but focused opening in 2-4 short paragraphs. Establish what the character perceives, what is happening now, and why a response matters. If visibleOpeningPressure is present, make that crisis the immediate playable situation without exposing any hidden blueprint material. You may create temporary sensory detail and dialogue, but may not invent permanent lore, powers, mechanics, hidden truths, new factions, or off-screen knowledge.
 Offer exactly two meaningfully different actions. The player may always type something else. Call present_scene exactly once.`;
 
@@ -304,10 +379,11 @@ function parseSubmittedPlan(value: unknown): DirectorTurnPlan {
   const plan = value as Partial<SubmittedPlan>;
   if (typeof plan.summary !== "string" || plan.summary.trim().length === 0) throw new Error("Cloud Director plan requires a summary");
   if (typeof plan.majorActionProposal !== "boolean") throw new Error("Cloud Director plan requires majorActionProposal");
-  if (!Array.isArray(plan.factionChanges) || !Array.isArray(plan.npcReputationChanges) || !Array.isArray(plan.movements) || !Array.isArray(plan.factionPathAdvances) || !Array.isArray(plan.locationConsequences) || !Array.isArray(plan.npcRequests) || !Array.isArray(plan.npcUpdates) || !Array.isArray(plan.storyThreadUpdates)) throw new Error("Cloud Director plan requires change arrays");
+  if (!Array.isArray(plan.factionChanges) || !Array.isArray(plan.npcReputationChanges) || !Array.isArray(plan.movements) || !Array.isArray(plan.factionPathAdvances) || !Array.isArray(plan.locationConsequences) || !Array.isArray(plan.npcRequests) || !Array.isArray(plan.npcUpdates) || !Array.isArray(plan.storyThreadUpdates) || !Array.isArray(plan.storyThreadCreations)) throw new Error("Cloud Director plan requires change arrays");
   if (plan.npcRequests.length > 1) throw new Error("Cloud Director may request at most one minor NPC per turn");
   if (plan.npcUpdates.length > 20) throw new Error("Cloud Director may update at most twenty affected NPCs per turn");
   if (plan.storyThreadUpdates.length > 4) throw new Error("Cloud Director may update at most four story threads per turn");
+  if (plan.storyThreadCreations.length > 2) throw new Error("Cloud Director may create at most two story threads per turn");
   if (!Array.isArray(plan.suggestedActions) || plan.suggestedActions.length !== 2 || !plan.suggestedActions.every((item) => typeof item === "string")) {
     throw new Error("Cloud Director plan requires exactly two suggested actions");
   }
@@ -321,6 +397,7 @@ function parseSubmittedPlan(value: unknown): DirectorTurnPlan {
     ...plan.npcRequests.map((change) => ({ type: "request_minor_npc" as const, ...change })),
     ...plan.npcUpdates.map((change) => ({ type: "manage_npc_turn" as const, ...change })),
     ...plan.storyThreadUpdates.map((change) => ({ type: "manage_story_thread" as const, ...change })),
+    ...plan.storyThreadCreations.map((change) => ({ type: "create_story_thread" as const, ...change })),
     ...plan.movements.map((change) => ({ type: "move_player" as const, ...change }))
   ];
   return {
@@ -390,7 +467,41 @@ export class CloudDirector implements CampaignDirector {
     };
   }
 
-  async planTurn(context: DirectorPlanningContext, playerInput: string, validationFeedback: string[] = []): Promise<DirectorTurnPlan> {
+  async assessAction(context: DirectorPlanningContext, playerInput: string): Promise<ActionAssessment> {
+    const response = await this.#fetch(this.#endpoint, {
+      method: "POST",
+      signal: AbortSignal.timeout(this.#timeoutMs),
+      headers: { "content-type": "application/json", authorization: `Bearer ${this.#apiKey}` },
+      body: JSON.stringify({
+        model: this.#model,
+        instructions: ACTION_ASSESSMENT_RULES,
+        input: JSON.stringify({ context, playerInput }),
+        tools: [ASSESS_ACTION_TOOL],
+        tool_choice: { type: "function", name: "assess_player_action" }
+      })
+    });
+    if (!response.ok) throw new Error(`Campaign Master action assessment failed (${response.status}): ${(await response.text()).slice(0, 300)}`);
+    const payload = await response.json() as { output?: Array<{ type?: string; name?: string; arguments?: string }> };
+    const call = payload.output?.find((item) => item.type === "function_call" && item.name === "assess_player_action");
+    if (!call?.arguments) throw new Error("Campaign Master did not assess the player action");
+    const value = JSON.parse(call.arguments) as Record<string, unknown>;
+    if (value.resolution === "automatic" && typeof value.reason === "string") return { resolution: "automatic", reason: value.reason };
+    if (value.resolution !== "check" || typeof value.category !== "string" || typeof value.ability !== "string" || typeof value.difficulty !== "string" || typeof value.mode !== "string" || typeof value.stakes !== "string" || typeof value.reason !== "string") {
+      throw new Error("Campaign Master returned an invalid action assessment");
+    }
+    return {
+      resolution: "check",
+      category: value.category as Extract<ActionAssessment, { resolution: "check" }>["category"],
+      ability: value.ability as Extract<ActionAssessment, { resolution: "check" }>["ability"],
+      skill: value.skill as Extract<ActionAssessment, { resolution: "check" }>["skill"],
+      difficulty: value.difficulty as Extract<ActionAssessment, { resolution: "check" }>["difficulty"],
+      mode: value.mode as Extract<ActionAssessment, { resolution: "check" }>["mode"],
+      stakes: value.stakes,
+      reason: value.reason
+    };
+  }
+
+  async planTurn(context: DirectorPlanningContext, playerInput: string, validationFeedback: string[] = [], actionResolution?: ActionResolution): Promise<DirectorTurnPlan> {
     const response = await this.#fetch(this.#endpoint, {
       method: "POST",
       signal: AbortSignal.timeout(this.#timeoutMs),
@@ -398,7 +509,7 @@ export class CloudDirector implements CampaignDirector {
       body: JSON.stringify({
         model: this.#model,
         instructions: DIRECTOR_RULES,
-        input: JSON.stringify({ context, playerInput, validationFeedback }),
+        input: JSON.stringify({ context, playerInput, actionResolution: actionResolution ?? null, validationFeedback }),
         tools: [PLAN_TOOL],
         tool_choice: { type: "function", name: "submit_turn_plan" }
       })

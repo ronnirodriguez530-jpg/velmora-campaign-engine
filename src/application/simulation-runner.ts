@@ -4,7 +4,8 @@ import { join } from "node:path";
 import type { CampaignDirector } from "../director/director.ts";
 import type { DirectorPlanningContext, DirectorTurnPlan, VelmoraContent } from "../domain/types.ts";
 import { createCampaign, getCampaign, listEvents, listFactionPathProgress, openDatabase } from "../persistence/database.ts";
-import { openPlayableMoment, submitPlayableAction } from "./gameplay-session.ts";
+import { openPlayableMoment } from "./gameplay-session.ts";
+import { runPlayerAction } from "./turn-orchestrator.ts";
 
 const PROFILES = [
   { name: "defense-magic", factions: ["FAC-001", "FAC-002"] },
@@ -70,7 +71,7 @@ export async function runSimulations(content: VelmoraContent, pathCount = 12, tu
     try {
       for (let turn = 0; turn < turnsPerPath; turn += 1) {
         openPlayableMoment(db, content, name);
-        await submitPlayableAction(db, content, director, name, "commit simulation step");
+        await runPlayerAction(db, content, director, name, "commit simulation step");
       }
       const campaign = getCampaign(db, name)!;
       const events = listEvents(db, campaignId);

@@ -1,6 +1,6 @@
 # Velmora Ghost Feature Audit
 
-Audit date: 2026-08-22
+Audit date: 2026-09-02
 
 Purpose: distinguish the application that actually exists from scaffolding, approved design, and absent features. A passing test means only that its stated scope works; it does not prove an unimplemented game system exists.
 
@@ -26,7 +26,7 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 10. Five bounded world-change tools: faction condition, fixed-character reputation, player movement, abstract faction-path advancement, and current-location consequence.
 11. Atomic turn commits, event logging, checkpoints, and one-turn rollback for the currently captured state.
 12. Provisional deterministic Tear-arrival records.
-13. Provisional numeric stage progression through abstract faction-path counters.
+13. Provisional numeric stage progression requiring both abstract faction-path counters and stage-dwell floors; Resolution cannot begin before turn 48.
 14. Public-update client, local version manifest, source replacement, and protection rules for the local save/config paths.
 15. Persistent general NPC records with active/known/background categories, automatic category decisions from bounded relevance signals, and category-change history.
 16. Separate world-fact, NPC-knowledge, NPC-belief, and personal-memory storage, including meaningful-memory promotion from background to known.
@@ -41,22 +41,33 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 25. Separate player-facing and Director-only story-thread retrieval, preventing hidden planning threads from entering scene-presentation context.
 26. Deterministic per-campaign blueprint generation with variable opening pressure, focal faction tension, multiple clue routes, later reversal, and a Resolution-only endgame gate.
 27. Persistent hidden blueprint retrieval for Director planning, automatic initial-thread seeding, and safe projection of only the immediate visible crisis into opening-scene context.
-28. Current automated suite: 40 of 40 tests passing.
+28. Validated story-thread management can activate, advance, block, resolve, fail, or recovery-path-replace relevant threads with atomic rollback.
+29. Validated live thread creation supports sourced player goals, witnessed consequences, NPC commitments, faction developments, and existing-thread branches without granting new-main-plot authority.
+30. Created-thread provenance, visibility inheritance, protected First Speaker boundaries, unresolved-thread caps, and legacy checkpoint defaults.
+31. One classless player-character record per campaign, with validated creation, standard-array abilities, derived modifiers, four skill proficiencies, two save proficiencies, starting/current HP, unarmored Defense, persistence, player/Director context, and play-before-creation blocking.
+32. Functional browser character creation and persistent character-sheet display.
+33. Core action assessment separates automatic actions from uncertain, meaningful checks through a strict Campaign Master schema and engine validation.
+34. Player-clicked hidden-DC d20 checks support abilities, linked skills, saving throws, proficiency, Easy/Standard/Hard/Extreme difficulty, advantage/disadvantage, and natural 1/20 priority.
+35. Persistent roll records and refresh-safe pending checks prevent rerolls; failed narration can retry with the original stored dice instead of generating a new result.
+36. Critical success, success, success with a cost, failure, and critical failure are calculated by the engine and supplied to the Campaign Master with proportional-result and recovery-route instructions.
+37. Required player rolls cannot be bypassed through non-browser action paths.
+38. Current automated suite: 60 of 60 tests passing.
 
 ## Partial or scaffolded
 
 ### Campaign Master
 
 - The OpenAI Responses API adapter, strict tool schemas, basic prompts, and local key-setting route exist.
+- The adapter now separately assesses roll necessity and must resolve stored engine outcomes, but real-provider adherence and narrative quality remain unverified.
 - The real API connection has not been verified in this workspace.
 - The prompts are a basic bounded narrator/turn planner, not the trained DM Core discussed later.
 - No DM handbook retrieval, examples library, rules retrieval, evaluations, or adaptive behavior exists.
 
 ### Characters and NPCs
 
-- `character_state` stores only ID, status, reputation, location, and an unused replacement-character field for eight fixed authored slots.
-- The eight content records contain roles and faction links, not complete NPC identities or personalities.
-- There is no player-character record or character-creation flow.
+- `character_state` stores only ID, status, reputation, location, and an unused replacement-character field for eight fixed authored NPC slots.
+- The eight authored content records contain roles and faction links, not complete NPC identities or personalities.
+- The player-character foundation works, but background, role, faction ties, equipment, conditions, damage, death, rest, recovery, advancement, and party behavior do not exist.
 - A general `npc_records` registry now preserves minimal identity, origin, faction, location, role, status, relevance turn, and storage category.
 - Automatic category decisions, recorded transitions, knowledge/belief separation, personal memory storage, directional relationship storage, adaptive Context Gate, curated reference retrieval, constrained minor-NPC generation, persistent novelty, lifecycle/archival, complete NPC rollback, bounded creation, and bounded live NPC consequence management work. Restricted-fact reveal events, high-consequence death resolution, and a real-provider playtest do not exist yet.
 
@@ -91,16 +102,16 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 
 - Four broad stage anchors and four generic templates exist.
 - The generic templates contain abstract conflict/objective keys rather than authored scenes or quest structure.
-- Stage progression is driven by provisional counters and produces uniform simulations.
+- Stage progression still uses provisional faction counters, but stage-dwell floors now prevent those counters from rushing every simulation into Resolution. Current simulation variety remains mechanical and incomplete.
 - There are no truth candidates, no truth-selection logic, no main quests, no faction quests, and no side quests.
-- The seeded campaign blueprint, initial thread seeding, context separation, and visible opening-pressure projection now exist. There is no validated thread-management authority yet, so the cloud Director cannot advance, block, resolve, retire, or replace generated threads during play.
+- The seeded campaign blueprint, initial thread seeding, context separation, visible opening-pressure projection, validated thread management, and bounded sourced thread creation now exist. These provide continuity memory, not a complete quest or scene-composition system.
 
 ### Browser pages and trackers
 
 - Story, Factions, Locations, History, and Settings render limited real data.
-- Character, Quests, and Inventory are placeholder pages.
+- Character creation and sheet display work. Quests and Inventory remain placeholder pages.
 - History shows recent committed player actions and Director summaries, not the complete engine event history.
-- There is no combat strip, action dropdown, dice popup, ability proposal card, Silly Mode slider, or NPC interface.
+- The temporary action-check popup works. There is no combat strip, action dropdown, ability proposal card, Silly Mode slider, or NPC interface.
 
 ### Perspective filtering
 
@@ -110,36 +121,33 @@ Purpose: distinguish the application that actually exists from scaffolding, appr
 
 ## Design-only features
 
-Everything in `DM_CORE_RULES_V1.md` is approved design, not implemented code. This includes:
+Most of `DM_CORE_RULES_V1.md` remains approved design rather than implemented code. Implemented exceptions are the classless character foundation and core non-combat d20 action resolution. Remaining design-only scope includes:
 
-1. Player-clicked d20 popup, critical/partial outcome rules, difficulty ladder, and advantage/disadvantage.
-2. Six ability scores, standard array, modifiers, skills, proficiencies, and saving throws.
-3. Player HP, Defense, death saves, conditions, morale, rest, and recovery.
-4. Adaptive quick/standard/set-piece theater-of-the-mind combat.
-5. Combat actions and the contextual action dropdown.
-6. Magic and ability usage, sustained effects, and player approval of proposed abilities.
-7. Inventory slots, weapons, armor, shields, consumables, and equipment effects.
-8. Silly Mode and temporary/permanent player-authored overrides.
-9. XP event recording, milestone advancement, and the later skill-tree module.
-10. Progressive-disclosure combat and tracker UI.
+1. Damage, healing, armor/equipment effects, death saves, conditions, morale, rest, and recovery beyond the stored starting/current HP and unarmored Defense foundation.
+2. Adaptive quick/standard/set-piece theater-of-the-mind combat.
+3. Combat actions and the contextual action dropdown.
+4. Magic and ability usage, sustained effects, and player approval of proposed abilities.
+5. Inventory slots, weapons, armor, shields, consumables, and equipment effects.
+6. Silly Mode and temporary/permanent player-authored overrides.
+7. XP event recording, milestone advancement, and the later skill-tree module.
+8. Progressive-disclosure combat and tracker UI.
 
 ## Completely absent systems
 
 1. Validated restricted-fact reveal events and dedicated high-consequence NPC death resolution.
-2. Player character storage, character sheet, creation, party membership, and party control.
-3. Gameplay dice roller and roll records.
-4. Combat state, initiative, turns, HP, damage, conditions, targets, and encounter resolution.
-5. Inventory/item storage and equipment state.
-6. Ability/power catalog and character ability ownership.
-7. XP, level, milestone, or skill-tree storage and behavior.
-8. Generative quest lifecycle application logic, reusable validated quest structures, and campaign-specific quest creation.
-9. Mechanical creature, relic, power, world-fragment, and Tear-payload records; curated content catalogs exist but cannot yet act on game state.
-10. Final-truth candidates and player-choice resolution logic.
-11. Story/DM training and reference retrieval beyond the existing NPC-only library, including examples or open-licensed structural guidance.
-12. Adaptive learning, player-preference modeling, and DM behavior adjustment.
-13. Independent live-world activity. The playable engine advances only in response to committed player actions; the multi-path Simulation Runner is isolated test machinery.
-14. Silly Mode and override history.
-15. Velmora economy and item catalog.
+2. Character background/role/faction/equipment systems, party membership, and party control.
+3. Combat state, initiative, turns, damage, conditions, targets, and encounter resolution.
+4. Inventory/item storage and equipment state.
+5. Ability/power catalog and character ability ownership.
+6. XP, level, milestone, or skill-tree storage and behavior.
+7. Generative quest lifecycle application logic, reusable validated quest structures, and campaign-specific quest creation.
+8. Mechanical creature, relic, power, world-fragment, and Tear-payload records; curated content catalogs exist but cannot yet act on game state.
+9. Final-truth candidates and player-choice resolution logic.
+10. Story/DM training and reference retrieval beyond the existing NPC-only library, including examples or open-licensed structural guidance.
+11. Adaptive learning, player-preference modeling, and DM behavior adjustment.
+12. Independent live-world activity. The playable engine advances only in response to committed player actions; the multi-path Simulation Runner is isolated test machinery.
+13. Silly Mode and override history.
+14. Velmora economy and item catalog.
 
 ## Important implementation limitations found
 
@@ -147,15 +155,15 @@ Everything in `DM_CORE_RULES_V1.md` is approved design, not implemented code. Th
 2. Rollback deletes later scenes, location consequences, and Tear arrivals, but does not delete orphaned later story-presentation records.
 3. Quest snapshots preserve only quest state and cannot support future quest creation or detailed quest mutation without expansion.
 4. NPC behavior is covered through local and mocked-provider tests, but real Campaign Master quality and real provider behavior remain unverified.
-5. Player character, combat, inventory, authored quests, powers, and a full playable campaign remain untested because those systems do not yet exist.
+5. Character creation is tested, but combat, inventory, authored quests, powers, party control, and a full playable campaign remain untested because those systems do not yet exist.
 
 ## Correct project position
 
-Velmora currently has a functional local application shell, continuity scaffold, and tested NPC Engine foundation. It is not yet a complete playable D&D campaign engine and does not yet contain the implemented DM Core, player character, authored quests, combat, items, powers, or sufficient authored campaign content.
+Velmora currently has a functional local application shell, continuity scaffold, tested NPC Engine foundation, persistent single-player-character foundation, and core non-combat action resolution. It is not yet a complete playable D&D campaign engine and does not yet contain the complete DM Core, authored quests, combat, items, powers, party behavior, or sufficient generative campaign machinery.
 
 ## Required correction before further feature design
 
 1. Maintain one feature ledger with the four statuses used in this audit.
 2. Never describe design-only or partial features in the present tense.
 3. Implement and test one dependency-complete vertical system before designing dependent behavior.
-4. Continue from the completed NPC foundation into only the minimum safe NPC consequence tools required by live play.
+4. Continue from core action resolution into only the next dependency-safe layer; do not imply that non-combat checks constitute combat.

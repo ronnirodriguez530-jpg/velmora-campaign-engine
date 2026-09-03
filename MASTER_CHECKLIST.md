@@ -60,12 +60,16 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Variable opening conflict over replacing the incapacitated First Speaker
 - [ ] Replacement candidates and selection events generated from approved campaign conditions rather than one preset outcome
 - [x] First Speaker's hidden transformation, false recovery, intermittent control, and escalating influence established as a campaign conflict
+- [x] Stage-dwell pacing floor prevents rapid faction progress from reaching Resolution before 48 meaningful player turns
 - [ ] Approved pools and stage rules for transformation clues, interventions, consequences, and possible outcomes
 - [x] Seeded, stage-gated campaign blueprint foundation with variable opening pressure, focal faction tension, three clue routes, a later reversal, and a Resolution-only endgame gate
 - [x] Persistent story-thread ledger foundation with visibility, stage, location, urgency, recovery-path, and rollback-safe records
 - [x] Validated Director tools for activating, advancing, blocking, resolving, failing, and replacing story threads during play
 - [x] Replacement routes must consume a recorded recovery path and inherit the source thread's visibility and stage gates
-- [ ] Validated creation of genuinely new player-created or campaign-generated story threads during play
+- [x] Validated creation of new player goals, witnessed consequences, NPC commitments, faction developments, and branches from existing threads during play
+- [x] Created-thread provenance records the exact player input, location, NPC, faction, or source thread that caused it
+- [x] Live creation cannot invent a new main plot, bypass the protected First Speaker arc, change visibility rules, or exceed current stage authority
+- [x] Unresolved generated threads are capped and retrieved through the existing bounded relevance context
 - [ ] Main-quest generator using approved canon, campaign conditions, and player-created goals
 - [ ] Faction-quest generator using faction agendas, local pressures, relationships, and current state
 - [ ] Reusable side-quest generator with objective, stakes, failure conditions, recovery routes, and consequences
@@ -102,15 +106,17 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [ ] Complete rollback coverage for every future system
 - [ ] Stable data contracts for every remaining module
 
-### 5. Player character and party — Missing
+### 5. Player character and party — Partial
 
-- [ ] Player-character identity and creation flow
-- [ ] Character sheet and persistent character state
-- [ ] Attributes, modifiers, skills, proficiencies, and saves
+- [x] Player-character identity and creation flow
+- [x] Character sheet and persistent character state
+- [x] Attributes, modifiers, skills, proficiencies, and saves
 - [ ] Health, defense, conditions, death, rest, and recovery
 - [ ] Background, role, faction ties, and starting equipment
-- [ ] Single-character control for the first release
+- [x] Single-character control for the first release
 - [ ] Party membership and later party-control boundary
+
+Implemented health scope: starting/current HP and unarmored Defense are derived and persisted. Conditions, damage, death, rest, recovery, armor, and equipment effects do not exist yet.
 
 ### 6. NPC Engine — Working foundation
 
@@ -126,14 +132,16 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [ ] Faction-specific generation constraints for the First Speaker, senior deputy, and six faction-leader offices
 - [ ] Real-provider NPC behavior playtest
 
-### 7. Core action and dice rules — Designed
+### 7. Core action and dice rules — Working foundation
 
-- [ ] Player-clicked dice roller and stored roll records
-- [ ] Difficulty levels and outcome bands
-- [ ] Advantage and disadvantage
-- [ ] Attribute, skill, proficiency, and saving-throw resolution
-- [ ] Clear boundary between automatic actions and required rolls
-- [ ] Failure that creates consequences without routinely stopping play
+- [x] Player-clicked dice roller and stored roll records
+- [x] Difficulty levels and outcome bands
+- [x] Advantage and disadvantage
+- [x] Attribute, skill, proficiency, and saving-throw resolution
+- [x] Clear boundary between automatic actions and required rolls
+- [x] Failure outcome contract requires proportional consequences and recovery routes instead of routine dead ends
+
+The exact DC remains Director-only. Pending checks survive refreshes, resolved dice cannot be rerolled, and historical roll records do not enter ordinary story context. Real-provider narrative quality is still unverified.
 
 ### 8. Combat and encounters — Designed
 
@@ -242,7 +250,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 
 - [x] High-contrast application shell and navigation
 - [x] Story, Factions, Locations, History, and Settings show limited real data
-- [ ] Functional Character page
+- [x] Functional Character page
 - [ ] Functional Quest page
 - [ ] Functional Inventory page
 - [ ] Clean location and world-state presentation
@@ -266,7 +274,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 44 of 44 tests
+- [x] Current automated suite passes 50 of 50 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -275,6 +283,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [ ] Save migration, corruption recovery, and updater testing
 - [ ] Full performance and long-campaign endurance testing
 - [x] Initial 60-turn growing thread-history stress test keeps relevant Director context bounded
+- [x] Multi-path pacing test verifies campaigns remain below Resolution through turn 47 and become eligible at turn 48
 
 ### 20. API configuration and security — Partial
 
@@ -364,4 +373,4 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 
 ## Current position
 
-Velmora is currently completing step 2. The world foundation, application shell, persistence layer, NPC Engine foundation, seeded campaign blueprint, story-thread ledger, hidden/player context separation, and validated thread-management tools exist. New-thread creation, player character, quests, combat, powers, items, progression, and the complete DM Core do not yet exist.
+Velmora is currently completing step 2. The world foundation, application shell, persistence layer, NPC Engine foundation, seeded campaign blueprint, story-thread ledger, hidden/player context separation, validated thread tools, and the single-player-character foundation exist. Quests, combat, powers, items, progression, and the complete DM Core do not yet exist.

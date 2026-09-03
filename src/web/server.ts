@@ -5,13 +5,15 @@ import { fileURLToPath } from "node:url";
 import { dirname, extname, join, resolve } from "node:path";
 import { loadVelmoraContent } from "../application/campaign-loader.ts";
 import { buildPerspectiveContext } from "../application/context-builder.ts";
-import { submitPlayableAction } from "../application/gameplay-session.ts";
+import { beginPlayableAction, finishPlayableAction } from "../application/gameplay-session.ts";
+import { getPendingActionCheck } from "../application/dice-resolution.ts";
 import { openPresentedStoryMoment } from "../application/story-session.ts";
+import { createPlayerCharacter, type PlayerCharacterInput } from "../application/player-character.ts";
 import { checkForUpdate, installLatestUpdate } from "../application/update-manager.ts";
 import { spawn } from "node:child_process";
 import { cloudDirectorFromEnvironment } from "../director/cloud-director.ts";
 import { MockDirector } from "../director/mock-director.ts";
-import { backfillAuthoredState, createCampaign, getCampaign, listEvents, openDatabase, restorePreviousTurn } from "../persistence/database.ts";
+import { backfillAuthoredState, createCampaign, getCampaign, getPlayerCharacter, listEvents, openDatabase, restorePreviousTurn } from "../persistence/database.ts";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const publicRoot = join(projectRoot, "public");
@@ -20,7 +22,9 @@ const staticFiles: Record<string, string> = {
   "/": "index.html",
   "/index.html": "index.html",
   "/app.js": "app.js",
-  "/styles.css": "styles.css"
+  "/styles.css": "styles.css",
+  "/character.css": "character.css",
+  "/dice.css": "dice.css"
 };
 
 function sendJson(response: ServerResponse, status: number, value: unknown): void {
@@ -61,6 +65,8 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
     });
     return {
       context,
+      playerCharacter: context.playerCharacter,
+      pendingCheck: getPendingActionCheck(db, context.campaignId),
       storyHistory,
       factions: content.factions.map((faction) => ({
         id: faction.id,
@@ -128,7 +134,7 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         return;
       }
 
-      const match = url.pathname.match(/^\/api\/campaigns\/([^/]+)(?:\/(play|actions|rollback|log))?$/u);
+      const match = url.pathname.match(/^\/api\/campaigns\/([^/]+)(?:\/(play|actions|rolls|rollback|log|character))?$/u);
       if (match) {
         const name = decodeURIComponent(match[1]);
         const operation = match[2];
@@ -151,17 +157,47 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
           sendJson(response, 200, { events: listEvents(db, campaign.id) });
           return;
         }
+        if (method === "POST" && operation === "character") {
+          const body = await readJson(request);
+          const input: PlayerCharacterInput = {
+            name: typeof body.name === "string" ? body.name : "",
+            identityNotes: typeof body.identityNotes === "string" ? body.identityNotes : "",
+            abilityScores: body.abilityScores as PlayerCharacterInput["abilityScores"],
+            skillProficiencies: body.skillProficiencies as PlayerCharacterInput["skillProficiencies"],
+            saveProficiencies: body.saveProficiencies as PlayerCharacterInput["saveProficiencies"]
+          };
+          const playerCharacter = createPlayerCharacter(db, campaign.id, input);
+          sendJson(response, 201, { campaign: getCampaign(db, name), playerCharacter, ...playerView(name) });
+          return;
+        }
         if (method === "POST" && operation === "actions") {
+          if (!getPlayerCharacter(db, campaign.id)) throw new Error("Create your player character before beginning story play");
           const body = await readJson(request);
           const input = typeof body.input === "string" ? body.input.trim() : "";
           if (!input || input.length > 1000) throw new Error("Action must be 1-1000 characters");
           const requestedDirector = body.director === "local" ? "local" : "cloud";
           const director = selectDirector(requestedDirector);
-          const result = await submitPlayableAction(db, content, director, name, input);
-          sendJson(response, 200, { result, campaign: getCampaign(db, name), moment: await openPresentedStoryMoment(db, content, director, name), ...playerView(name) });
+          const begun = await beginPlayableAction(db, content, director, name, input);
+          if (begun.status === "roll_required") {
+            sendJson(response, 200, { pendingCheck: begun.pendingCheck, campaign: getCampaign(db, name), ...playerView(name) });
+            return;
+          }
+          sendJson(response, 200, { result: begun.result, campaign: getCampaign(db, name), moment: await openPresentedStoryMoment(db, content, director, name), ...playerView(name) });
+          return;
+        }
+        if (method === "POST" && operation === "rolls") {
+          if (!getPlayerCharacter(db, campaign.id)) throw new Error("Create your player character before beginning story play");
+          const body = await readJson(request);
+          const checkId = typeof body.checkId === "string" ? body.checkId : "";
+          if (!checkId) throw new Error("A pending check ID is required");
+          const requestedDirector = body.director === "local" ? "local" : "cloud";
+          const director = selectDirector(requestedDirector);
+          const resolved = await finishPlayableAction(db, content, director, name, checkId);
+          sendJson(response, 200, { ...resolved, campaign: getCampaign(db, name), moment: await openPresentedStoryMoment(db, content, director, name), ...playerView(name) });
           return;
         }
         if (method === "POST" && operation === "rollback") {
+          if (getPendingActionCheck(db, campaign.id)) throw new Error("Resolve the pending action check before rolling back");
           const restored = restorePreviousTurn(db, name);
           const director = selectDirector(url.searchParams.get("director"));
           sendJson(response, 200, { campaign: restored, moment: await openPresentedStoryMoment(db, content, director, name), ...playerView(name) });

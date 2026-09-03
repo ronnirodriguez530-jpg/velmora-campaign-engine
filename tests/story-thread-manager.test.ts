@@ -65,6 +65,141 @@ test("Campaign Master can advance a thread atomically and rollback restores it",
   }
 });
 
+test("player-created goals become durable visible threads and rollback removes them", async () => {
+  const { content, db, campaignId } = await setup("thread-create-goal");
+  const director = directorFor(async () => ({
+    summary: "The player promises to find the child separated from the evacuation line.",
+    majorActionProposal: true,
+    toolRequests: [{
+      type: "create_story_thread",
+      threadId: "THREAD-FIND-SEPARATED-CHILD",
+      origin: "player_goal",
+      basisId: "player_input",
+      kind: "personal",
+      title: "A Promise in the Plaza",
+      summary: "The player promised to find a child separated from the Council Plaza evacuation line.",
+      visibility: "player",
+      maximumStage: "stabilization",
+      urgency: 2,
+      locationIds: ["LOC-COUNCIL-CROWN"],
+      factionIds: [],
+      npcIds: [],
+      recoveryPaths: ["Another survivor can identify where the missing child was last seen."],
+      reason: "The player explicitly accepted responsibility for an unresolved rescue."
+    }],
+    suggestedActions: ["Search the evacuation route", "Question nearby survivors"],
+    allowsFreeText: true
+  }));
+  try {
+    await runPlayerAction(db, content, director, "thread-create-goal", "I promise to find the missing child");
+    const created = listStoryThreads(db, campaignId).find((thread) => thread.threadId === "THREAD-FIND-SEPARATED-CHILD")!;
+    assert.equal(created.origin, "player_goal");
+    assert.equal(created.basisId, "player_input");
+    assert.equal(created.minimumStage, "opening");
+    assert.equal(created.visibility, "player");
+    assert.equal(buildPerspectiveContext(db, content, "thread-create-goal").playerKnownStoryThreads.some((thread) => thread.threadId === created.threadId), true);
+    assert.ok(listEvents(db, campaignId).some((event) => event.eventType === "story_thread_created"));
+
+    restorePreviousTurn(db, "thread-create-goal");
+    assert.equal(listStoryThreads(db, campaignId).some((thread) => thread.threadId === created.threadId), false);
+  } finally {
+    db.close();
+  }
+});
+
+test("unwitnessed faction developments stay hidden while retaining a concrete basis", async () => {
+  const { content, db, campaignId } = await setup("thread-create-faction");
+  const director = directorFor(async () => ({
+    summary: "The player's public refusal gives the Order of Glass a reason to quietly reassess them.",
+    majorActionProposal: true,
+    toolRequests: [{
+      type: "create_story_thread",
+      threadId: "THREAD-GLASS-QUIET-REASSESSMENT",
+      origin: "faction_development",
+      basisId: "FAC-006",
+      kind: "faction",
+      title: "A Quiet Reassessment",
+      summary: "The Order of Glass has an unresolved reason to reassess the player's usefulness after the public refusal.",
+      visibility: "director",
+      maximumStage: "stabilization",
+      urgency: 1,
+      locationIds: [],
+      factionIds: ["FAC-006"],
+      npcIds: [],
+      recoveryPaths: ["A later public action can change how the Order interprets the refusal."],
+      reason: "A witnessed player choice created a new unresolved faction response."
+    }],
+    suggestedActions: ["Return to the evacuation", "Watch the gallery"],
+    allowsFreeText: true
+  }));
+  try {
+    await runPlayerAction(db, content, director, "thread-create-faction", "publicly refuse the Order's request");
+    const created = listStoryThreads(db, campaignId).find((thread) => thread.threadId === "THREAD-GLASS-QUIET-REASSESSMENT")!;
+    assert.equal(created.origin, "faction_development");
+    assert.equal(JSON.stringify(buildPerspectiveContext(db, content, "thread-create-faction")).includes(created.threadId), false);
+    assert.equal(buildDirectorPlanningContext(db, content, "thread-create-faction").directorStoryThreads.some((thread) => thread.threadId === created.threadId), true);
+  } finally {
+    db.close();
+  }
+});
+
+test("new threads cannot invent a main plot or an independent First Speaker arc", async () => {
+  const { content, db, campaignId } = await setup("thread-create-guardrails");
+  const invalidMain = directorFor(async () => ({
+    summary: "invalid",
+    majorActionProposal: true,
+    toolRequests: [{
+      type: "create_story_thread",
+      threadId: "THREAD-UNSUPPORTED-MAIN",
+      origin: "player_goal",
+      basisId: "player_input",
+      kind: "main" as "side",
+      title: "An Unsupported Main Plot",
+      summary: "This attempts to create a new main plot without protected campaign authority.",
+      visibility: "player",
+      maximumStage: "resolution",
+      urgency: 3,
+      locationIds: [],
+      factionIds: [],
+      npcIds: [],
+      recoveryPaths: ["Return to an approved existing story thread."],
+      reason: "Invalid main-thread creation test."
+    }],
+    suggestedActions: ["A", "B"],
+    allowsFreeText: true
+  }));
+  const invalidSpeaker = directorFor(async () => ({
+    summary: "invalid",
+    majorActionProposal: true,
+    toolRequests: [{
+      type: "create_story_thread",
+      threadId: "THREAD-INDEPENDENT-SPEAKER-ARC",
+      origin: "npc_commitment",
+      basisId: "NPC-FIRST-SPEAKER",
+      kind: "personal",
+      title: "An Unsupported Speaker Arc",
+      summary: "This attempts to create a separate Speaker storyline outside protected structure.",
+      visibility: "player",
+      maximumStage: "resolution",
+      urgency: 3,
+      locationIds: ["LOC-COUNCIL-CROWN"],
+      factionIds: [],
+      npcIds: ["NPC-FIRST-SPEAKER"],
+      recoveryPaths: ["Return to the protected transformation thread."],
+      reason: "Invalid independent Speaker-thread creation test."
+    }],
+    suggestedActions: ["A", "B"],
+    allowsFreeText: true
+  }));
+  try {
+    await assert.rejects(() => runPlayerAction(db, content, invalidMain, "thread-create-guardrails", "commit invalid main"), /may not create a new main story thread/);
+    await assert.rejects(() => runPlayerAction(db, content, invalidSpeaker, "thread-create-guardrails", "commit invalid speaker arc"), /must branch from the protected transformation thread/);
+    assert.equal(listStoryThreads(db, campaignId).some((thread) => thread.threadId === "THREAD-UNSUPPORTED-MAIN" || thread.threadId === "THREAD-INDEPENDENT-SPEAKER-ARC"), false);
+  } finally {
+    db.close();
+  }
+});
+
 test("replacement must follow a recorded recovery route and inherits secrecy and stage gates", async () => {
   const { content, db, campaignId } = await setup("thread-replace");
   const source = listStoryThreads(db, campaignId).find((thread) => thread.threadId === "THREAD-FIRST-SPEAKER-TRANSFORMATION")!;
@@ -147,6 +282,8 @@ test("growing long-campaign thread history stays bounded in planning context", a
     summary: "A synthetic route used to verify long-running continuity behavior.",
     status: "active",
     visibility: "director",
+    origin: "existing_thread_branch",
+    basisId: "THREAD-FACTION-PRESSURE",
     minimumStage: "opening",
     maximumStage: "resolution",
     urgency: 1,

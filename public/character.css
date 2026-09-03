@@ -1,0 +1,41 @@
+.choice-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 10px;
+}
+.choice-field, .check-field {
+  padding: 14px;
+  border: 1px solid #493955;
+  border-radius: 11px;
+  background: #140f19;
+}
+.choice-field label { margin: 0 0 8px; }
+.choice-field select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #635170;
+  border-radius: 8px;
+  color: #fff;
+  background: #0c0910;
+}
+.check-field { display: flex; gap: 10px; align-items: center; }
+.check-field input { width: auto; }
+.check-field label { margin: 0; font-weight: 700; }
+.check-field small { display: block; color: #a99caf; }
+.selection-count { color: #c7a6e3; font: 700 .8rem Inter, sans-serif; }
+.optional { color: #9e91a8; font-weight: 500; }
+.character-submit { margin-top: 26px; }
+.character-summary { display: flex; justify-content: space-between; gap: 24px; align-items: center; }
+.vital-grid, .stat-grid { display: grid; grid-template-columns: repeat(3, minmax(90px, 1fr)); gap: 10px; }
+.vital-grid > div, .stat-card { padding: 14px; border-radius: 10px; background: #0d0911; text-align: center; }
+.vital-grid span, .stat-card span { display: block; color: #aa9caf; font-size: .76rem; text-transform: uppercase; letter-spacing: .08em; }
+.vital-grid strong, .stat-card strong { display: block; margin-top: 4px; font-size: 1.45rem; }
+.stat-grid { grid-template-columns: repeat(auto-fit, minmax(125px, 1fr)); }
+.character-details { display: grid; grid-template-columns: 2fr 1fr; gap: 30px; }
+.tag-list { display: flex; flex-wrap: wrap; gap: 8px; }
+.tag-list span { padding: 8px 11px; border: 1px solid #594368; border-radius: 999px; background: #1a1220; color: #e5d8ed; }
+@media (max-width: 620px) {
+  .character-summary { align-items: stretch; flex-direction: column; }
+  .vital-grid { width: 100%; }
+  .character-details { grid-template-columns: 1fr; }
+}

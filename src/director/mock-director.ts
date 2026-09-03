@@ -1,5 +1,5 @@
 import type { CampaignDirector } from "./director.ts";
-import type { DirectorContext, DirectorPlanningContext, DirectorPreview, DirectorTurnPlan, PerspectiveContext, ScenePackage, StoryPresentation, ToolRequest } from "../domain/types.ts";
+import type { ActionAssessment, ActionResolution, DirectorContext, DirectorPlanningContext, DirectorPreview, DirectorTurnPlan, PerspectiveContext, ScenePackage, StoryPresentation, ToolRequest } from "../domain/types.ts";
 
 export class MockDirector implements CampaignDirector {
   readonly source = "diagnostic" as const;
@@ -22,7 +22,23 @@ export class MockDirector implements CampaignDirector {
     };
   }
 
-  async planTurn(context: DirectorPlanningContext, playerInput: string): Promise<DirectorTurnPlan> {
+  async assessAction(_context: DirectorPlanningContext, playerInput: string): Promise<ActionAssessment> {
+    if (playerInput.toLowerCase().includes("diagnostic check")) {
+      return {
+        resolution: "check",
+        category: "skill",
+        ability: "dexterity",
+        skill: "stealth",
+        difficulty: "standard",
+        mode: "normal",
+        stakes: "Success passes unnoticed; a worse result draws attention but leaves another route.",
+        reason: "The diagnostic action is uncertain and has a meaningful consequence."
+      };
+    }
+    return { resolution: "automatic", reason: "The diagnostic action does not require a roll." };
+  }
+
+  async planTurn(context: DirectorPlanningContext, playerInput: string, _validationFeedback?: string[], actionResolution?: ActionResolution): Promise<DirectorTurnPlan> {
     const normalized = playerInput.toLowerCase();
     const toolRequests: ToolRequest[] = [];
     if (normalized.includes("support league")) {
@@ -42,7 +58,9 @@ export class MockDirector implements CampaignDirector {
       });
     }
     return {
-      summary: `Mock Director received '${playerInput}' at ${context.currentLocation.id}.`,
+      summary: actionResolution?.kind === "rolled"
+        ? `Mock Director resolved '${playerInput}' as ${actionResolution.roll.outcome} with a total of ${actionResolution.roll.total}.`
+        : `Mock Director received '${playerInput}' at ${context.currentLocation.id}.`,
       majorActionProposal: toolRequests.length > 0,
       toolRequests,
       suggestedActions: ["Review the result", "Inspect current campaign status"],

@@ -1,6 +1,6 @@
 # Velmora DM Core — Rules Foundation V1
 
-Status: approved design checkpoint; implementation pending.
+Status: approved design contract; character creation and core d20 action resolution implemented, later systems pending.
 
 This file records only decisions explicitly established with the user. It is the rules contract for the first competent Campaign Master build. Later modules may extend these rules but must not silently replace them.
 
@@ -13,6 +13,8 @@ This file records only decisions explicitly established with the user. It is the
 - The main Story screen stays clean through progressive disclosure: contextual action dropdown, temporary roll popup, compact combat strip, and detailed trackers in their respective sidebar pages.
 
 ## Core resolution
+
+Implementation status: automatic-versus-check assessment, the four hidden difficulty levels, player-clicked d20 rolls, stored roll records, ability/skill/save modifiers, proficiency, advantage/disadvantage, and all five outcome bands work. Real-provider narrative handling remains unverified.
 
 - Roll: `d20 + relevant ability modifier + proficiency when applicable`.
 - The DM calls for a roll only when the outcome is uncertain and meaningful.
@@ -35,6 +37,8 @@ This file records only decisions explicitly established with the user. It is the
 Difficulty follows the world and circumstances; it does not secretly scale to oppose the player.
 
 ## Character foundation
+
+Implementation status: the creation, persistence, sheet, ability, proficiency, starting/current HP, and unarmored Defense foundation works. Damage, armor, conditions, death, rest, recovery, and later character systems remain design-only.
 
 - Abilities: Strength, Dexterity, Constitution, Intelligence, Wisdom, Charisma.
 - Starting array: 15, 14, 13, 12, 10, 8, assigned by the player.
@@ -171,4 +175,3 @@ V1 keeps advancement deliberately simple:
 5. Deeper magical-energy systems if the authored magic catalog requires them.
 6. Actual Velmora power and ability catalog.
 7. Velmora economy and item catalog.
-

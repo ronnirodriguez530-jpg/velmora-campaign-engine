@@ -39,6 +39,8 @@ At campaign creation, the engine uses the campaign seed and approved content poo
 
 The blueprint must never select Resolution-stage possession, permanent control of the First Speaker, or another endgame event during an earlier stage.
 
+Faction-path progress is necessary but not sufficient to change campaign stages. Each stage also has a minimum dwell period measured in meaningful committed player turns. Under the V1 pacing floor, Resolution cannot begin before turn 48, preserving room for faction stories, investigations, failures, recovery, and character moments even when mechanical milestones are completed unusually quickly.
+
 ### 3. Story-thread ledger
 
 The engine persistently tracks open questions, promises, clues, threats, relationships, faction agendas, player-created goals, unresolved consequences, and dormant threads. Each thread records its origin, current state, involved entities, stage limits, urgency, last use, and possible recovery routes.
@@ -46,6 +48,8 @@ The engine persistently tracks open questions, promises, clues, threats, relatio
 This ledger is the campaign's story memory. It prevents the Campaign Master from treating each scene as an isolated prompt.
 
 The Campaign Master may activate, advance, block, resolve, fail, or replace retrieved threads only through validated tools. A replacement must follow a recovery path already recorded on the source thread and inherits that thread's visibility and stage range. This prevents adaptation from becoming an unrelated shortcut, a secret leak, or premature escalation.
+
+New threads created during play must be caused by an explicit player goal, witnessed consequence, NPC commitment, faction development, or unresolved source-thread branch. Their provenance is stored with the thread. Live generation cannot create a new main plot: main-story authority remains with protected canon and the seeded campaign blueprint. The First Speaker cannot receive an independent generated arc outside the protected transformation thread. Unresolved generated threads are capped so long campaigns cannot grow planning context without limit.
 
 ### 4. Scene and quest composer
 

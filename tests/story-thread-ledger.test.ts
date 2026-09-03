@@ -17,6 +17,8 @@ function thread(campaignId: string, overrides: Partial<StoryThread> = {}): Story
     summary: "The player must respond to the immediate consequences of the attack.",
     status: "active",
     visibility: "player",
+    origin: "witnessed_consequence",
+    basisId: "LOC-COUNCIL-CROWN",
     minimumStage: "opening",
     maximumStage: "stabilization",
     urgency: 3,
@@ -79,5 +81,21 @@ test("story-thread stage ranges cannot run backward", async () => {
     minimumStage: "resolution",
     maximumStage: "opening"
   })), /minimum stage/);
+  db.close();
+});
+
+test("legacy story-thread snapshots receive safe provenance defaults", async () => {
+  const root = mkdtempSync(join(tmpdir(), "velmora-story-thread-legacy-"));
+  const db = openDatabase(join(root, "save.sqlite"));
+  const content = await loadVelmoraContent(resolve(import.meta.dirname, ".."));
+  const campaignId = createCampaign(db, content, "story-thread-legacy-test", "thread-legacy-seed");
+  const legacy = thread(campaignId) as Partial<StoryThread>;
+  delete legacy.origin;
+  delete legacy.basisId;
+  persistStoryThread(db, legacy as StoryThread);
+  const restored = listRelevantStoryThreads(db, campaignId, "opening", "LOC-COUNCIL-CROWN", "player")
+    .find((item) => item.threadId === legacy.threadId)!;
+  assert.equal(restored.origin, "blueprint");
+  assert.equal(restored.basisId, null);
   db.close();
 });

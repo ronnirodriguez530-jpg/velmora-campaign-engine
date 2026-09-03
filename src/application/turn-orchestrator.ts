@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { CampaignDirector } from "../director/director.ts";
-import type { TurnResult, VelmoraContent } from "../domain/types.ts";
+import type { ActionResolution, TurnResult, VelmoraContent } from "../domain/types.ts";
 import { isMajorPlayerAction } from "./action-classifier.ts";
 import { appendEvent, captureSnapshot, getCampaign, insertCheckpoint } from "../persistence/database.ts";
 import { validateToolRequest } from "../tools/validator.ts";
@@ -16,12 +16,13 @@ async function requestValidPlan(
   content: VelmoraContent,
   director: CampaignDirector,
   campaignName: string,
-  playerInput: string
+  playerInput: string,
+  actionResolution?: ActionResolution
 ) {
   const context = buildDirectorPlanningContext(db, content, campaignName);
   let feedback: string[] | undefined;
   for (let attempt = 1; attempt <= MAX_DIRECTOR_ATTEMPTS; attempt += 1) {
-    const plan = await director.planTurn(context, playerInput, feedback);
+    const plan = await director.planTurn(context, playerInput, feedback, actionResolution);
     try {
       if (plan.toolRequests.filter((request) => request.type === "request_minor_npc").length > 1) {
         throw new Error("A turn may request at most one new minor NPC");
@@ -41,6 +42,12 @@ async function requestValidPlan(
       if (new Set(replacementIds).size !== replacementIds.length) {
         throw new Error("Replacement story thread IDs must be unique within a turn");
       }
+      const creationRequests = plan.toolRequests.filter((request) => request.type === "create_story_thread");
+      if (creationRequests.length > 2) throw new Error("A turn may create at most two story threads");
+      const createdIds = creationRequests.map((request) => request.threadId);
+      if (new Set(createdIds).size !== createdIds.length) throw new Error("Created story thread IDs must be unique within a turn");
+      const allNewIds = [...replacementIds, ...createdIds];
+      if (new Set(allNewIds).size !== allNewIds.length) throw new Error("All new story thread IDs must be unique within a turn");
       for (const request of plan.toolRequests) validateToolRequest(db, content, context.campaignId, request);
       return plan;
     } catch (error) {
@@ -56,11 +63,12 @@ export async function runPlayerAction(
   content: VelmoraContent,
   director: CampaignDirector,
   campaignName: string,
-  playerInput: string
+  playerInput: string,
+  actionResolution?: ActionResolution
 ): Promise<TurnResult> {
   const campaign = getCampaign(db, campaignName);
   if (!campaign) throw new Error(`Campaign '${campaignName}' does not exist`);
-  const plan = await requestValidPlan(db, content, director, campaignName, playerInput);
+  const plan = await requestValidPlan(db, content, director, campaignName, playerInput, actionResolution);
 
   const isMajor = isMajorPlayerAction(playerInput) || plan.majorActionProposal;
   if (!isMajor) {
@@ -87,8 +95,13 @@ export async function runPlayerAction(
     appendEvent(db, campaign.id, nextTurn, "world_turn_committed", {
       playerInput,
       directorSummary: plan.summary,
-      toolCount: plan.toolRequests.length
+      toolCount: plan.toolRequests.length,
+      roll: actionResolution?.kind === "rolled" ? { checkId: actionResolution.roll.checkId, total: actionResolution.roll.total, outcome: actionResolution.roll.outcome } : null
     });
+    if (actionResolution?.kind === "rolled") {
+      db.prepare("DELETE FROM pending_action_checks WHERE campaign_id = ? AND check_id = ?")
+        .run(campaign.id, actionResolution.roll.checkId);
+    }
     const post = captureSnapshot(db, campaign.id);
     insertCheckpoint(db, campaign.id, campaign.turn, nextTurn, "post_turn", post);
     db.exec("COMMIT");
