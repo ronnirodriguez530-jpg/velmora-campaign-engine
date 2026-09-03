@@ -6,7 +6,9 @@ import { join, resolve } from "node:path";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { buildPerspectiveContext } from "../src/application/context-builder.ts";
 import { createPlayerCharacter, type PlayerCharacterInput } from "../src/application/player-character.ts";
-import { applyCharacterAdvancement, awardProgressionMilestone } from "../src/application/progression-system.ts";
+import { applyCharacterAdvancement, awardCompletedTurningPointMilestone, awardProgressionMilestone } from "../src/application/progression-system.ts";
+import { generateQuestFromThread } from "../src/application/quest-generator.ts";
+import { activateQuest, completeQuest, createQuestInstance, updateQuestObjective } from "../src/application/quest-system.ts";
 import { captureSnapshot, createCampaign, getPlayerCharacter, getPlayerProgression, insertCheckpoint, listCharacterAdvancements, listProgressionMilestones, openDatabase, restorePreviousTurn } from "../src/persistence/database.ts";
 
 const characterInput: PlayerCharacterInput = {
@@ -110,5 +112,43 @@ test("one-turn rollback restores progression ledger and character improvements",
     assert.equal(getPlayerProgression(db, campaignId).earnedAdvancements, 0);
     assert.equal(listProgressionMilestones(db, campaignId).length, 0);
     assert.equal(listCharacterAdvancements(db, campaignId).length, 0);
+  } finally { db.close(); }
+});
+
+test("automatic quest progression requires a completed verified turning point", async () => {
+  const { content, db, campaignId } = await setup("progression-turning-point");
+  try {
+    const ordinary = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    assert.throws(
+      () => awardCompletedTurningPointMilestone(db, campaignId, ordinary.questId),
+      /completed quest with a recorded outcome/
+    );
+    db.prepare("DELETE FROM quest_instances WHERE campaign_id = ? AND quest_id = ?").run(campaignId, ordinary.questId);
+
+    const turningPoint = createQuestInstance(db, content, campaignId, {
+      ...ordinary,
+      questId: "QUEST-OPENING-TURNING-POINT",
+      isTurningPoint: true,
+      outcomes: [
+        ...ordinary.outcomes,
+        {
+          outcomeId: "OUT-OPENING-TURNING-POINT-C",
+          summary: "Reject both immediate routes and create a costly third path.",
+          consequenceSeeds: ["A third route changes the crisis without erasing its cost."]
+        }
+      ]
+    });
+    activateQuest(db, campaignId, turningPoint.questId);
+    for (const objective of turningPoint.objectives) {
+      updateQuestObjective(db, campaignId, turningPoint.questId, objective.objectiveId, "completed");
+    }
+    completeQuest(db, campaignId, turningPoint.questId, turningPoint.outcomes[2]!.outcomeId);
+    const awarded = awardCompletedTurningPointMilestone(db, campaignId, turningPoint.questId);
+    assert.equal(awarded.progression.availableAdvancements, 1);
+    assert.equal(awarded.milestone.basisId, turningPoint.questId);
+    assert.throws(
+      () => awardCompletedTurningPointMilestone(db, campaignId, turningPoint.questId),
+      /already been awarded/
+    );
   } finally { db.close(); }
 });

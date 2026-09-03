@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { AbilityKey, CharacterAdvancement, MilestoneBasisType, PlayerProgression, ProgressionMilestone, SkillKey } from "../domain/types.ts";
-import { appendEvent, getPlayerCharacter, getPlayerProgression, listProgressionMilestones, persistCharacterAdvancement, persistPlayerCharacter, persistPlayerProgression, persistProgressionMilestone } from "../persistence/database.ts";
+import { appendEvent, getPlayerCharacter, getPlayerProgression, listProgressionMilestones, listQuestInstances, persistCharacterAdvancement, persistPlayerCharacter, persistPlayerProgression, persistProgressionMilestone } from "../persistence/database.ts";
 import { ABILITIES, SKILLS, calculateAbilityModifier } from "./player-character.ts";
 
 export type CharacterAdvancementInput =
@@ -56,6 +56,27 @@ export function awardProgressionMilestone(
     throw error;
   }
   return { milestone, progression: getPlayerProgression(db, campaignId) };
+}
+
+export function awardCompletedTurningPointMilestone(
+  db: DatabaseSync,
+  campaignId: string,
+  questId: string
+): { milestone: ProgressionMilestone; progression: PlayerProgression } {
+  const quest = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === questId);
+  if (!quest) throw new Error(`Unknown quest milestone source ${questId}`);
+  if (quest.state !== "completed" || !quest.selectedOutcomeId) {
+    throw new Error("A quest milestone requires a completed quest with a recorded outcome");
+  }
+  if (!quest.isTurningPoint) {
+    throw new Error("Only a verified turning-point quest can award quest progression automatically");
+  }
+  return awardProgressionMilestone(db, campaignId, {
+    milestoneId: `MS-${quest.questId}`,
+    basisType: "quest",
+    basisId: quest.questId,
+    summary: `Completed the turning point: ${quest.title}.`
+  });
 }
 
 export function applyCharacterAdvancement(

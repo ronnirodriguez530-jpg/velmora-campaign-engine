@@ -36,6 +36,10 @@ The seeded quest composer now turns any active story thread into a validated que
 
 The composer supplies story structure rather than finished prose. The Campaign Master remains responsible for interpreting objectives through the live world state and player choices.
 
+## Working checkpoint 3A
+
+Completed turning-point quests can now award one advancement opportunity through a verified quest record. The award requires a completed quest, a selected recorded outcome, and the preapproved turning-point flag. Incomplete and ordinary quests cannot award progression automatically, and duplicate source awards remain blocked.
+
 ## Branching rule
 
 Normal quests have exactly two major outcomes. Only a marked turning-point quest backed by an urgency-three story thread may have three. Smaller variations belong in consequence state rather than additional major branches.
@@ -61,5 +65,5 @@ Recoverable failure requires at least one recorded route forward. Permanent fail
 
 - Validated Campaign Master quest tools
 - Consequence application and recovery-quest replacement
-- Verified milestone rewards from completed turning points or major objectives
+- Major-objective milestone designation and awards
 - Quest notifications and browser page

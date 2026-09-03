@@ -212,6 +212,8 @@ Implemented progression scope: each unique validated major milestone awards one 
 
 Implemented quest scope: the durable contract, lifecycle, and seeded reusable quest composer work. It deterministically derives validated quest structures from active story threads while preserving stage and visibility boundaries. The Campaign Master cannot invoke or manage those quests yet. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
+Verified progression bridge: a completed preapproved turning-point quest with a recorded outcome can award one advancement opportunity. Ordinary or incomplete quests and duplicate awards are rejected. Major-objective designation and recovery-quest replacement remain unfinished.
+
 ### 13. Faction Engine — Partial scaffold
 
 - [x] Six faction definitions and basic conditions
@@ -292,7 +294,7 @@ Implemented quest scope: the durable contract, lifecycle, and seeded reusable qu
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 80 of 80 tests
+- [x] Current automated suite passes 81 of 81 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -391,7 +393,7 @@ Implemented quest scope: the durable contract, lifecycle, and seeded reusable qu
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the first two Quest Engine slices of step 6. The strict quest contract, persistent lifecycle, seeded thread-to-quest composition, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, and rollback now exist. Campaign Master quest tools, consequence application, milestone integration, combat, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the first Quest Engine slices of step 6. The strict quest contract, persistent lifecycle, seeded thread-to-quest composition, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, and verified turning-point progression awards now exist. Campaign Master quest tools, consequence application, major-objective awards, recovery replacement, combat, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 
