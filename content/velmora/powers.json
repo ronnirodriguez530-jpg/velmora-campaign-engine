@@ -1,0 +1,100 @@
+[
+  {
+    "id": "PWR-SHORT-BLINK",
+    "name": "Short Blink",
+    "familyId": "movement-phasing-limited-space",
+    "level": 1,
+    "useType": "instant",
+    "summary": "Move a few feet to a visible, unoccupied position within the current scene.",
+    "limits": [
+      "Cannot cross a sealed barrier or leave the current scene.",
+      "Cannot create or travel through a void-rift."
+    ],
+    "allowedSources": ["innate", "invented", "magic_tech", "discovered", "taken", "taught", "made", "tear", "void_rift"],
+    "requiresPlayerApproval": false
+  },
+  {
+    "id": "PWR-RIFT-SIGHT",
+    "name": "Rift Sight",
+    "familyId": "senses-tracking-investigation",
+    "level": 1,
+    "useType": "sustained",
+    "summary": "Perceive active dimensional residue and nearby weak points within the current scene.",
+    "limits": [
+      "Does not reveal protected campaign truth or events outside the current perspective.",
+      "Provides perception only and cannot open or control a rift."
+    ],
+    "allowedSources": ["innate", "magic_tech", "discovered", "taken", "taught", "made", "tear", "void_rift"],
+    "requiresPlayerApproval": false
+  },
+  {
+    "id": "PWR-SILENT-MOVEMENT",
+    "name": "Silent Movement",
+    "familyId": "sound-light-shadow-illusion",
+    "level": 1,
+    "useType": "sustained",
+    "summary": "Suppress ordinary sound created by the user's own movement.",
+    "limits": [
+      "Does not silence other creatures, speech, impacts, alarms, or the surrounding area.",
+      "Does not make the user invisible."
+    ],
+    "allowedSources": ["innate", "invented", "magic_tech", "discovered", "taken", "taught", "made", "tear", "void_rift"],
+    "requiresPlayerApproval": false
+  },
+  {
+    "id": "PWR-HEAT-SIPHON",
+    "name": "Heat Siphon",
+    "familyId": "thermal-elemental",
+    "level": 1,
+    "useType": "sustained",
+    "summary": "Draw heat from a touched object or small nearby source while contact is maintained.",
+    "limits": [
+      "Cannot instantly freeze a living target or extinguish a district-scale fire.",
+      "Combat damage and environmental extremes require their dedicated rules."
+    ],
+    "allowedSources": ["innate", "invented", "magic_tech", "discovered", "taken", "taught", "made", "tear", "void_rift"],
+    "requiresPlayerApproval": false
+  },
+  {
+    "id": "PWR-FORCE-SHIELD",
+    "name": "Force Shield",
+    "familyId": "force-gravity-mass-motion",
+    "level": 1,
+    "useType": "sustained",
+    "summary": "Maintain a small personal barrier against an immediate physical threat.",
+    "limits": [
+      "Numeric defense and damage reduction remain unavailable until combat rules exist.",
+      "Cannot protect an entire location or remain active after unconsciousness."
+    ],
+    "allowedSources": ["innate", "invented", "magic_tech", "discovered", "taken", "taught", "made", "tear", "void_rift"],
+    "requiresPlayerApproval": false
+  },
+  {
+    "id": "PWR-PHASE-WALK",
+    "name": "Phase Walk",
+    "familyId": "movement-phasing-limited-space",
+    "level": 2,
+    "useType": "sustained",
+    "summary": "Become partially intangible while moving through a bounded part of the current scene.",
+    "limits": [
+      "Cannot bypass a containment boundary, leave Velmora, or enter a void-rift.",
+      "Cannot end while occupying solid matter and ends on unconsciousness."
+    ],
+    "allowedSources": ["innate", "invented", "magic_tech", "discovered", "taken", "taught", "made", "tear", "void_rift"],
+    "requiresPlayerApproval": false
+  },
+  {
+    "id": "PWR-WORLD-ANCHOR",
+    "name": "World Anchor",
+    "familyId": "magic-control-copying-containment",
+    "level": 3,
+    "useType": "sustained",
+    "summary": "Temporarily suppress teleportation, phasing, and unstable rift movement in the current scene.",
+    "limits": [
+      "Cannot close the central Tear or permanently seal a void-rift.",
+      "Permanent acquisition requires an approved opportunity, explicit player choice, and player approval."
+    ],
+    "allowedSources": ["tear", "void_rift"],
+    "requiresPlayerApproval": true
+  }
+]

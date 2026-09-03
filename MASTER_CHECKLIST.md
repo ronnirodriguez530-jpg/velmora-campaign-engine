@@ -154,16 +154,19 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 - [ ] Escape, surrender, negotiation, and non-combat solutions
 - [ ] Approximately 65/35 story-to-combat pacing target
 
-### 9. Powers, magic, and abilities — Missing
+### 9. Powers, magic, and abilities — Partial
 
 - [x] Authored power idea bank consolidated into bounded families and restricted-later concepts
-- [ ] Ability and power catalog
-- [ ] Character ability ownership
+- [x] Minimum engine-readable ability and power catalog with seven bounded definitions
+- [x] Persistent character power ownership, acquisition source, activation state, event history, context retrieval, and rollback
 - [ ] Costs, limits, risks, duration, and sustained effects
 - [ ] New-magic boundaries with no existing masters
-- [ ] Rare Tear-linked abilities and one-way teleportation boundary
+- [x] Validated Level 3 Tear/void-rift source and explicit player-approval gate
+- [x] Initial movement-power boundaries prevent outward Tear travel and unrestricted portals
 - [ ] Player approval process for newly proposed abilities
 - [ ] Power scaling that does not break the campaign
+
+Implemented power scope: one sustained magical effect may be active at a time, and activating another ends the first. Instant and fixed-duration effects do not use that slot. Damage interruption, unconsciousness, combat values, proposal UI, and upgrades remain unavailable until their prerequisite systems exist. See `POWER_SYSTEM_V1.md`.
 
 ### 10. Inventory, equipment, and economy — Missing
 
@@ -274,7 +277,7 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 60 of 60 tests
+- [x] Current automated suite passes 64 of 64 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -373,7 +376,7 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 
 ## Current position
 
-Velmora has completed the working foundations through step 4. The world foundation, application shell, persistence layer, NPC Engine foundation, seeded campaign blueprint, story-thread ledger, hidden/player context separation, validated thread tools, single-player-character foundation, and core action/dice resolution exist. Work is now beginning on step 5: minimum powers, items, and progression data. Quests, combat, usable powers, usable items, progression, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 4 and the first independently tested power-system slice of step 5. The world foundation, application shell, persistence layer, NPC Engine foundation, seeded campaign blueprint, story-thread ledger, hidden/player context separation, validated thread tools, single-player-character foundation, core action/dice resolution, minimum power definitions, persistent power ownership, and sustained-power state exist. Inventory, equipment, progression, quests, combat effects, complete power resolution, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

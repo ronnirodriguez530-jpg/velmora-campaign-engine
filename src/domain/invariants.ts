@@ -88,6 +88,22 @@ export function validateContent(content: VelmoraContent): void {
   ];
   assert(new Set(blueprintIds).size === blueprintIds.length, "Story blueprint pool IDs must be globally unique");
 
+  assert(content.powers.length >= 6, "The first-release power catalog requires at least six bounded powers");
+  assert(new Set(content.powers.map((power) => power.id)).size === content.powers.length, "Power IDs must be unique");
+  for (const power of content.powers) {
+    assert(power.id.startsWith("PWR-"), `Power ${power.id} requires a stable PWR identifier`);
+    assert(power.name.trim().length > 0 && power.summary.trim().length > 0, `Power ${power.id} requires a name and summary`);
+    assert(power.familyId.trim().length > 0, `Power ${power.id} requires a power family`);
+    assert([1, 2, 3].includes(power.level), `Power ${power.id} level must be 1-3`);
+    assert(["instant", "fixed_duration", "sustained"].includes(power.useType), `Power ${power.id} has an invalid use type`);
+    assert(power.limits.length > 0, `Power ${power.id} requires at least one explicit limit`);
+    assert(power.allowedSources.length > 0, `Power ${power.id} requires at least one acquisition source`);
+    if (power.level === 3) {
+      assert(power.requiresPlayerApproval, `Level 3 power ${power.id} must require player approval`);
+      assert(power.allowedSources.every((source) => source === "tear" || source === "void_rift"), `Level 3 power ${power.id} must originate from the Tear or a void-rift`);
+    }
+  }
+
   assert(content.sceneTemplates.length >= 4, "At least one mechanical scene scaffold per campaign stage is required");
   for (const template of content.sceneTemplates) {
     assert(template.stages.length > 0, `Scene template ${template.id} requires a stage`);

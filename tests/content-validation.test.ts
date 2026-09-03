@@ -20,5 +20,7 @@ test("approved Velmora foundation content validates", async () => {
   ], [75, 15, 5, 5]);
   assert.equal(content.campaign.factionPathRequirement, 2);
   assert.equal(content.campaign.allowTemporaryTearTravel, false);
+  assert.equal(content.powers.length, 7);
+  assert.equal(content.powers.find((power) => power.id === "PWR-WORLD-ANCHOR")?.requiresPlayerApproval, true);
   assert.equal(content.sceneTemplates.length, 4, "One clearly labeled mechanical scaffold exists per stage");
 });

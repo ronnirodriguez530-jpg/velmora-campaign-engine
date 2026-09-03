@@ -17,6 +17,7 @@ import type {
   NpcOrigin,
   NpcRecord,
   NpcStatus,
+  PlayerPower,
   NpcRelationship,
   PlayerCharacter,
   RelationshipQuality,
@@ -57,6 +58,7 @@ export type StateSnapshot = {
   };
   storyThreads?: StoryThread[];
   playerCharacter?: PlayerCharacter | null;
+  playerPowers?: PlayerPower[];
 };
 
 export function openDatabase(path: string): DatabaseSync {
@@ -532,6 +534,25 @@ function migrate(db: DatabaseSync): void {
     `);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(20, ?)").run(new Date().toISOString());
   }
+  const migrationTwentyOne = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 21").get() as { present: number } | undefined;
+  if (!migrationTwentyOne) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS player_powers (
+        campaign_id TEXT NOT NULL,
+        power_id TEXT NOT NULL,
+        source TEXT NOT NULL CHECK(source IN ('innate','invented','magic_tech','discovered','taken','taught','made','tear','void_rift')),
+        player_approved INTEGER NOT NULL CHECK(player_approved IN (0,1)),
+        active INTEGER NOT NULL DEFAULT 0 CHECK(active IN (0,1)),
+        acquired_turn INTEGER NOT NULL,
+        activated_turn INTEGER,
+        PRIMARY KEY (campaign_id, power_id),
+        FOREIGN KEY (campaign_id) REFERENCES player_characters(campaign_id) ON DELETE CASCADE
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS player_one_active_sustained_power_idx
+        ON player_powers(campaign_id) WHERE active = 1;
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(21, ?)").run(new Date().toISOString());
+  }
 }
 
 const STAGE_ORDER = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 } as const;
@@ -719,6 +740,45 @@ export function persistPlayerCharacter(db: DatabaseSync, character: PlayerCharac
     if (ownsTransaction) db.exec("ROLLBACK");
     throw error;
   }
+}
+
+export function listPlayerPowers(db: DatabaseSync, campaignId: string): PlayerPower[] {
+  const rows = db.prepare(`SELECT campaign_id AS campaignId, power_id AS powerId, source,
+      player_approved AS playerApproved, active, acquired_turn AS acquiredTurn,
+      activated_turn AS activatedTurn
+    FROM player_powers WHERE campaign_id = ? ORDER BY power_id`).all(campaignId) as Array<{
+      campaignId: string;
+      powerId: string;
+      source: PlayerPower["source"];
+      playerApproved: number;
+      active: number;
+      acquiredTurn: number;
+      activatedTurn: number | null;
+    }>;
+  return rows.map((row) => ({
+    ...row,
+    playerApproved: row.playerApproved === 1,
+    active: row.active === 1
+  }));
+}
+
+export function persistPlayerPower(db: DatabaseSync, power: PlayerPower): void {
+  db.prepare(`INSERT INTO player_powers(
+      campaign_id, power_id, source, player_approved, active, acquired_turn, activated_turn
+    ) VALUES(?, ?, ?, ?, ?, ?, ?)
+    ON CONFLICT(campaign_id, power_id) DO UPDATE SET
+      source = excluded.source, player_approved = excluded.player_approved,
+      active = excluded.active, acquired_turn = excluded.acquired_turn,
+      activated_turn = excluded.activated_turn`)
+    .run(
+      power.campaignId,
+      power.powerId,
+      power.source,
+      power.playerApproved ? 1 : 0,
+      power.active ? 1 : 0,
+      power.acquiredTurn,
+      power.activatedTurn
+    );
 }
 
 export function persistNpc(
@@ -1394,6 +1454,7 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
     .all(campaignId) as Array<{ fingerprint: string; npcId: string; createdTurn: number }>;
   const storyThreads = listStoryThreads(db, campaignId);
   const playerCharacter = getPlayerCharacter(db, campaignId) ?? null;
+  const playerPowers = listPlayerPowers(db, campaignId);
   return {
     campaign,
     factions,
@@ -1402,7 +1463,8 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
     quests,
     npcState: { records, designs, facts, knowledge, memories, relationships, novelty },
     storyThreads,
-    playerCharacter
+    playerCharacter,
+    playerPowers
   };
 }
 
@@ -1483,6 +1545,10 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
       } else {
         persistPlayerCharacter(db, snapshot.playerCharacter);
       }
+    }
+    if (snapshot.playerPowers !== undefined) {
+      db.prepare("DELETE FROM player_powers WHERE campaign_id = ?").run(campaign.id);
+      for (const power of snapshot.playerPowers) persistPlayerPower(db, power);
     }
     if (snapshot.npcState) {
       db.prepare("DELETE FROM npc_relationship_qualities WHERE campaign_id = ?").run(campaign.id);

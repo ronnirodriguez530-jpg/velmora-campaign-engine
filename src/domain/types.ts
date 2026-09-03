@@ -125,6 +125,7 @@ export type VelmoraContent = {
   truths: TruthDefinition[];
   openingSpawns: OpeningSpawnDefinition[];
   storyBlueprintPools: StoryBlueprintPools;
+  powers: PowerDefinition[];
   sceneTemplates: SceneTemplate[];
 };
 
@@ -219,6 +220,32 @@ export type PlayerCharacter = {
   updatedTurn: number;
 };
 
+export type PowerLevel = 1 | 2 | 3;
+export type PowerUseType = "instant" | "fixed_duration" | "sustained";
+export type PowerAcquisitionSource = "innate" | "invented" | "magic_tech" | "discovered" | "taken" | "taught" | "made" | "tear" | "void_rift";
+
+export type PowerDefinition = {
+  id: string;
+  name: string;
+  familyId: string;
+  level: PowerLevel;
+  useType: PowerUseType;
+  summary: string;
+  limits: string[];
+  allowedSources: PowerAcquisitionSource[];
+  requiresPlayerApproval: boolean;
+};
+
+export type PlayerPower = {
+  campaignId: string;
+  powerId: string;
+  source: PowerAcquisitionSource;
+  playerApproved: boolean;
+  active: boolean;
+  acquiredTurn: number;
+  activatedTurn: number | null;
+};
+
 export type PerspectiveContext = {
   campaignId: string;
   seed: string;
@@ -239,6 +266,7 @@ export type PerspectiveContext = {
   npcContext: NpcContextPackage;
   publicFacts: WorldFact[];
   playerCharacter: PlayerCharacter | null;
+  playerPowers: Array<PlayerPower & { definition: PowerDefinition }>;
   playerKnownStoryThreads: StoryThread[];
   visibleOpeningPressure: OpeningPressureDefinition | null;
 };
