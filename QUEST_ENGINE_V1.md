@@ -21,9 +21,9 @@ The first quest checkpoint provides:
 - Creation, activation, objective updates, completion, and recoverable failure
 - Atomic quest updates, event history, bounded context retrieval, save compatibility, and rollback
 
-## Working checkpoint 2
+## Provisional checkpoint 2
 
-The seeded quest composer now turns any active story thread into a validated quest structure:
+The seeded quest composer turns an active story thread into a validated test structure. Its persistence and validation are working, but its campaign-shaping formulas remain provisional:
 
 - The same campaign seed, source thread, and sequence always reproduce the same structure
 - Different seeds select among reusable investigate, protect, negotiate, and recovery patterns
@@ -34,11 +34,11 @@ The seeded quest composer now turns any active story thread into a validated que
 - Completed quests become prerequisites and links for later quests on the same thread
 - Every generated quest defaults to recoverable failure, meaningful neglect triggers, and exactly two outcomes
 
-The composer supplies story structure rather than finished prose. The Campaign Master remains responsible for interpreting objectives through the live world state and player choices.
+The composer currently proves that generated quest structures can be stored and validated. The four formulas, sequential objective flow, one-unresolved-quest rule, automatic follow-up linking, generic recovery default, and authored placeholder text require user review before this becomes the approved campaign-flow generator.
 
-## Working checkpoint 3A
+## Provisional checkpoint 3A
 
-Completed turning-point quests can now award one advancement opportunity through a verified quest record. The award requires a completed quest, a selected recorded outcome, and the preapproved turning-point flag. Incomplete and ordinary quests cannot award progression automatically, and duplicate source awards remain blocked.
+Completed turning-point quests can technically award one advancement opportunity through a verified quest record. The validation and duplicate protection work, but turning-point completion as the reward trigger was not explicitly approved and remains provisional with the unfinished major-objective rule.
 
 ## Working checkpoint 3B
 
@@ -68,18 +68,18 @@ Recoverably failed quests can now produce one altered recovery quest:
 
 Recovery therefore preserves forward motion without erasing consequences or letting the Campaign Master use failure to invent a different main plot.
 
-## Working checkpoint 5
+## Provisional opening behavior in checkpoint 5
 
 The browser now exposes the player-visible quest ledger as a functional journal:
 
-- New campaigns receive an opening quest generated from the active opening-pressure thread
-- Existing browser campaigns without that quest receive the same safe backfill when the server starts
+- New campaigns currently receive a provisional opening quest generated from the active opening-pressure thread
+- Existing browser campaigns without that provisional quest currently receive the same backfill when the server starts
 - Available, active, changed, completed, and failed quests render with their real persistent state
 - Quest cards show type, campaign stage, summary, ordered objectives, stakes, recovery provenance, and selected outcome when present
 - The navigation badge counts genuinely actionable available, active, and changed quests
 - Hidden Director-only and locked quests remain excluded through the player-context boundary
 
-This checkpoint makes the existing Quest Engine visible and inspectable. Direct quest actions still occur through play and validated Campaign Master operations rather than journal buttons.
+The journal itself is working engineering. Automatic opening-quest creation is provisional because the approved player-clicked d6 start and final first objective do not yet exist.
 
 ## Branching rule
 
@@ -104,5 +104,6 @@ Recoverable failure requires at least one recorded route forward. Permanent fail
 
 ## Still required
 
+- User review of the decisions recorded in `QUEST_ENGINE_DECISION_AUDIT.md`
 - Major-objective milestone designation and awards
 - Live play validation of quest changes and recovery across sustained multi-scene sessions

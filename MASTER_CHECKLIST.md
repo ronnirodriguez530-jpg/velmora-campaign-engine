@@ -205,15 +205,15 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Main, faction, side, personal, dynamic, and fragment classification
 - [x] Player and Director perspective filtering with bounded retrieval
 - [x] Complete quest-ledger snapshot, rollback, and legacy snapshot compatibility
-- [x] Seeded main, faction, side, personal, dynamic, and fragment quest generation from active story threads
+- [ ] Approved seeded main, faction, side, personal, dynamic, and fragment quest generation from active story threads; current composer is provisional scaffolding pending `QUEST_ENGINE_DECISION_AUDIT.md`
 - [x] Campaign Master quest tools and atomic outcome/consequence application
-- [x] Verified turning-point rewards and altered recovery-quest generation
+- [ ] Approved turning-point/major-objective reward cadence and altered recovery-quest generation; current mechanics are provisional pending review
 - [ ] Major-objective milestone designation and rewards
 - [x] Functional Quest page and actionable notifications
 
-Implemented quest scope: the durable contract, lifecycle, seeded reusable composer, bounded Campaign Master controls, altered recovery generation, and player-visible browser journal work. Quest outcomes and justified world consequences commit together through the atomic turn pipeline. Failed approaches remain recorded while one linked recovery route preserves the source thread, visibility, and stage ceiling. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+Implemented quest engineering: the durable contract, lifecycle, bounded Campaign Master controls, atomic consequences, player-visible browser journal, persistence, privacy, and rollback work. The current composer, opening-quest timing, objective sequence, follow-up linkage, recovery cadence, and progression trigger are explicitly provisional pending the decisions in `QUEST_ENGINE_DECISION_AUDIT.md`. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
-Verified progression bridge: a completed preapproved turning-point quest with a recorded outcome can award one advancement opportunity. Ordinary or incomplete quests and duplicate awards are rejected. Major-objective designation remains unfinished.
+Provisional progression bridge: the engine can validate a completed turning-point quest with a recorded outcome and prevent duplicate awards. The reward trigger and major-objective cadence require approval before they become final campaign rules.
 
 ### 13. Faction Engine — Partial scaffold
 
@@ -394,7 +394,7 @@ Verified progression bridge: a completed preapproved turning-point quest with a 
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the core Quest Engine slices of step 6. The strict quest contract, persistent lifecycle, seeded thread-to-quest composition, bounded Campaign Master controls, atomic outcome consequences, altered recovery quests, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, verified turning-point progression awards, and functional player Quest journal now exist. Major-objective awards, combat, sustained live-play validation, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the engineering foundation of step 6. The strict quest contract, persistence, bounded Campaign Master controls, atomic consequences, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, and player Quest journal work. The current quest formulas, opening timing, objective flow, follow-up linkage, recovery cadence, and quest reward trigger are provisional and must be reviewed through `QUEST_ENGINE_DECISION_AUDIT.md` before step 6 is complete. Combat, sustained live-play validation, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

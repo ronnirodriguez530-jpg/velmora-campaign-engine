@@ -62,6 +62,10 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - The provisional stage thresholds tied to those numbers.
 - The provisional 15% Tear-arrival check and 70/23/7 rarity weights.
 - The four generic scene templates whose IDs begin with `TPL-SCAFFOLD`.
+- The four generic quest formulas in `src/application/quest-generator.ts`.
+- Automatic browser opening-quest creation before the approved opening d6 flow exists.
+- Sequential one-active-objective flow, one unresolved quest per thread, automatic follow-up prerequisites, generic neglect triggers, and exact-one recovery replacement.
+- Turning-point completion as the current automatic advancement trigger.
 - Simulation profiles and abstract milestones.
 
 These parts exist so the engine can run, branch, and be tested. They may be replaced by approved content without changing canon.
@@ -75,6 +79,7 @@ These parts exist so the engine can run, branch, and be tested. They may be repl
 ## Deferred content
 
 - Named quests and their actual milestones.
+- Final opening-quest timing, quest-form generation rules, objective topology, thread concurrency, follow-up linkage, recovery cadence, quest classification, and quest-based advancement cadence.
 - Final mechanics, statistics, and campaign placement for the curated powers, creatures, relics, and magic-tech content.
 - Final truth candidates and final outcomes.
 - Exact faction relationships and detailed faction leadership.
@@ -82,4 +87,4 @@ These parts exist so the engine can run, branch, and be tested. They may be repl
 
 ## Hard rule
 
-The engine may select, place, combine, validate, and simulate approved structures. It may not promote scaffolding or generated material into canon, rewrite the setting, or create permanent new mechanics without approval.
+The engine may select, place, combine, validate, and simulate approved structures. It may not promote scaffolding or generated material into canon, rewrite the setting, or create permanent new mechanics without approval. See `QUEST_ENGINE_DECISION_AUDIT.md` for the Quest Engine choices awaiting review.
