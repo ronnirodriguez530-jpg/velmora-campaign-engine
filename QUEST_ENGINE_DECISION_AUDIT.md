@@ -28,17 +28,21 @@ This audit separates protected user-approved direction, implementation-only mach
 - **Quest construction:** The approved generator direction recombines modular objectives, pressures, complications, and outcomes rather than selecting one fixed beginning-to-end formula. The old four formulas remain provisional until their replacement module rules and content are reviewed.
 - **Objective flow:** Quest objectives may be sequential, parallel, branching, or optional when appropriate. The engine now stores dependencies, required status, branch groups, and skipped alternatives; it rejects cycles and malformed branches.
 
+## Approved in review batch 2
+
+- **Thread concurrency:** Each story thread has a hard cap of two simultaneous unresolved quests: one primary route and one alternative. Completed and failed quests remain as history but do not consume the cap. Runtime validation enforces the limit even when quest creation bypasses the seeded composer.
+- **Meaningful distinction remains required:** The second slot is not permission to duplicate a quest. The module rules that prove a primary and alternative route are meaningfully different still require review; until then, the composer remains scaffolding rather than approved campaign content.
+
 ## Remaining provisional choices requiring review
 
 1. **Module rules and content:** The approved modular direction still needs rules for which ingredients may be created, combined, and validated. The current four formulas and generic text remain scaffolding.
-2. **Thread concurrency:** A story thread may currently have only one unresolved quest.
-3. **Follow-up structure:** A completed quest automatically becomes the prerequisite and link for the next quest on the same thread.
-4. **Default failure:** Every composed quest currently defaults to recoverable failure using a generic neglect trigger.
-5. **Recovery replacement:** A recoverably failed quest currently permits exactly one altered replacement using one exact recorded recovery path.
-6. **Quest classifications:** Thread kinds automatically map to main, faction, side, personal, dynamic, and fragment quest types.
-7. **Progression trigger:** A completed turning-point quest currently awards one advancement opportunity; the major-objective rule is unfinished.
-8. **Per-turn limits:** The Campaign Master may currently generate at most two quests and manage at most four in one committed turn.
-9. **Generic authored text:** Generated objective wording, stakes, outcomes, consequence seeds, and opening quest text are implementation-written scaffolding rather than approved content pools.
+2. **Follow-up structure:** A completed quest automatically becomes the prerequisite and link for the next quest on the same thread.
+3. **Default failure:** Every composed quest currently defaults to recoverable failure using a generic neglect trigger.
+4. **Recovery replacement:** A recoverably failed quest currently permits exactly one altered replacement using one exact recorded recovery path.
+5. **Quest classifications:** Thread kinds automatically map to main, faction, side, personal, dynamic, and fragment quest types.
+6. **Progression trigger:** A completed turning-point quest currently awards one advancement opportunity; the major-objective rule is unfinished.
+7. **Per-turn limits:** The Campaign Master may currently generate at most two quests and manage at most four in one committed turn.
+8. **Generic authored text:** Generated objective wording, stakes, outcomes, consequence seeds, and opening quest text are implementation-written scaffolding rather than approved content pools.
 
 ## Review order
 

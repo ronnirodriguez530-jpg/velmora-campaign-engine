@@ -64,6 +64,22 @@ test("creates a validated player quest from an existing main story thread", asyn
   } finally { db.close(); }
 });
 
+test("direct quest creation cannot bypass the two-unresolved-quests-per-thread cap", async () => {
+  const { content, db, campaignId } = await setup("quest-thread-cap");
+  try {
+    createQuestInstance(db, content, campaignId, openingQuest());
+    createQuestInstance(db, content, campaignId, openingQuest({
+      questId: "QUEST-OPENING-ALTERNATIVE",
+      title: "Choose an Alternative Response"
+    }));
+    assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
+      questId: "QUEST-OPENING-EXCESS",
+      title: "Create a Third Unresolved Route"
+    })), /at most two simultaneous unresolved quests/);
+    assert.equal(listQuestInstances(db, campaignId).length, 2);
+  } finally { db.close(); }
+});
+
 test("rejects invented main plots, excess outcomes, and missing recovery routes", async () => {
   const { content, db, campaignId } = await setup("quest-reject");
   try {

@@ -147,6 +147,12 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
   if (input.state !== "locked" && input.state !== "available") throw new Error("A new quest must begin locked or available");
   const sourceThread = listStoryThreads(db, campaignId).find((thread) => thread.threadId === input.sourceThreadId);
   if (!sourceThread) throw new Error(`Unknown quest source thread ${input.sourceThreadId}`);
+  const unresolvedOnSourceThread = listQuestInstances(db, campaignId)
+    .filter((quest) => quest.sourceThreadId === input.sourceThreadId)
+    .filter((quest) => quest.state !== "completed" && quest.state !== "failed");
+  if (unresolvedOnSourceThread.length >= 2) {
+    throw new Error("A story thread may have at most two simultaneous unresolved quests");
+  }
   if (input.visibility !== sourceThread.visibility) throw new Error("A quest must inherit its source thread visibility");
   if (input.questType === "main" && sourceThread.kind !== "main") throw new Error("A main quest must originate from an existing main story thread");
   if (input.questType === "faction" && input.factionIds.length === 0) throw new Error("A faction quest requires at least one faction");

@@ -202,6 +202,7 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Persistent creation, prerequisite availability, activation, objective updates, completion, and recoverable failure
 - [x] Objectives, stakes, prerequisites, meaningful neglect triggers, warnings, recovery paths, and consequence seeds
 - [x] Flexible sequential, parallel, branching, and optional objective graph with dependency validation
+- [x] Hard cap of two simultaneous unresolved quests per story thread: one primary route and one alternative
 - [x] Exactly two major outcomes for normal quests and three only for urgency-backed turning points
 - [x] Main, faction, side, personal, dynamic, and fragment classification
 - [x] Player and Director perspective filtering with bounded retrieval
@@ -212,7 +213,7 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [ ] Major-objective milestone designation and rewards
 - [x] Functional Quest page and actionable notifications
 
-Implemented quest engineering: the durable contract, lifecycle, flexible objective graph, bounded Campaign Master controls, atomic consequences, player-visible browser journal, persistence, privacy, and rollback work. The first quest is now correctly withheld until the future d6-and-attack opening flow. The current composer formulas, modular content, thread concurrency, follow-up linkage, recovery cadence, and progression trigger remain provisional pending `QUEST_ENGINE_DECISION_AUDIT.md`. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+Implemented quest engineering: the durable contract, lifecycle, flexible objective graph, hard two-unresolved-quest-per-thread cap, bounded Campaign Master controls, atomic consequences, player-visible browser journal, persistence, privacy, and rollback work. The first quest is now correctly withheld until the future d6-and-attack opening flow. The current composer formulas, meaningful primary/alternative distinction, modular content, follow-up linkage, recovery cadence, and progression trigger remain provisional pending `QUEST_ENGINE_DECISION_AUDIT.md`. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
 Provisional progression bridge: the engine can validate a completed turning-point quest with a recorded outcome and prevent duplicate awards. The reward trigger and major-objective cadence require approval before they become final campaign rules.
 

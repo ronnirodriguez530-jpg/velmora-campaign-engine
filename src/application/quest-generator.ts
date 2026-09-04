@@ -71,8 +71,9 @@ export function composeQuestFromThread(
   if (!thread) throw new Error(`Unknown quest source thread ${threadId}`);
   if (thread.status !== "active") throw new Error("Quests may be composed only from active story threads");
   const existing = listQuestInstances(db, campaignId).filter((quest) => quest.sourceThreadId === threadId);
-  if (existing.some((quest) => !["completed", "failed"].includes(quest.state))) {
-    throw new Error("This story thread already has an unresolved quest");
+  const unresolved = existing.filter((quest) => !["completed", "failed"].includes(quest.state));
+  if (unresolved.length >= 2) {
+    throw new Error("This story thread already has two unresolved quests");
   }
   const sequence = existing.length + 1;
   const pattern = seededChoice(`${campaign.seed}|quest|${threadId}|${sequence}`, QUEST_PATTERNS);

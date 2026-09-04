@@ -49,13 +49,16 @@ test("different campaign seeds produce varied but valid opening quests", async (
   assert.ok(signatures.size >= 8, `Expected substantial quest variation, received ${signatures.size} structures`);
 });
 
-test("a thread has one unresolved quest and completed quests seed linked follow-ups", async () => {
+test("a thread permits one primary and one alternative unresolved quest, then enforces the hard cap", async () => {
   const { content, db, campaignId } = await setup("quest-sequence", "quest-sequence-seed");
   try {
     const first = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    const alternative = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    assert.notEqual(alternative.questId, first.questId);
+    assert.equal(listQuestInstances(db, campaignId).filter((quest) => !["completed", "failed"].includes(quest.state)).length, 2);
     assert.throws(
       () => generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE"),
-      /already has an unresolved quest/
+      /already has two unresolved quests/
     );
     activateQuest(db, campaignId, first.questId);
     for (const objective of first.objectives) {
@@ -64,10 +67,9 @@ test("a thread has one unresolved quest and completed quests seed linked follow-
     completeQuest(db, campaignId, first.questId, first.outcomes[0]!.outcomeId);
 
     const followUp = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
-    assert.notEqual(followUp.questId, first.questId);
-    assert.deepEqual(followUp.prerequisiteQuestIds, [first.questId]);
-    assert.deepEqual(followUp.linkedQuestIds, [first.questId]);
-    assert.equal(listQuestInstances(db, campaignId).length, 2);
+    assert.notEqual(followUp.questId, alternative.questId);
+    assert.equal(listQuestInstances(db, campaignId).length, 3);
+    assert.equal(listQuestInstances(db, campaignId).filter((quest) => !["completed", "failed"].includes(quest.state)).length, 2);
   } finally { db.close(); }
 });
 

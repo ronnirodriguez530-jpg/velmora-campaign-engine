@@ -30,11 +30,11 @@ The seeded quest composer turns an active story thread into a validated test str
 - Main, faction, side, personal, dynamic, and fragment types derive from the source thread
 - Player-visible threads create available quests; hidden threads create locked Director-only quests
 - Current locations, involved factions and NPCs, stage gates, and recovery paths carry forward
-- Each source thread may have only one unresolved quest at a time
+- Each source thread may have at most two unresolved quests at a time; the approved intent is one primary route and one meaningfully different alternative
 - Completed quests become prerequisites and links for later quests on the same thread
 - Every generated quest defaults to recoverable failure, meaningful neglect triggers, and exactly two outcomes
 
-The composer currently proves that generated quest structures can be stored and validated. The four formulas, sequential objective flow, one-unresolved-quest rule, automatic follow-up linking, generic recovery default, and authored placeholder text require user review before this becomes the approved campaign-flow generator.
+The composer currently proves that generated quest structures can be stored and validated. Flexible objective flow and the hard two-unresolved-quest cap are approved. The four formulas, meaningful primary/alternative distinction, automatic follow-up linking, generic recovery default, and authored placeholder text require user review before this becomes the approved campaign-flow generator.
 
 ## Provisional checkpoint 3A
 
