@@ -3,7 +3,7 @@ import { getCharacterReputation, getFactionCondition, getFactionPathProgress } f
 import type { DatabaseSync } from "node:sqlite";
 import { validateNpcTurnUpdate } from "../npc/npc-turn-manager.ts";
 import { validateStoryThreadCreation, validateStoryThreadUpdate } from "../application/story-thread-manager.ts";
-import { validateGeneratedQuest } from "../application/quest-generator.ts";
+import { validateGeneratedQuest, validateRecoveryQuest } from "../application/quest-generator.ts";
 import { validateQuestManagement } from "../application/quest-system.ts";
 
 export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, campaignId: string, request: ToolRequest): void {
@@ -82,6 +82,11 @@ export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, c
 
   if (request.type === "generate_quest") {
     validateGeneratedQuest(db, content, campaignId, request.sourceThreadId);
+    return;
+  }
+
+  if (request.type === "generate_recovery_quest") {
+    validateRecoveryQuest(db, content, campaignId, request.failedQuestId, request.recoveryPath);
     return;
   }
 

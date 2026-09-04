@@ -126,6 +126,8 @@ export function composeQuestFromThread(
     recoveryPaths,
     prerequisiteQuestIds: previous?.state === "completed" ? [previous.questId] : [],
     linkedQuestIds: previous ? [previous.questId] : [],
+    recoveryOfQuestId: null,
+    recoveryPathUsed: null,
     truthEvidenceIds: [],
     isTurningPoint: false
   };
@@ -157,4 +159,66 @@ export function applyGeneratedQuest(
   turn: number
 ) {
   return applyQuestCreation(db, content, campaignId, turn, composeQuestFromThread(db, content, campaignId, threadId));
+}
+
+export function composeRecoveryQuest(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignId: string,
+  failedQuestId: string,
+  recoveryPath: string
+): CreateQuestInput {
+  const failedQuest = listQuestInstances(db, campaignId).find((quest) => quest.questId === failedQuestId);
+  if (!failedQuest || failedQuest.state !== "failed" || failedQuest.failureMode !== "recoverable") {
+    throw new Error("Recovery composition requires a recoverably failed quest");
+  }
+  if (!failedQuest.recoveryPaths.includes(recoveryPath)) {
+    throw new Error("Recovery composition must use an exact recorded recovery path");
+  }
+  if (listQuestInstances(db, campaignId).some((quest) => quest.recoveryOfQuestId === failedQuestId)) {
+    throw new Error("This failed quest already has an altered recovery quest");
+  }
+  const base = composeQuestFromThread(db, content, campaignId, failedQuest.sourceThreadId);
+  const alteredTitle = bounded(`Altered Route: ${failedQuest.title}`, 120);
+  return {
+    ...base,
+    title: alteredTitle,
+    summary: bounded(`The original approach failed. Continue through this changed route: ${recoveryPath}`, 600),
+    objectives: [
+      {
+        ...base.objectives[0]!,
+        summary: bounded(`Establish what changed after the failure of ${failedQuest.title}.`, 240)
+      },
+      {
+        ...base.objectives[1]!,
+        summary: bounded(`Use the altered route without erasing its cost: ${recoveryPath}`, 240)
+      }
+    ],
+    stakes: bounded(`This route preserves the underlying story problem, but the failed approach and its consequences remain part of the world.`, 300),
+    prerequisiteQuestIds: [],
+    linkedQuestIds: [failedQuest.questId],
+    recoveryOfQuestId: failedQuest.questId,
+    recoveryPathUsed: recoveryPath
+  };
+}
+
+export function validateRecoveryQuest(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignId: string,
+  failedQuestId: string,
+  recoveryPath: string
+): void {
+  validateQuestCreation(db, content, campaignId, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath));
+}
+
+export function applyRecoveryQuest(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignId: string,
+  failedQuestId: string,
+  recoveryPath: string,
+  turn: number
+) {
+  return applyQuestCreation(db, content, campaignId, turn, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath));
 }

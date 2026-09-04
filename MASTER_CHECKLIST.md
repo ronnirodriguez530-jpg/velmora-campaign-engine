@@ -207,10 +207,11 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Complete quest-ledger snapshot, rollback, and legacy snapshot compatibility
 - [x] Seeded main, faction, side, personal, dynamic, and fragment quest generation from active story threads
 - [x] Campaign Master quest tools and atomic outcome/consequence application
-- [ ] Verified milestone rewards and altered recovery-quest generation
+- [x] Verified turning-point rewards and altered recovery-quest generation
+- [ ] Major-objective milestone designation and rewards
 - [ ] Functional Quest page and actionable notifications
 
-Implemented quest scope: the durable contract, lifecycle, seeded reusable composer, and bounded Campaign Master quest controls work. Quest outcomes and justified world consequences commit together through the atomic turn pipeline while preserving stage, prerequisite, visibility, and recovery boundaries. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+Implemented quest scope: the durable contract, lifecycle, seeded reusable composer, bounded Campaign Master controls, and altered recovery generation work. Quest outcomes and justified world consequences commit together through the atomic turn pipeline. Failed approaches remain recorded while one linked recovery route preserves the source thread, visibility, and stage ceiling. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
 Verified progression bridge: a completed preapproved turning-point quest with a recorded outcome can award one advancement opportunity. Ordinary or incomplete quests and duplicate awards are rejected. Major-objective designation and recovery-quest replacement remain unfinished.
 
@@ -294,7 +295,7 @@ Verified progression bridge: a completed preapproved turning-point quest with a 
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 85 of 85 tests
+- [x] Current automated suite passes 88 of 88 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -393,7 +394,7 @@ Verified progression bridge: a completed preapproved turning-point quest with a 
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the core Quest Engine slices of step 6. The strict quest contract, persistent lifecycle, seeded thread-to-quest composition, bounded Campaign Master quest controls, atomic outcome consequences, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, and verified turning-point progression awards now exist. Major-objective awards, altered recovery-quest replacement, the Quest page, combat, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the core Quest Engine slices of step 6. The strict quest contract, persistent lifecycle, seeded thread-to-quest composition, bounded Campaign Master controls, atomic outcome consequences, altered recovery quests, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, and verified turning-point progression awards now exist. Major-objective awards, the Quest page, combat, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

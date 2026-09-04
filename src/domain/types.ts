@@ -409,6 +409,8 @@ export type QuestInstance = {
   recoveryPaths: string[];
   prerequisiteQuestIds: string[];
   linkedQuestIds: string[];
+  recoveryOfQuestId: string | null;
+  recoveryPathUsed: string | null;
   truthEvidenceIds: string[];
   isTurningPoint: boolean;
   selectedOutcomeId: string | null;
@@ -697,6 +699,13 @@ export type GenerateQuestRequest = {
   reason: string;
 };
 
+export type GenerateRecoveryQuestRequest = {
+  type: "generate_recovery_quest";
+  failedQuestId: string;
+  recoveryPath: string;
+  reason: string;
+};
+
 export type ManageQuestRequest = {
   type: "manage_quest";
   questId: string;
@@ -706,7 +715,7 @@ export type ManageQuestRequest = {
   reason: string;
 };
 
-export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest | ManageStoryThreadRequest | CreateStoryThreadRequest | GenerateQuestRequest | ManageQuestRequest;
+export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest | ManageStoryThreadRequest | CreateStoryThreadRequest | GenerateQuestRequest | GenerateRecoveryQuestRequest | ManageQuestRequest;
 
 export type DirectorTurnPlan = {
   summary: string;

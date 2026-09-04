@@ -93,6 +93,28 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
   if (input.visibility !== sourceThread.visibility) throw new Error("A quest must inherit its source thread visibility");
   if (input.questType === "main" && sourceThread.kind !== "main") throw new Error("A main quest must originate from an existing main story thread");
   if (input.questType === "faction" && input.factionIds.length === 0) throw new Error("A faction quest requires at least one faction");
+  if ((input.recoveryOfQuestId === null) !== (input.recoveryPathUsed === null)) {
+    throw new Error("A recovery quest requires both its failed source and exact recovery path");
+  }
+  if (input.recoveryOfQuestId !== null && input.recoveryPathUsed !== null) {
+    const quests = listQuestInstances(db, campaignId);
+    const failedSource = quests.find((quest) => quest.questId === input.recoveryOfQuestId);
+    if (!failedSource || failedSource.state !== "failed" || failedSource.failureMode !== "recoverable") {
+      throw new Error("A recovery quest must descend from a recoverably failed quest");
+    }
+    if (!failedSource.recoveryPaths.includes(input.recoveryPathUsed)) {
+      throw new Error("A recovery quest must use an exact recorded recovery path");
+    }
+    if (input.sourceThreadId !== failedSource.sourceThreadId || input.visibility !== failedSource.visibility || input.maximumStage !== failedSource.maximumStage) {
+      throw new Error("A recovery quest must inherit its failed quest's thread, visibility, and stage ceiling");
+    }
+    if (!input.linkedQuestIds.includes(failedSource.questId)) {
+      throw new Error("A recovery quest must link to its failed source");
+    }
+    if (quests.some((quest) => quest.recoveryOfQuestId === failedSource.questId)) {
+      throw new Error("This failed quest already has an altered recovery quest");
+    }
+  }
   if (input.isTurningPoint && sourceThread.urgency !== 3) throw new Error("A three-outcome turning point requires an urgency-three source thread");
   if (STAGE_ORDER[input.minimumStage] > STAGE_ORDER[input.maximumStage]) throw new Error("Quest stage range is inverted");
   if (STAGE_ORDER[input.minimumStage] < STAGE_ORDER[sourceThread.minimumStage] || STAGE_ORDER[input.maximumStage] > STAGE_ORDER[sourceThread.maximumStage]) {

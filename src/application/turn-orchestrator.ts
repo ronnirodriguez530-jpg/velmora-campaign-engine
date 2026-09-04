@@ -52,6 +52,8 @@ async function requestValidPlan(
       if (questGenerations.length > 2) throw new Error("A turn may generate at most two quests");
       const questSourceIds = questGenerations.map((request) => request.sourceThreadId);
       if (new Set(questSourceIds).size !== questSourceIds.length) throw new Error("A story thread may generate at most one quest per turn");
+      const recoveryGenerations = plan.toolRequests.filter((request) => request.type === "generate_recovery_quest");
+      if (recoveryGenerations.length > 1) throw new Error("A turn may generate at most one altered recovery quest");
       const questUpdates = plan.toolRequests.filter((request) => request.type === "manage_quest");
       if (questUpdates.length > 4) throw new Error("A turn may manage at most four quests");
       const questIds = questUpdates.map((request) => request.questId);

@@ -53,6 +53,21 @@ The live Campaign Master can now request bounded quest operations through the va
 
 A turn may generate at most two quests and manage at most four, with each source thread or quest used only once per turn. Quest completion and its requested faction, NPC, location, or story-thread consequences share the existing atomic world-turn transaction. If any requested change fails validation or execution, none of the quest or consequence changes commit.
 
+## Working checkpoint 4
+
+Recoverably failed quests can now produce one altered recovery quest:
+
+- The failed quest remains permanently recorded as failed
+- The new quest cites the exact failed quest and one of its recorded recovery paths
+- The replacement inherits the same story thread, visibility, and maximum campaign stage
+- Failed quests are linked as history, not treated as completed prerequisites
+- A failed quest can produce only one altered recovery quest
+- Unrecorded paths, premature recovery, and duplicate recovery attempts are rejected
+- Hidden faction recovery remains Director-only
+- Recovery generation participates in atomic world turns and one-turn rollback
+
+Recovery therefore preserves forward motion without erasing consequences or letting the Campaign Master use failure to invent a different main plot.
+
 ## Branching rule
 
 Normal quests have exactly two major outcomes. Only a marked turning-point quest backed by an urgency-three story thread may have three. Smaller variations belong in consequence state rather than additional major branches.
@@ -76,6 +91,5 @@ Recoverable failure requires at least one recorded route forward. Permanent fail
 
 ## Still required
 
-- Altered recovery-quest replacement
 - Major-objective milestone designation and awards
 - Quest notifications and browser page

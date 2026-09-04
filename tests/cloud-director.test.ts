@@ -94,6 +94,7 @@ test("cloud Director submits a strict bounded plan without executing it", async 
           storyThreadUpdates: [],
           storyThreadCreations: [],
           questGenerations: [],
+          questRecoveries: [],
           questUpdates: [],
           suggestedActions: ["Ask what the League needs", "Return to the avenue"],
           allowsFreeText: true
@@ -139,6 +140,7 @@ test("cloud Director can request one bounded minor NPC without creating it direc
         storyThreadUpdates: [],
         storyThreadCreations: [],
         questGenerations: [],
+        questRecoveries: [],
         questUpdates: [],
         suggestedActions: ["Question the repairer", "Inspect the lamp"],
         allowsFreeText: true
@@ -183,6 +185,7 @@ test("cloud Director can propose one sourced non-main story thread", async () =>
           reason: "The player explicitly accepted unfinished responsibility."
         }],
         questGenerations: [],
+        questRecoveries: [],
         questUpdates: [],
         suggestedActions: ["Follow the rescue route", "Question survivors"],
         allowsFreeText: true
@@ -212,7 +215,7 @@ test("cloud Campaign Master presents a grounded story scene", async () => {
   assert.equal(presentation.suggestedActions.length, 2);
 });
 
-test("cloud Director can request engine-owned quest generation", async () => {
+test("cloud Director can request engine-owned quest generation and recovery", async () => {
   const fakeFetch = async () => new Response(JSON.stringify({
     output: [{
       type: "function_call",
@@ -233,6 +236,11 @@ test("cloud Director can request engine-owned quest generation", async () => {
           sourceThreadId: "THREAD-OPENING-PRESSURE",
           reason: "The active visible crisis needs a playable quest structure."
         }],
+        questRecoveries: [{
+          failedQuestId: "QUEST-OPENING-PRESSURE-01",
+          recoveryPath: "A survivor can reveal an altered route.",
+          reason: "The supplied failed quest retains this exact recovery path."
+        }],
         questUpdates: [],
         suggestedActions: ["Accept the objective", "Study the immediate danger"],
         allowsFreeText: true
@@ -240,6 +248,7 @@ test("cloud Director can request engine-owned quest generation", async () => {
     }]
   }), { status: 200, headers: { "content-type": "application/json" } });
   const plan = await new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch }).planTurn(context, "respond to the crisis");
-  assert.equal(plan.toolRequests.length, 1);
+  assert.equal(plan.toolRequests.length, 2);
   assert.equal(plan.toolRequests[0]?.type, "generate_quest");
+  assert.equal(plan.toolRequests[1]?.type, "generate_recovery_quest");
 });

@@ -8,9 +8,9 @@ import type { DirectorTurnPlan, ToolRequest } from "../src/domain/types.ts";
 import { MockDirector } from "../src/director/mock-director.ts";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { generateQuestFromThread } from "../src/application/quest-generator.ts";
-import { activateQuest, updateQuestObjective } from "../src/application/quest-system.ts";
+import { activateQuest, failQuestRecoverably, updateQuestObjective } from "../src/application/quest-system.ts";
 import { runPlayerAction } from "../src/application/turn-orchestrator.ts";
-import { createCampaign, getFactionCondition, listQuestInstances, openDatabase } from "../src/persistence/database.ts";
+import { createCampaign, getFactionCondition, listQuestInstances, openDatabase, restorePreviousTurn } from "../src/persistence/database.ts";
 
 async function setup(name: string) {
   const content = await loadVelmoraContent(resolve(import.meta.dirname, ".."));
@@ -140,5 +140,28 @@ test("an invalid combined consequence plan leaves both quest and world state unc
     assert.equal(unchanged.state, "active");
     assert.equal(unchanged.selectedOutcomeId, null);
     assert.equal(getFactionCondition(db, campaignId, "FAC-001"), before);
+  } finally { db.close(); }
+});
+
+test("Campaign Master recovery generation is atomic and rollback-safe", async () => {
+  const { content, db, campaignId } = await setup("quest-tool-recovery");
+  try {
+    const original = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    activateQuest(db, campaignId, original.questId);
+    failQuestRecoverably(db, campaignId, original.questId);
+    await runPlayerAction(db, content, directorFor([{
+      type: "generate_recovery_quest",
+      failedQuestId: original.questId,
+      recoveryPath: original.recoveryPaths[0]!,
+      reason: "The failed approach now requires its recorded altered route."
+    }]), "quest-tool-recovery", "commit to the altered recovery route");
+    const recovery = listQuestInstances(db, campaignId).find((quest) => quest.recoveryOfQuestId === original.questId)!;
+    assert.equal(recovery.createdTurn, 1);
+    assert.equal(recovery.recoveryPathUsed, original.recoveryPaths[0]);
+
+    restorePreviousTurn(db, "quest-tool-recovery");
+    const restored = listQuestInstances(db, campaignId);
+    assert.equal(restored.some((quest) => quest.recoveryOfQuestId === original.questId), false);
+    assert.equal(restored.find((quest) => quest.questId === original.questId)?.state, "failed");
   } finally { db.close(); }
 });

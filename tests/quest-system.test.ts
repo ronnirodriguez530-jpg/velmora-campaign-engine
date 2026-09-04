@@ -45,6 +45,8 @@ function openingQuest(overrides: Partial<CreateQuestInput> = {}): CreateQuestInp
     recoveryPaths: ["Survivors, changed conditions, or lost evidence create an altered route forward."],
     prerequisiteQuestIds: [],
     linkedQuestIds: [],
+    recoveryOfQuestId: null,
+    recoveryPathUsed: null,
     truthEvidenceIds: [],
     isTurningPoint: false,
     ...overrides

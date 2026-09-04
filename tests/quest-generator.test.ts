@@ -5,8 +5,8 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { buildDirectorPlanningContext, buildPerspectiveContext } from "../src/application/context-builder.ts";
-import { composeQuestFromThread, generateQuestFromThread } from "../src/application/quest-generator.ts";
-import { activateQuest, completeQuest, updateQuestObjective } from "../src/application/quest-system.ts";
+import { applyRecoveryQuest, composeQuestFromThread, composeRecoveryQuest, generateQuestFromThread } from "../src/application/quest-generator.ts";
+import { activateQuest, completeQuest, failQuestRecoverably, makeQuestAvailable, updateQuestObjective } from "../src/application/quest-system.ts";
 import { createCampaign, listQuestInstances, listStoryThreads, openDatabase, persistStoryThread } from "../src/persistence/database.ts";
 
 async function setup(name: string, seed: string) {
@@ -87,5 +87,50 @@ test("dormant threads cannot generate quests and activated hidden threads remain
     assert.equal(hidden.factionIds.length, 2);
     assert.equal(buildPerspectiveContext(db, content, "quest-hidden-generation").playerQuests.length, 0);
     assert.equal(buildDirectorPlanningContext(db, content, "quest-hidden-generation").directorQuests[0]?.questId, hidden.questId);
+  } finally { db.close(); }
+});
+
+test("a failed quest creates one altered route without erasing the failure", async () => {
+  const { content, db, campaignId } = await setup("quest-recovery", "quest-recovery-seed");
+  try {
+    const original = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    assert.throws(
+      () => composeRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!),
+      /recoverably failed quest/
+    );
+    activateQuest(db, campaignId, original.questId);
+    failQuestRecoverably(db, campaignId, original.questId);
+    const input = composeRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!);
+    assert.equal(input.recoveryOfQuestId, original.questId);
+    assert.equal(input.recoveryPathUsed, original.recoveryPaths[0]);
+    assert.deepEqual(input.linkedQuestIds, [original.questId]);
+    assert.deepEqual(input.prerequisiteQuestIds, []);
+    assert.equal(input.sourceThreadId, original.sourceThreadId);
+    assert.equal(input.maximumStage, original.maximumStage);
+
+    const recovery = applyRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, 0);
+    assert.equal(recovery.state, "available");
+    assert.equal(listQuestInstances(db, campaignId).find((quest) => quest.questId === original.questId)?.state, "failed");
+    assert.throws(
+      () => composeRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!),
+      /already has an altered recovery quest/
+    );
+  } finally { db.close(); }
+});
+
+test("hidden faction recovery preserves Director-only visibility", async () => {
+  const { content, db, campaignId } = await setup("quest-hidden-recovery", "quest-hidden-recovery-seed");
+  try {
+    const factionThread = listStoryThreads(db, campaignId).find((thread) => thread.threadId === "THREAD-FACTION-PRESSURE")!;
+    persistStoryThread(db, { ...factionThread, status: "active" });
+    const original = generateQuestFromThread(db, content, campaignId, factionThread.threadId);
+    makeQuestAvailable(db, campaignId, original.questId);
+    activateQuest(db, campaignId, original.questId);
+    failQuestRecoverably(db, campaignId, original.questId);
+    const recovery = applyRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, 0);
+    assert.equal(recovery.visibility, "director");
+    assert.equal(recovery.state, "locked");
+    assert.equal(JSON.stringify(buildPerspectiveContext(db, content, "quest-hidden-recovery")).includes(recovery.questId), false);
+    assert.equal(buildDirectorPlanningContext(db, content, "quest-hidden-recovery").directorQuests.some((quest) => quest.questId === recovery.questId), true);
   } finally { db.close(); }
 });
