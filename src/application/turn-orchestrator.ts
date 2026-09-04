@@ -53,7 +53,9 @@ async function requestValidPlan(
       const questSourceIds = questGenerations.map((request) => request.sourceThreadId);
       if (new Set(questSourceIds).size !== questSourceIds.length) throw new Error("A story thread may generate at most one quest per turn");
       const recoveryGenerations = plan.toolRequests.filter((request) => request.type === "generate_recovery_quest");
-      if (recoveryGenerations.length > 1) throw new Error("A turn may generate at most one altered recovery quest");
+      if (recoveryGenerations.length > 2) throw new Error("A turn may generate at most two altered recovery quests");
+      const recoveryKeys = recoveryGenerations.map((request) => `${request.failedQuestId}\u0000${request.recoveryPath}`);
+      if (new Set(recoveryKeys).size !== recoveryKeys.length) throw new Error("Altered recovery routes must use distinct failed-quest paths within a turn");
       const questUpdates = plan.toolRequests.filter((request) => request.type === "manage_quest");
       if (questUpdates.length > 4) throw new Error("A turn may manage at most four quests");
       const questIds = questUpdates.map((request) => request.questId);

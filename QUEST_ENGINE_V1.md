@@ -55,14 +55,15 @@ A turn may generate at most two quests and manage at most four, with each source
 
 ## Working checkpoint 4
 
-Recoverably failed quests can now produce one altered recovery quest:
+Recoverably failed quests can produce up to two simultaneously pursuable altered recovery quests:
 
 - The failed quest remains permanently recorded as failed
 - The new quest cites the exact failed quest and one of its recorded recovery paths
 - The replacement inherits the same story thread, visibility, and maximum campaign stage
 - Failed quests are linked as history, not treated as completed prerequisites
-- A failed quest can produce only one altered recovery quest
-- Unrecorded paths, premature recovery, and duplicate recovery attempts are rejected
+- Each altered quest must use a distinct exact recovery path recorded on the failed quest
+- The source thread's hard two-unresolved-quest cap always applies, so existing unresolved work reduces recovery capacity
+- Unrecorded paths, premature recovery, duplicate paths, and attempts beyond two recoveries are rejected
 - Hidden faction recovery remains Director-only
 - Recovery generation participates in atomic world turns and one-turn rollback
 

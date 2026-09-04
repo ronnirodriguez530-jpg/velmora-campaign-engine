@@ -63,7 +63,7 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - The provisional 15% Tear-arrival check and 70/23/7 rarity weights.
 - The four generic scene templates whose IDs begin with `TPL-SCAFFOLD`.
 - The four generic quest formulas in `src/application/quest-generator.ts`.
-- Automatic follow-up prerequisites, generic neglect triggers, and exact-one recovery replacement.
+- Automatic follow-up prerequisites and generic neglect triggers.
 - Turning-point completion as the current automatic advancement trigger.
 - Simulation profiles and abstract milestones.
 

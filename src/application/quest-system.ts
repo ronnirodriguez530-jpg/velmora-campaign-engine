@@ -174,8 +174,10 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
     if (!input.linkedQuestIds.includes(failedSource.questId)) {
       throw new Error("A recovery quest must link to its failed source");
     }
-    if (quests.some((quest) => quest.recoveryOfQuestId === failedSource.questId)) {
-      throw new Error("This failed quest already has an altered recovery quest");
+    const existingRecoveries = quests.filter((quest) => quest.recoveryOfQuestId === failedSource.questId);
+    if (existingRecoveries.length >= 2) throw new Error("This failed quest already has two altered recovery quests");
+    if (existingRecoveries.some((quest) => quest.recoveryPathUsed === input.recoveryPathUsed)) {
+      throw new Error("This recovery path already has an altered quest");
     }
   }
   if (input.isTurningPoint && sourceThread.urgency !== 3) throw new Error("A three-outcome turning point requires an urgency-three source thread");

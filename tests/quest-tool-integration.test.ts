@@ -10,7 +10,7 @@ import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { generateQuestFromThread } from "../src/application/quest-generator.ts";
 import { activateQuest, failQuestRecoverably, updateQuestObjective } from "../src/application/quest-system.ts";
 import { runPlayerAction } from "../src/application/turn-orchestrator.ts";
-import { createCampaign, getFactionCondition, listQuestInstances, openDatabase, restorePreviousTurn } from "../src/persistence/database.ts";
+import { createCampaign, getFactionCondition, listQuestInstances, openDatabase, persistQuestInstance, restorePreviousTurn } from "../src/persistence/database.ts";
 
 async function setup(name: string) {
   const content = await loadVelmoraContent(resolve(import.meta.dirname, ".."));
@@ -143,21 +143,32 @@ test("an invalid combined consequence plan leaves both quest and world state unc
   } finally { db.close(); }
 });
 
-test("Campaign Master recovery generation is atomic and rollback-safe", async () => {
+test("Campaign Master can keep two distinct recovery routes pursuable and rollback both atomically", async () => {
   const { content, db, campaignId } = await setup("quest-tool-recovery");
   try {
     const original = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    const secondPath = "Changed evidence opens a separate route through another survivor.";
+    persistQuestInstance(db, { ...original, recoveryPaths: [original.recoveryPaths[0]!, secondPath] });
     activateQuest(db, campaignId, original.questId);
     failQuestRecoverably(db, campaignId, original.questId);
-    await runPlayerAction(db, content, directorFor([{
-      type: "generate_recovery_quest",
-      failedQuestId: original.questId,
-      recoveryPath: original.recoveryPaths[0]!,
-      reason: "The failed approach now requires its recorded altered route."
-    }]), "quest-tool-recovery", "commit to the altered recovery route");
-    const recovery = listQuestInstances(db, campaignId).find((quest) => quest.recoveryOfQuestId === original.questId)!;
-    assert.equal(recovery.createdTurn, 1);
-    assert.equal(recovery.recoveryPathUsed, original.recoveryPaths[0]);
+    await runPlayerAction(db, content, directorFor([
+      {
+        type: "generate_recovery_quest",
+        failedQuestId: original.questId,
+        recoveryPath: original.recoveryPaths[0]!,
+        reason: "The failed approach now permits its first recorded altered route."
+      },
+      {
+        type: "generate_recovery_quest",
+        failedQuestId: original.questId,
+        recoveryPath: secondPath,
+        reason: "The consequences also support a distinct second recorded route."
+      }
+    ]), "quest-tool-recovery", "commit to preserving both altered recovery routes");
+    const recoveries = listQuestInstances(db, campaignId).filter((quest) => quest.recoveryOfQuestId === original.questId);
+    assert.equal(recoveries.length, 2);
+    assert.deepEqual(new Set(recoveries.map((quest) => quest.recoveryPathUsed)), new Set([original.recoveryPaths[0]!, secondPath]));
+    assert.equal(recoveries.every((quest) => quest.createdTurn === 1 && quest.state === "available"), true);
 
     restorePreviousTurn(db, "quest-tool-recovery");
     const restored = listQuestInstances(db, campaignId);

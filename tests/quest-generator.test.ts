@@ -115,7 +115,7 @@ test("a failed quest creates one altered route without erasing the failure", asy
     assert.equal(listQuestInstances(db, campaignId).find((quest) => quest.questId === original.questId)?.state, "failed");
     assert.throws(
       () => composeRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!),
-      /already has an altered recovery quest/
+      /recovery path already has an altered quest/i
     );
   } finally { db.close(); }
 });

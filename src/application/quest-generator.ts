@@ -176,8 +176,11 @@ export function composeRecoveryQuest(
   if (!failedQuest.recoveryPaths.includes(recoveryPath)) {
     throw new Error("Recovery composition must use an exact recorded recovery path");
   }
-  if (listQuestInstances(db, campaignId).some((quest) => quest.recoveryOfQuestId === failedQuestId)) {
-    throw new Error("This failed quest already has an altered recovery quest");
+  const existingRecoveries = listQuestInstances(db, campaignId)
+    .filter((quest) => quest.recoveryOfQuestId === failedQuestId);
+  if (existingRecoveries.length >= 2) throw new Error("This failed quest already has two altered recovery quests");
+  if (existingRecoveries.some((quest) => quest.recoveryPathUsed === recoveryPath)) {
+    throw new Error("This recovery path already has an altered quest");
   }
   const base = composeQuestFromThread(db, content, campaignId, failedQuest.sourceThreadId);
   const alteredTitle = bounded(`Altered Route: ${failedQuest.title}`, 120);

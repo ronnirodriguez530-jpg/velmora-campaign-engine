@@ -203,6 +203,7 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Objectives, stakes, prerequisites, meaningful neglect triggers, warnings, recovery paths, and consequence seeds
 - [x] Flexible sequential, parallel, branching, and optional objective graph with dependency validation
 - [x] Hard cap of two simultaneous unresolved quests per story thread: one primary route and one alternative
+- [x] Up to two distinct altered routes per failed quest may remain pursuable within the same thread cap
 - [x] Exactly two major outcomes for normal quests and three only for urgency-backed turning points
 - [x] Main, faction, side, personal, dynamic, and fragment classification
 - [x] Player and Director perspective filtering with bounded retrieval
@@ -297,7 +298,7 @@ Provisional progression bridge: the engine can validate a completed turning-poin
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 89 of 89 tests
+- [x] Current automated suite passes 90 of 90 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
