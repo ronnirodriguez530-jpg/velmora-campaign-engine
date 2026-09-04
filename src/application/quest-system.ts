@@ -18,6 +18,63 @@ function stableId(value: string, prefix: string): boolean {
   return new RegExp(`^${prefix}-[A-Z0-9][A-Z0-9-]{2,95}$`).test(value);
 }
 
+function activateReadyObjectives(objectives: QuestInstance["objectives"]): QuestInstance["objectives"] {
+  const completedIds = new Set(objectives.filter((objective) => objective.state === "completed").map((objective) => objective.objectiveId));
+  const completedBranches = new Set(objectives.filter((objective) => objective.state === "completed" && objective.branchGroupId).map((objective) => objective.branchGroupId));
+  return objectives.map((objective) => {
+    if (objective.state !== "pending") return objective;
+    if (objective.branchGroupId && completedBranches.has(objective.branchGroupId)) return { ...objective, state: "skipped" };
+    if (objective.dependsOnObjectiveIds.every((objectiveId) => completedIds.has(objectiveId))) return { ...objective, state: "active" };
+    return objective;
+  });
+}
+
+function objectiveRequirementsMet(objectives: QuestInstance["objectives"]): boolean {
+  const requiredWithoutBranch = objectives.filter((objective) => objective.required && !objective.branchGroupId);
+  if (requiredWithoutBranch.some((objective) => objective.state !== "completed")) return false;
+  const requiredBranches = new Set(objectives.filter((objective) => objective.required && objective.branchGroupId).map((objective) => objective.branchGroupId!));
+  return [...requiredBranches].every((branchGroupId) => objectives.some((objective) => objective.branchGroupId === branchGroupId && objective.state === "completed"));
+}
+
+function validateObjectiveGraph(objectives: QuestInstance["objectives"]): void {
+  const objectiveIds = new Set(objectives.map((objective) => objective.objectiveId));
+  const byId = new Map(objectives.map((objective) => [objective.objectiveId, objective]));
+  if (!objectives.some((objective) => objective.required)) throw new Error("A quest requires at least one required objective");
+  for (const objective of objectives) {
+    if (typeof objective.required !== "boolean") throw new Error("Quest objectives must declare whether they are required");
+    if (!Array.isArray(objective.dependsOnObjectiveIds) || objective.dependsOnObjectiveIds.length > 4) throw new Error("Quest objective dependencies must contain at most four objective IDs");
+    if (new Set(objective.dependsOnObjectiveIds).size !== objective.dependsOnObjectiveIds.length) throw new Error("Quest objective dependencies must be unique");
+    for (const dependencyId of objective.dependsOnObjectiveIds) {
+      if (!objectiveIds.has(dependencyId)) throw new Error(`Unknown quest objective dependency ${dependencyId}`);
+      if (dependencyId === objective.objectiveId) throw new Error("A quest objective cannot depend on itself");
+    }
+    if (objective.branchGroupId !== null && !stableId(objective.branchGroupId, "BRANCH")) throw new Error("Quest branch group IDs must be stable BRANCH identifiers");
+  }
+  const branchGroups = new Map<string, QuestInstance["objectives"]>();
+  for (const objective of objectives) {
+    if (!objective.branchGroupId) continue;
+    branchGroups.set(objective.branchGroupId, [...(branchGroups.get(objective.branchGroupId) ?? []), objective]);
+  }
+  for (const [branchGroupId, members] of branchGroups) {
+    if (members.length < 2) throw new Error(`Quest branch group ${branchGroupId} requires at least two alternatives`);
+    if (new Set(members.map((objective) => objective.required)).size !== 1) throw new Error("Quest branch alternatives must share the same required status");
+    if (members.some((objective) => objective.dependsOnObjectiveIds.some((dependencyId) => members.some((member) => member.objectiveId === dependencyId)))) {
+      throw new Error("Quest branch alternatives cannot depend on one another");
+    }
+  }
+  const visiting = new Set<string>();
+  const visited = new Set<string>();
+  const visit = (objectiveId: string) => {
+    if (visiting.has(objectiveId)) throw new Error("Quest objective dependencies cannot form a cycle");
+    if (visited.has(objectiveId)) return;
+    visiting.add(objectiveId);
+    for (const dependencyId of byId.get(objectiveId)!.dependsOnObjectiveIds) visit(dependencyId);
+    visiting.delete(objectiveId);
+    visited.add(objectiveId);
+  };
+  for (const objectiveId of objectiveIds) visit(objectiveId);
+}
+
 function getCampaignState(db: DatabaseSync, campaignId: string): { stage: CampaignStage; turn: number } {
   const campaign = db.prepare("SELECT stage, turn FROM campaigns WHERE id = ?").get(campaignId) as { stage: CampaignStage; turn: number } | undefined;
   if (!campaign) throw new Error(`Missing campaign state ${campaignId}`);
@@ -130,6 +187,7 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
     requireText(objective.summary, "Quest objective", 3, 240);
     if (objective.state !== "pending") throw new Error("New quest objectives must begin pending");
   }
+  validateObjectiveGraph(input.objectives);
   const requiredOutcomeCount = input.isTurningPoint ? 3 : 2;
   if (input.outcomes.length !== requiredOutcomeCount) throw new Error(`This quest requires exactly ${requiredOutcomeCount} major outcomes`);
   if (new Set(input.outcomes.map((outcome) => outcome.outcomeId)).size !== input.outcomes.length) throw new Error("Quest outcome IDs must be unique");
@@ -224,7 +282,8 @@ export function activateQuest(db: DatabaseSync, campaignId: string, questId: str
   const quest = getQuest(db, campaignId, questId);
   if (quest.state !== "available") throw new Error("Only an available quest can be activated");
   const turn = getCampaignState(db, campaignId).turn;
-  const objectives = quest.objectives.map((objective, index) => index === 0 ? { ...objective, state: "active" as const } : objective);
+  const objectives = activateReadyObjectives(quest.objectives);
+  if (!objectives.some((objective) => objective.state === "active")) throw new Error("A quest must expose at least one ready objective when activated");
   const updated = { ...quest, state: "active" as const, objectives, updatedTurn: turn };
   return commitQuestUpdate(db, updated, "quest_activated", { questId });
 }
@@ -242,22 +301,24 @@ export function updateQuestObjective(
   if (!objective) throw new Error(`Unknown quest objective ${objectiveId}`);
   if (objective.state !== "active") throw new Error("Only the active quest objective can be resolved");
   const turn = getCampaignState(db, campaignId).turn;
-  const objectives = quest.objectives.map((candidate) => candidate.objectiveId === objectiveId ? { ...candidate, state } : candidate);
-  if (state === "completed") {
-    const nextPendingIndex = objectives.findIndex((candidate) => candidate.state === "pending");
-    if (nextPendingIndex >= 0) objectives[nextPendingIndex] = { ...objectives[nextPendingIndex]!, state: "active" };
+  let objectives = quest.objectives.map((candidate) => candidate.objectiveId === objectiveId ? { ...candidate, state } : candidate);
+  if (state === "completed" && objective.branchGroupId) {
+    objectives = objectives.map((candidate) => candidate.branchGroupId === objective.branchGroupId && candidate.objectiveId !== objectiveId && (candidate.state === "pending" || candidate.state === "active") ? { ...candidate, state: "skipped" as const } : candidate);
   }
-  const updated: QuestInstance = { ...quest, objectives, state: state === "failed" ? "changed" : quest.state, updatedTurn: turn };
+  objectives = activateReadyObjectives(objectives);
+  const requiredFailure = state === "failed" && objective.required && (!objective.branchGroupId || !objectives.some((candidate) => candidate.branchGroupId === objective.branchGroupId && (candidate.state === "active" || candidate.state === "pending" || candidate.state === "completed")));
+  const updated: QuestInstance = { ...quest, objectives, state: requiredFailure ? "changed" : quest.state, updatedTurn: turn };
   return commitQuestUpdate(db, updated, "quest_objective_updated", { questId, objectiveId, state });
 }
 
 export function completeQuest(db: DatabaseSync, campaignId: string, questId: string, outcomeId: string): QuestInstance {
   const quest = getQuest(db, campaignId, questId);
   if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can be completed");
-  if (quest.objectives.some((objective) => objective.state !== "completed")) throw new Error("Every quest objective must be completed first");
+  if (!objectiveRequirementsMet(quest.objectives)) throw new Error("Every required quest objective or branch must be completed first");
   if (!quest.outcomes.some((outcome) => outcome.outcomeId === outcomeId)) throw new Error(`Unknown quest outcome ${outcomeId}`);
   const turn = getCampaignState(db, campaignId).turn;
-  const updated: QuestInstance = { ...quest, state: "completed", selectedOutcomeId: outcomeId, updatedTurn: turn };
+  const objectives = quest.objectives.map((objective) => objective.state === "pending" || objective.state === "active" ? { ...objective, state: "skipped" as const } : objective);
+  const updated: QuestInstance = { ...quest, objectives, state: "completed", selectedOutcomeId: outcomeId, updatedTurn: turn };
   return commitQuestUpdate(db, updated, "quest_completed", { questId, outcomeId });
 }
 
@@ -306,7 +367,7 @@ export function validateQuestManagement(
     if (objective.state !== "active") throw new Error("Only the active quest objective can be resolved");
   } else if (request.action === "complete") {
     if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can be completed");
-    if (quest.objectives.some((objective) => objective.state !== "completed")) throw new Error("Every quest objective must be completed first");
+    if (!objectiveRequirementsMet(quest.objectives)) throw new Error("Every required quest objective or branch must be completed first");
     if (!quest.outcomes.some((outcome) => outcome.outcomeId === request.outcomeId)) throw new Error(`Unknown quest outcome ${request.outcomeId}`);
   } else if (request.action === "fail_recoverably") {
     if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can fail");
@@ -333,21 +394,25 @@ export function applyQuestManagement(
     eventType = "quest_available";
     payload = { ...payload, prerequisiteQuestIds: quest.prerequisiteQuestIds };
   } else if (request.action === "activate") {
-    const objectives = quest.objectives.map((objective, index) => index === 0 ? { ...objective, state: "active" as const } : objective);
+    const objectives = activateReadyObjectives(quest.objectives);
+    if (!objectives.some((objective) => objective.state === "active")) throw new Error("A quest must expose at least one ready objective when activated");
     updated = { ...quest, state: "active", objectives, updatedTurn: turn };
     eventType = "quest_activated";
   } else if (request.action === "complete_objective" || request.action === "fail_objective") {
     const objectiveState = request.action === "complete_objective" ? "completed" as const : "failed" as const;
-    const objectives = quest.objectives.map((objective) => objective.objectiveId === request.objectiveId ? { ...objective, state: objectiveState } : objective);
-    if (objectiveState === "completed") {
-      const nextPendingIndex = objectives.findIndex((objective) => objective.state === "pending");
-      if (nextPendingIndex >= 0) objectives[nextPendingIndex] = { ...objectives[nextPendingIndex]!, state: "active" };
+    const resolvedObjective = quest.objectives.find((objective) => objective.objectiveId === request.objectiveId)!;
+    let objectives = quest.objectives.map((objective) => objective.objectiveId === request.objectiveId ? { ...objective, state: objectiveState } : objective);
+    if (objectiveState === "completed" && resolvedObjective.branchGroupId) {
+      objectives = objectives.map((objective) => objective.branchGroupId === resolvedObjective.branchGroupId && objective.objectiveId !== request.objectiveId && (objective.state === "pending" || objective.state === "active") ? { ...objective, state: "skipped" as const } : objective);
     }
-    updated = { ...quest, objectives, state: objectiveState === "failed" ? "changed" : quest.state, updatedTurn: turn };
+    objectives = activateReadyObjectives(objectives);
+    const requiredFailure = objectiveState === "failed" && resolvedObjective.required && (!resolvedObjective.branchGroupId || !objectives.some((objective) => objective.branchGroupId === resolvedObjective.branchGroupId && (objective.state === "active" || objective.state === "pending" || objective.state === "completed")));
+    updated = { ...quest, objectives, state: requiredFailure ? "changed" : quest.state, updatedTurn: turn };
     eventType = "quest_objective_updated";
     payload = { ...payload, objectiveId: request.objectiveId, state: objectiveState };
   } else if (request.action === "complete") {
-    updated = { ...quest, state: "completed", selectedOutcomeId: request.outcomeId, updatedTurn: turn };
+    const objectives = quest.objectives.map((objective) => objective.state === "pending" || objective.state === "active" ? { ...objective, state: "skipped" as const } : objective);
+    updated = { ...quest, objectives, state: "completed", selectedOutcomeId: request.outcomeId, updatedTurn: turn };
     eventType = "quest_completed";
     payload = { ...payload, outcomeId: request.outcomeId };
   } else {

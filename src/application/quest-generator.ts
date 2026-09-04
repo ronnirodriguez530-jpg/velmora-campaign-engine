@@ -104,8 +104,8 @@ export function composeQuestFromThread(
     factionIds,
     npcIds: thread.npcIds,
     objectives: [
-      { objectiveId: `OBJ-${baseId}-${String(sequence).padStart(2, "0")}-A`, summary: bounded(pattern.firstObjective(thread.title), 240), state: "pending" },
-      { objectiveId: `OBJ-${baseId}-${String(sequence).padStart(2, "0")}-B`, summary: bounded(pattern.secondObjective(thread.title), 240), state: "pending" }
+      { objectiveId: `OBJ-${baseId}-${String(sequence).padStart(2, "0")}-A`, summary: bounded(pattern.firstObjective(thread.title), 240), state: "pending", required: true, dependsOnObjectiveIds: [], branchGroupId: null },
+      { objectiveId: `OBJ-${baseId}-${String(sequence).padStart(2, "0")}-B`, summary: bounded(pattern.secondObjective(thread.title), 240), state: "pending", required: true, dependsOnObjectiveIds: [`OBJ-${baseId}-${String(sequence).padStart(2, "0")}-A`], branchGroupId: null }
     ],
     stakes: bounded(`If no one meaningfully responds, the pressure represented by ${thread.title} may change the people, factions, or locations already involved.`, 300),
     outcomes: [

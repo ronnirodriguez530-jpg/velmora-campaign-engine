@@ -31,11 +31,9 @@ test("browser API creates, plays, persists, acts, and rolls back", async () => {
       actionable: { quests: number };
       context: { playerQuests: Array<{ questId: string }> };
     };
-    assert.equal(createdBody.quests.length, 1);
-    assert.equal(createdBody.quests[0]?.sourceThreadId, "THREAD-OPENING-PRESSURE");
-    assert.equal(createdBody.quests[0]?.state, "available");
-    assert.equal(createdBody.actionable.quests, 1);
-    assert.equal(createdBody.context.playerQuests.length, 1);
+    assert.equal(createdBody.quests.length, 0);
+    assert.equal(createdBody.actionable.quests, 0);
+    assert.equal(createdBody.context.playerQuests.length, 0);
 
     const blockedAction = await fetch(`${base}/api/campaigns/browser-proof/actions`, {
       method: "POST",

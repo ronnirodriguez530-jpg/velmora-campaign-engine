@@ -370,13 +370,16 @@ export type DirectorPlanningContext = PerspectiveContext & {
 export type QuestType = "main" | "faction" | "side" | "personal" | "dynamic" | "fragment";
 export type QuestState = "locked" | "available" | "active" | "changed" | "completed" | "failed";
 export type QuestVisibility = "player" | "director";
-export type QuestObjectiveState = "pending" | "active" | "completed" | "failed";
+export type QuestObjectiveState = "pending" | "active" | "completed" | "failed" | "skipped";
 export type QuestFailureMode = "recoverable" | "warned_deadline" | "irreversible_choice" | "major_world_event";
 
 export type QuestObjective = {
   objectiveId: string;
   summary: string;
   state: QuestObjectiveState;
+  required: boolean;
+  dependsOnObjectiveIds: string[];
+  branchGroupId: string | null;
 };
 
 export type QuestOutcome = {

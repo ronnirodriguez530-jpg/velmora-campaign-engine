@@ -718,6 +718,12 @@ export function getCampaignBlueprint(db: DatabaseSync, campaignId: string): Camp
 
 function questFromRow(row: Record<string, unknown>): QuestInstance {
   const stored = JSON.parse(row.dataJson as string) as QuestInstance;
+  const objectives = stored.objectives.map((objective, index, all) => ({
+    ...objective,
+    required: objective.required ?? true,
+    dependsOnObjectiveIds: objective.dependsOnObjectiveIds ?? (index === 0 ? [] : [all[index - 1]!.objectiveId]),
+    branchGroupId: objective.branchGroupId ?? null
+  }));
   return {
     ...stored,
     campaignId: String(row.campaignId),
@@ -725,6 +731,7 @@ function questFromRow(row: Record<string, unknown>): QuestInstance {
     title: String(row.title),
     questType: row.questType as QuestInstance["questType"],
     state: row.state as QuestInstance["state"],
+    objectives,
     isTurningPoint: Number(row.isTurningPoint) === 1,
     recoveryOfQuestId: stored.recoveryOfQuestId ?? null,
     recoveryPathUsed: stored.recoveryPathUsed ?? null

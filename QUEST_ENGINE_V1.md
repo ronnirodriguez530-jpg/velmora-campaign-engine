@@ -14,7 +14,7 @@ The first quest checkpoint provides:
 - Player-visible and Director-only quest separation
 - Stage ranges inherited from the source thread
 - Issuer, location, faction, NPC, linked-quest, and truth-evidence links
-- One to five ordered objectives
+- One to five objectives with validated dependency, parallel, branch, required, and optional structure
 - Prerequisite quests and locked-to-available transitions
 - Meaningful neglect triggers and warning signals
 - Stakes, failure modes, recovery paths, and consequence seeds
@@ -72,14 +72,24 @@ Recovery therefore preserves forward motion without erasing consequences or lett
 
 The browser now exposes the player-visible quest ledger as a functional journal:
 
-- New campaigns currently receive a provisional opening quest generated from the active opening-pressure thread
-- Existing browser campaigns without that provisional quest currently receive the same backfill when the server starts
+- New campaigns do not receive a formal opening quest until the approved player-clicked d6 start and First Speaker attack have occurred
+- The future opening composer must use both the selected spawn and hidden opening crisis
 - Available, active, changed, completed, and failed quests render with their real persistent state
 - Quest cards show type, campaign stage, summary, ordered objectives, stakes, recovery provenance, and selected outcome when present
 - The navigation badge counts genuinely actionable available, active, and changed quests
 - Hidden Director-only and locked quests remain excluded through the player-context boundary
 
-The journal itself is working engineering. Automatic opening-quest creation is provisional because the approved player-clicked d6 start and final first objective do not yet exist.
+The journal itself is working engineering. It correctly remains empty before the formal opening quest exists.
+
+## Approved review checkpoint 6
+
+Review batch 1 establishes these permanent directions:
+
+- The first formal quest begins after the d6 start and attack, using the selected spawn and hidden crisis.
+- Quest construction recombines modular objectives, pressures, complications, and outcomes rather than selecting a fixed whole-quest formula.
+- Objectives may be sequential, parallel, branching, or optional when appropriate.
+
+The objective graph is implemented. Each objective records whether it is required, which objectives it depends on, and whether it belongs to a mutually exclusive branch group. Activating a quest exposes every ready objective, completing a branch skips unused alternatives, optional objectives do not block completion, and malformed or cyclic structures are rejected. The modular content rules remain under review.
 
 ## Branching rule
 

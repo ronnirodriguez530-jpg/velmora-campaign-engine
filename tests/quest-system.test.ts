@@ -31,8 +31,8 @@ function openingQuest(overrides: Partial<CreateQuestInput> = {}): CreateQuestInp
     factionIds: [],
     npcIds: [],
     objectives: [
-      { objectiveId: "OBJ-READ-THE-CRISIS", summary: "Determine the immediate danger in the plaza.", state: "pending" },
-      { objectiveId: "OBJ-CHOOSE-A-RESPONSE", summary: "Commit to a response that protects someone or something at risk.", state: "pending" }
+      { objectiveId: "OBJ-READ-THE-CRISIS", summary: "Determine the immediate danger in the plaza.", state: "pending", required: true, dependsOnObjectiveIds: [], branchGroupId: null },
+      { objectiveId: "OBJ-CHOOSE-A-RESPONSE", summary: "Commit to a response that protects someone or something at risk.", state: "pending", required: true, dependsOnObjectiveIds: ["OBJ-READ-THE-CRISIS"], branchGroupId: null }
     ],
     stakes: "Lives, evidence, and the player's first relationships may change.",
     outcomes: [
@@ -79,6 +79,25 @@ test("rejects invented main plots, excess outcomes, and missing recovery routes"
       questId: "QUEST-NO-RECOVERY",
       recoveryPaths: []
     })), /requires at least one recovery path/);
+    assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
+      questId: "QUEST-CYCLIC-OBJECTIVES",
+      objectives: [
+        { objectiveId: "OBJ-CYCLE-A", summary: "First side of an invalid cycle.", state: "pending", required: true, dependsOnObjectiveIds: ["OBJ-CYCLE-B"], branchGroupId: null },
+        { objectiveId: "OBJ-CYCLE-B", summary: "Second side of an invalid cycle.", state: "pending", required: true, dependsOnObjectiveIds: ["OBJ-CYCLE-A"], branchGroupId: null }
+      ]
+    })), /cannot form a cycle/);
+    assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
+      questId: "QUEST-LONE-BRANCH",
+      objectives: [
+        { objectiveId: "OBJ-LONE-BRANCH", summary: "An invalid branch without an alternative.", state: "pending", required: true, dependsOnObjectiveIds: [], branchGroupId: "BRANCH-LONE-ROUTE" }
+      ]
+    })), /requires at least two alternatives/);
+    assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
+      questId: "QUEST-NO-REQUIRED-OBJECTIVE",
+      objectives: [
+        { objectiveId: "OBJ-OPTIONAL-ONLY", summary: "An optional objective cannot carry the entire quest.", state: "pending", required: false, dependsOnObjectiveIds: [], branchGroupId: null }
+      ]
+    })), /at least one required objective/);
   } finally { db.close(); }
 });
 
@@ -102,6 +121,30 @@ test("advances objectives and completes through one selected major outcome", asy
       prerequisiteQuestIds: [completed.questId]
     }));
     assert.equal(makeQuestAvailable(db, campaignId, "QUEST-OPENING-AFTERMATH").state, "available");
+  } finally { db.close(); }
+});
+
+test("supports parallel, optional, and branching objectives without forcing one active step", async () => {
+  const { content, db, campaignId } = await setup("quest-flexible-objectives");
+  try {
+    createQuestInstance(db, content, campaignId, openingQuest({
+      questId: "QUEST-FLEXIBLE-OBJECTIVES",
+      objectives: [
+        { objectiveId: "OBJ-FLEX-FOUNDATION", summary: "Establish the pressure shaping the immediate choice.", state: "pending", required: true, dependsOnObjectiveIds: [], branchGroupId: null },
+        { objectiveId: "OBJ-FLEX-OPTIONAL", summary: "Pursue an optional advantage before committing.", state: "pending", required: false, dependsOnObjectiveIds: [], branchGroupId: null },
+        { objectiveId: "OBJ-FLEX-DIRECT", summary: "Take the direct branch through the pressure.", state: "pending", required: true, dependsOnObjectiveIds: ["OBJ-FLEX-FOUNDATION"], branchGroupId: "BRANCH-FLEX-ROUTE" },
+        { objectiveId: "OBJ-FLEX-INDIRECT", summary: "Take the indirect branch through the pressure.", state: "pending", required: true, dependsOnObjectiveIds: ["OBJ-FLEX-FOUNDATION"], branchGroupId: "BRANCH-FLEX-ROUTE" }
+      ]
+    }));
+    const active = activateQuest(db, campaignId, "QUEST-FLEXIBLE-OBJECTIVES");
+    assert.deepEqual(active.objectives.map((objective) => objective.state), ["active", "active", "pending", "pending"]);
+    const branched = updateQuestObjective(db, campaignId, active.questId, "OBJ-FLEX-FOUNDATION", "completed");
+    assert.deepEqual(branched.objectives.map((objective) => objective.state), ["completed", "active", "active", "active"]);
+    const selected = updateQuestObjective(db, campaignId, active.questId, "OBJ-FLEX-DIRECT", "completed");
+    assert.equal(selected.objectives.find((objective) => objective.objectiveId === "OBJ-FLEX-INDIRECT")?.state, "skipped");
+    const completed = completeQuest(db, campaignId, active.questId, "OUT-PROTECT-PEOPLE");
+    assert.equal(completed.objectives.find((objective) => objective.objectiveId === "OBJ-FLEX-OPTIONAL")?.state, "skipped");
+    assert.equal(completed.state, "completed");
   } finally { db.close(); }
 });
 

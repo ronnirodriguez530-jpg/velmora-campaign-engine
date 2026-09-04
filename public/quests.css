@@ -87,6 +87,7 @@
 }
 
 .objective-completed { text-decoration: line-through; opacity: .65; }
+.objective-skipped { text-decoration: line-through; opacity: .48; }
 .objective-active { outline: 1px solid #9f7dbc; }
 .objective-failed { color: #e5adb4 !important; }
 .quest-stakes { margin-top: 18px; }

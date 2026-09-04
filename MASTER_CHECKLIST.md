@@ -201,6 +201,7 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Strict generated-quest data contract with stable IDs and existing story-thread provenance
 - [x] Persistent creation, prerequisite availability, activation, objective updates, completion, and recoverable failure
 - [x] Objectives, stakes, prerequisites, meaningful neglect triggers, warnings, recovery paths, and consequence seeds
+- [x] Flexible sequential, parallel, branching, and optional objective graph with dependency validation
 - [x] Exactly two major outcomes for normal quests and three only for urgency-backed turning points
 - [x] Main, faction, side, personal, dynamic, and fragment classification
 - [x] Player and Director perspective filtering with bounded retrieval
@@ -211,7 +212,7 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [ ] Major-objective milestone designation and rewards
 - [x] Functional Quest page and actionable notifications
 
-Implemented quest engineering: the durable contract, lifecycle, bounded Campaign Master controls, atomic consequences, player-visible browser journal, persistence, privacy, and rollback work. The current composer, opening-quest timing, objective sequence, follow-up linkage, recovery cadence, and progression trigger are explicitly provisional pending the decisions in `QUEST_ENGINE_DECISION_AUDIT.md`. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+Implemented quest engineering: the durable contract, lifecycle, flexible objective graph, bounded Campaign Master controls, atomic consequences, player-visible browser journal, persistence, privacy, and rollback work. The first quest is now correctly withheld until the future d6-and-attack opening flow. The current composer formulas, modular content, thread concurrency, follow-up linkage, recovery cadence, and progression trigger remain provisional pending `QUEST_ENGINE_DECISION_AUDIT.md`. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
 Provisional progression bridge: the engine can validate a completed turning-point quest with a recorded outcome and prevent duplicate awards. The reward trigger and major-objective cadence require approval before they become final campaign rules.
 
@@ -295,7 +296,7 @@ Provisional progression bridge: the engine can validate a completed turning-poin
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 88 of 88 tests
+- [x] Current automated suite passes 89 of 89 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -394,7 +395,7 @@ Provisional progression bridge: the engine can validate a completed turning-poin
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the engineering foundation of step 6. The strict quest contract, persistence, bounded Campaign Master controls, atomic consequences, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, and player Quest journal work. The current quest formulas, opening timing, objective flow, follow-up linkage, recovery cadence, and quest reward trigger are provisional and must be reviewed through `QUEST_ENGINE_DECISION_AUDIT.md` before step 6 is complete. Combat, sustained live-play validation, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the engineering foundation of step 6. The strict quest contract, persistence, flexible objective graph, bounded Campaign Master controls, atomic consequences, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, and player Quest journal work. Opening timing is approved and automatic pre-opening quest creation has been removed. The current quest formulas, modular content, thread concurrency, follow-up linkage, recovery cadence, and quest reward trigger remain provisional and must be reviewed through `QUEST_ENGINE_DECISION_AUDIT.md` before step 6 is complete. Combat, sustained live-play validation, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 
