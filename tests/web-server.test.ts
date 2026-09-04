@@ -14,7 +14,10 @@ test("browser API creates, plays, persists, acts, and rolls back", async () => {
   try {
     const page = await fetch(base);
     assert.equal(page.status, 200);
-    assert.match(await page.text(), /<title>Velmora<\/title>/);
+    const pageHtml = await page.text();
+    assert.match(pageHtml, /<title>Velmora<\/title>/);
+    assert.match(pageHtml, /id="quest-list"/);
+    assert.match(pageHtml, /href="\/quests\.css"/);
     assert.match(page.headers.get("cache-control") ?? "", /no-store/);
 
     const created = await fetch(`${base}/api/campaigns`, {
@@ -23,6 +26,16 @@ test("browser API creates, plays, persists, acts, and rolls back", async () => {
       body: JSON.stringify({ name: "browser-proof" })
     });
     assert.equal(created.status, 201);
+    const createdBody = await created.json() as {
+      quests: Array<{ sourceThreadId: string; state: string }>;
+      actionable: { quests: number };
+      context: { playerQuests: Array<{ questId: string }> };
+    };
+    assert.equal(createdBody.quests.length, 1);
+    assert.equal(createdBody.quests[0]?.sourceThreadId, "THREAD-OPENING-PRESSURE");
+    assert.equal(createdBody.quests[0]?.state, "available");
+    assert.equal(createdBody.actionable.quests, 1);
+    assert.equal(createdBody.context.playerQuests.length, 1);
 
     const blockedAction = await fetch(`${base}/api/campaigns/browser-proof/actions`, {
       method: "POST",

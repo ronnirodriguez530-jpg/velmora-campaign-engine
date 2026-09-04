@@ -6,6 +6,7 @@ import { dirname, extname, join, resolve } from "node:path";
 import { loadVelmoraContent } from "../application/campaign-loader.ts";
 import { buildPerspectiveContext } from "../application/context-builder.ts";
 import { beginPlayableAction, finishPlayableAction } from "../application/gameplay-session.ts";
+import { generateQuestFromThread } from "../application/quest-generator.ts";
 import { getPendingActionCheck } from "../application/dice-resolution.ts";
 import { openPresentedStoryMoment } from "../application/story-session.ts";
 import { createPlayerCharacter, type PlayerCharacterInput } from "../application/player-character.ts";
@@ -13,7 +14,7 @@ import { checkForUpdate, installLatestUpdate } from "../application/update-manag
 import { spawn } from "node:child_process";
 import { cloudDirectorFromEnvironment } from "../director/cloud-director.ts";
 import { MockDirector } from "../director/mock-director.ts";
-import { backfillAuthoredState, createCampaign, getCampaign, getPlayerCharacter, listEvents, openDatabase, restorePreviousTurn } from "../persistence/database.ts";
+import { backfillAuthoredState, createCampaign, getCampaign, getPlayerCharacter, listEvents, listQuestInstances, listStoryThreads, openDatabase, restorePreviousTurn } from "../persistence/database.ts";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const publicRoot = join(projectRoot, "public");
@@ -24,7 +25,8 @@ const staticFiles: Record<string, string> = {
   "/app.js": "app.js",
   "/styles.css": "styles.css",
   "/character.css": "character.css",
-  "/dice.css": "dice.css"
+  "/dice.css": "dice.css",
+  "/quests.css": "quests.css"
 };
 
 function sendJson(response: ServerResponse, status: number, value: unknown): void {
@@ -49,6 +51,14 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
   const dataDir = resolve(options.dataDir ?? process.env.VELMORA_DATA_DIR ?? join(projectRoot, "data"));
   const db = openDatabase(join(dataDir, "velmora.sqlite"));
   backfillAuthoredState(db, content);
+
+  const ensureOpeningQuest = (campaignId: string) => {
+    if (listQuestInstances(db, campaignId).some((quest) => quest.sourceThreadId === "THREAD-OPENING-PRESSURE")) return;
+    const openingThread = listStoryThreads(db, campaignId).find((thread) => thread.threadId === "THREAD-OPENING-PRESSURE");
+    if (openingThread?.status === "active") generateQuestFromThread(db, content, campaignId, openingThread.threadId);
+  };
+  const existingCampaigns = db.prepare("SELECT id FROM campaigns").all() as Array<{ id: string }>;
+  for (const campaign of existingCampaigns) ensureOpeningQuest(campaign.id);
 
   const selectDirector = (requested: string | null) => {
     if (requested === "local") return new MockDirector();
@@ -77,8 +87,9 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         progress: context.factionPathProgress.find((item) => item.factionId === faction.id)?.progress ?? 0
       })),
       locations: [context.currentLocation, ...context.connectedLocations],
+      quests: context.playerQuests,
       actionable: {
-        quests: 0,
+        quests: context.playerQuests.filter((quest) => quest.state === "available" || quest.state === "active" || quest.state === "changed").length,
         factions: context.factionPathProgress.filter((item) => item.progress > 0).length,
         locations: context.persistentConsequences.length + context.recentTearArrivals.length,
         inventory: 0
@@ -129,7 +140,8 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
           sendJson(response, 409, { error: "A campaign with that name already exists" });
           return;
         }
-        createCampaign(db, content, name, `${name}:${Date.now()}`);
+        const campaignId = createCampaign(db, content, name, `${name}:${Date.now()}`);
+        ensureOpeningQuest(campaignId);
         sendJson(response, 201, { campaign: getCampaign(db, name), ...playerView(name) });
         return;
       }

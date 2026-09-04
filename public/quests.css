@@ -1,0 +1,99 @@
+.quest-list {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.quest-card {
+  padding: 22px;
+  border: 1px solid #554363;
+  border-left: 5px solid #7f6690;
+  border-radius: 13px;
+  background: #140f19ed;
+}
+
+.quest-card header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.quest-card h2 {
+  margin: 0;
+  font: 700 1.5rem Georgia, serif;
+}
+
+.quest-card h3 {
+  margin: 20px 0 9px;
+  color: #d9c7e7;
+  font-size: .9rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+}
+
+.quest-state {
+  flex: none;
+  padding: 4px 9px;
+  border-radius: 999px;
+  color: #160d1d;
+  background: #c9a4e8;
+  font-size: .72rem;
+  font-weight: 900;
+}
+
+.quest-active { border-left-color: #72d6a2; }
+.quest-available { border-left-color: #d9b3ff; }
+.quest-changed { border-left-color: #e4ba67; }
+.quest-completed { border-left-color: #699a81; opacity: .82; }
+.quest-failed { border-left-color: #bc6470; opacity: .82; }
+
+.quest-meta {
+  margin: 8px 0;
+  color: #ad8fc5;
+  font-size: .8rem;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+}
+
+.quest-summary,
+.quest-stakes,
+.quest-recovery,
+.quest-outcome {
+  color: #c8bdcf;
+  line-height: 1.55;
+}
+
+.quest-objectives {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.quest-objectives li {
+  padding: 9px 12px;
+  color: #e4dce9;
+  background: #211827;
+  border-radius: 8px;
+}
+
+.quest-objectives li span {
+  float: right;
+  margin-left: 10px;
+  color: #a997b6;
+  font-size: .72rem;
+  text-transform: uppercase;
+}
+
+.objective-completed { text-decoration: line-through; opacity: .65; }
+.objective-active { outline: 1px solid #9f7dbc; }
+.objective-failed { color: #e5adb4 !important; }
+.quest-stakes { margin-top: 18px; }
+.quest-recovery { padding: 12px; border-radius: 8px; background: #2a2113; color: #eed7a3; }
+.quest-outcome { padding: 12px; border-radius: 8px; background: #14271e; color: #bde7cc; }
+
+@media (max-width: 620px) {
+  .quest-card header { display: block; }
+  .quest-state { display: inline-block; margin-top: 10px; }
+}

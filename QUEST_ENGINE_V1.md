@@ -68,6 +68,19 @@ Recoverably failed quests can now produce one altered recovery quest:
 
 Recovery therefore preserves forward motion without erasing consequences or letting the Campaign Master use failure to invent a different main plot.
 
+## Working checkpoint 5
+
+The browser now exposes the player-visible quest ledger as a functional journal:
+
+- New campaigns receive an opening quest generated from the active opening-pressure thread
+- Existing browser campaigns without that quest receive the same safe backfill when the server starts
+- Available, active, changed, completed, and failed quests render with their real persistent state
+- Quest cards show type, campaign stage, summary, ordered objectives, stakes, recovery provenance, and selected outcome when present
+- The navigation badge counts genuinely actionable available, active, and changed quests
+- Hidden Director-only and locked quests remain excluded through the player-context boundary
+
+This checkpoint makes the existing Quest Engine visible and inspectable. Direct quest actions still occur through play and validated Campaign Master operations rather than journal buttons.
+
 ## Branching rule
 
 Normal quests have exactly two major outcomes. Only a marked turning-point quest backed by an urgency-three story thread may have three. Smaller variations belong in consequence state rather than additional major branches.
@@ -92,4 +105,4 @@ Recoverable failure requires at least one recorded route forward. Permanent fail
 ## Still required
 
 - Major-objective milestone designation and awards
-- Quest notifications and browser page
+- Live play validation of quest changes and recovery across sustained multi-scene sessions

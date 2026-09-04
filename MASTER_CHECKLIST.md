@@ -209,11 +209,11 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Campaign Master quest tools and atomic outcome/consequence application
 - [x] Verified turning-point rewards and altered recovery-quest generation
 - [ ] Major-objective milestone designation and rewards
-- [ ] Functional Quest page and actionable notifications
+- [x] Functional Quest page and actionable notifications
 
-Implemented quest scope: the durable contract, lifecycle, seeded reusable composer, bounded Campaign Master controls, and altered recovery generation work. Quest outcomes and justified world consequences commit together through the atomic turn pipeline. Failed approaches remain recorded while one linked recovery route preserves the source thread, visibility, and stage ceiling. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+Implemented quest scope: the durable contract, lifecycle, seeded reusable composer, bounded Campaign Master controls, altered recovery generation, and player-visible browser journal work. Quest outcomes and justified world consequences commit together through the atomic turn pipeline. Failed approaches remain recorded while one linked recovery route preserves the source thread, visibility, and stage ceiling. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
-Verified progression bridge: a completed preapproved turning-point quest with a recorded outcome can award one advancement opportunity. Ordinary or incomplete quests and duplicate awards are rejected. Major-objective designation and recovery-quest replacement remain unfinished.
+Verified progression bridge: a completed preapproved turning-point quest with a recorded outcome can award one advancement opportunity. Ordinary or incomplete quests and duplicate awards are rejected. Major-objective designation remains unfinished.
 
 ### 13. Faction Engine — Partial scaffold
 
@@ -272,13 +272,13 @@ Verified progression bridge: a completed preapproved turning-point quest with a 
 - [x] High-contrast application shell and navigation
 - [x] Story, Factions, Locations, History, and Settings show limited real data
 - [x] Functional Character page
-- [ ] Functional Quest page
+- [x] Functional Quest page
 - [ ] Functional Inventory page
 - [ ] Clean location and world-state presentation
 - [ ] Dice popup and contextual action control
 - [ ] Progressive combat interface
 - [ ] NPC and relationship presentation where relevant
-- [ ] Actionable badges based on genuine events
+- [x] Actionable Quest badge based on genuine quest state
 - [ ] Accessibility, keyboard use, readable scaling, and error feedback
 
 ## Level 2 — Reliable application
@@ -394,7 +394,7 @@ Verified progression bridge: a completed preapproved turning-point quest with a 
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the core Quest Engine slices of step 6. The strict quest contract, persistent lifecycle, seeded thread-to-quest composition, bounded Campaign Master controls, atomic outcome consequences, altered recovery quests, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, and verified turning-point progression awards now exist. Major-objective awards, the Quest page, combat, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the core Quest Engine slices of step 6. The strict quest contract, persistent lifecycle, seeded thread-to-quest composition, bounded Campaign Master controls, atomic outcome consequences, altered recovery quests, two/three-outcome rule, prerequisites, visibility separation, failure boundaries, context retrieval, save compatibility, rollback, verified turning-point progression awards, and functional player Quest journal now exist. Major-objective awards, combat, sustained live-play validation, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

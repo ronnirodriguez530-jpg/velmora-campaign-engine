@@ -51,9 +51,43 @@ function renderCharacter(character) {
   $("#character-skills").replaceChildren(...character.skillProficiencies.map((skill) => tag(title(skill))));
   $("#character-saves").replaceChildren(...character.saveProficiencies.map((save) => tag(title(save))));
 }
+function renderQuests(quests = []) {
+  const list = $("#quest-list");
+  if (!quests.length) {
+    const empty = document.createElement("div"); empty.className = "empty-state"; empty.textContent = "No player-known quest is currently recorded.";
+    list.replaceChildren(empty); return;
+  }
+  const priority = { active: 0, changed: 1, available: 2, completed: 3, failed: 4, locked: 5 };
+  const sorted = [...quests].sort((left, right) => (priority[left.state] ?? 9) - (priority[right.state] ?? 9) || right.updatedTurn - left.updatedTurn);
+  list.replaceChildren(...sorted.map((quest) => {
+    const node = document.createElement("article"); node.className = `quest-card quest-${quest.state}`;
+    const header = document.createElement("header");
+    const heading = document.createElement("h2"); heading.textContent = quest.title;
+    const state = document.createElement("span"); state.className = "quest-state"; state.textContent = title(quest.state);
+    header.append(heading, state);
+    const meta = document.createElement("p"); meta.className = "quest-meta"; meta.textContent = `${title(quest.questType)} quest · ${title(quest.minimumStage)} stage`;
+    const summary = document.createElement("p"); summary.className = "quest-summary"; summary.textContent = quest.summary;
+    const objectiveTitle = document.createElement("h3"); objectiveTitle.textContent = "Objectives";
+    const objectives = document.createElement("ol"); objectives.className = "quest-objectives";
+    for (const objective of quest.objectives) {
+      const item = document.createElement("li"); item.className = `objective-${objective.state}`; item.textContent = objective.summary;
+      const marker = document.createElement("span"); marker.textContent = title(objective.state); item.append(marker); objectives.append(item);
+    }
+    const stakes = document.createElement("p"); stakes.className = "quest-stakes"; stakes.textContent = `Stakes: ${quest.stakes}`;
+    node.append(header, meta, summary, objectiveTitle, objectives, stakes);
+    if (quest.recoveryOfQuestId) {
+      const recovery = document.createElement("p"); recovery.className = "quest-recovery"; recovery.textContent = `Altered route after ${quest.recoveryOfQuestId}: ${quest.recoveryPathUsed}`; node.append(recovery);
+    }
+    if (quest.state === "completed" && quest.selectedOutcomeId) {
+      const selected = quest.outcomes.find((outcome) => outcome.outcomeId === quest.selectedOutcomeId);
+      if (selected) { const outcome = document.createElement("p"); outcome.className = "quest-outcome"; outcome.textContent = `Outcome: ${selected.summary}`; node.append(outcome); }
+    }
+    return node;
+  }));
+}
 function render(payload) {
   currentPayload = payload;
-  const { campaign, context, moment, storyHistory = [], factions = [], locations = [], actionable = {} } = payload;
+  const { campaign, context, moment, storyHistory = [], factions = [], locations = [], quests = context.playerQuests || [], actionable = {} } = payload;
   const playerCharacter = payload.playerCharacter ?? context.playerCharacter;
   $("#setup").classList.add("hidden"); $("#app").classList.remove("hidden");
   $("#story-stage").textContent = campaign.stage; $("#story-location").textContent = context.currentLocation.name; $("#story-turn").textContent = `Turn ${campaign.turn}`;
@@ -66,6 +100,7 @@ function render(payload) {
   $("#current-location").replaceChildren(...(current ? [Object.assign(document.createElement("h2"), { textContent: current.name }), Object.assign(document.createElement("p"), { textContent: `You are here. ${current.perspectiveTags.join(" · ")}` })] : []));
   $("#location-list").replaceChildren(...locations.slice(1).map((location) => card(location.name, location.perspectiveTags.join(" · "), "Directly reachable")));
   $("#history-list").replaceChildren(...(storyHistory.length ? storyHistory.map((entry) => card(`Turn ${entry.turn}`, entry.narration, entry.action)) : [Object.assign(document.createElement("div"), { className: "empty-state", textContent: "The campaign has not recorded a completed action yet." })]));
+  renderQuests(quests);
   badge("quests", actionable.quests || 0); badge("factions", actionable.factions || 0); badge("locations", actionable.locations || 0); badge("inventory", actionable.inventory || 0);
   renderCharacter(playerCharacter); showPage(playerCharacter ? "story" : "character");
   if (payload.pendingCheck) showRoll(payload.pendingCheck);
