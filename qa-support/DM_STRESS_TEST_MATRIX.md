@@ -21,6 +21,8 @@ For any unexpected but valid player action, the DM should be able to:
 | QP-03 | Player refuses every faction invitation | Campaign remains playable without forced allegiance | UNTESTED | |
 | QP-04 | Player publicly exposes a secret quest | NPCs/factions react; quest mutates instead of hard-failing | UNTESTED | |
 | QP-05 | Player leaves an urgent problem unresolved for many sessions | Problem advances off-screen and returns in updated form | UNTESTED | |
+| QP-06 | Player completes one of two parallel routes | Sibling route remains unresolved unless a durable consequence actually makes its premise impossible | PARTIAL | Current quest model preserves sibling routes by default; dedicated evidence-backed invalidation action is still missing. See ROUTE_INVALIDATION_SPEC.md. |
+| QP-07 | World consequences make one unresolved route impossible | Impossible route is preserved in journal as failed; sibling route remains untouched; invalidation cites durable causal evidence | BLOCKED | Specification complete in ROUTE_INVALIDATION_SPEC.md; runtime action not yet implemented. |
 | NPC-01 | Player befriends a hostile NPC unexpectedly | Relationship state can move outside authored expectation | UNTESTED | |
 | NPC-02 | Player attacks a friendly or important NPC | NPC/world response persists and downstream systems adapt | UNTESTED | |
 | NPC-03 | Player returns to an improvised NPC after many sessions | Same identity, history, relationship, and relevant memories persist | UNTESTED | |
