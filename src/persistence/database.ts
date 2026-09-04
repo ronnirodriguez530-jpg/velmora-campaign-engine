@@ -732,9 +732,11 @@ function questFromRow(row: Record<string, unknown>): QuestInstance {
     questType: row.questType as QuestInstance["questType"],
     state: row.state as QuestInstance["state"],
     objectives,
+    relationships: stored.relationships ?? [],
     isTurningPoint: Number(row.isTurningPoint) === 1,
     recoveryOfQuestId: stored.recoveryOfQuestId ?? null,
-    recoveryPathUsed: stored.recoveryPathUsed ?? null
+    recoveryPathUsed: stored.recoveryPathUsed ?? null,
+    recoveryEvidenceEventSequences: stored.recoveryEvidenceEventSequences ?? []
   };
 }
 

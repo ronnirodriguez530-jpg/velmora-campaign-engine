@@ -106,7 +106,7 @@ function characterExists(db: DatabaseSync, content: VelmoraContent, campaignId: 
 }
 
 function validateQuestLinks(db: DatabaseSync, content: VelmoraContent, campaignId: string, input: CreateQuestInput): void {
-  if (input.locationIds.length > 8 || input.factionIds.length > 6 || input.npcIds.length > 8 || input.prerequisiteQuestIds.length > 6 || input.linkedQuestIds.length > 6 || input.truthEvidenceIds.length > 8) {
+  if (input.locationIds.length > 8 || input.factionIds.length > 6 || input.npcIds.length > 8 || input.prerequisiteQuestIds.length > 6 || input.linkedQuestIds.length > 6 || input.relationships.length > 6 || input.truthEvidenceIds.length > 8) {
     throw new Error("Quest link limit exceeded");
   }
   for (const locationId of input.locationIds) {
@@ -125,6 +125,24 @@ function validateQuestLinks(db: DatabaseSync, content: VelmoraContent, campaignI
   }
   for (const linkedQuestId of input.linkedQuestIds) {
     if (!existingQuestIds.has(linkedQuestId)) throw new Error(`Unknown linked quest ${linkedQuestId}`);
+  }
+  if (new Set(input.relationships.map((relationship) => relationship.questId)).size !== input.relationships.length) {
+    throw new Error("A quest may define only one relationship to another quest");
+  }
+  const existingQuests = new Map(listQuestInstances(db, campaignId).map((quest) => [quest.questId, quest]));
+  for (const relationship of input.relationships) {
+    const related = existingQuests.get(relationship.questId);
+    if (!related || !input.linkedQuestIds.includes(relationship.questId)) throw new Error(`Unknown or unlinked quest relationship ${relationship.questId}`);
+    if (!["prerequisite", "parallel", "optional_branch", "consequence"].includes(relationship.type)) throw new Error("Unknown quest relationship type");
+    if (relationship.type === "prerequisite" && related.state !== "completed") throw new Error("A prerequisite relationship requires a completed quest");
+    if (relationship.type === "consequence" && related.state !== "completed" && related.state !== "failed") throw new Error("A consequence relationship requires a completed or failed quest");
+    if ((relationship.type === "parallel" || relationship.type === "optional_branch") && (related.state === "completed" || related.state === "failed")) {
+      throw new Error("A parallel or optional relationship requires an unresolved quest");
+    }
+  }
+  const relationshipPrerequisites = input.relationships.filter((relationship) => relationship.type === "prerequisite").map((relationship) => relationship.questId).sort();
+  if (JSON.stringify(relationshipPrerequisites) !== JSON.stringify([...input.prerequisiteQuestIds].sort())) {
+    throw new Error("Quest prerequisite IDs and relationships must match");
   }
   for (const factId of input.truthEvidenceIds) {
     if (!db.prepare("SELECT 1 FROM world_facts WHERE campaign_id = ? AND fact_id = ?").get(campaignId, factId)) {
@@ -174,11 +192,34 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
     if (!input.linkedQuestIds.includes(failedSource.questId)) {
       throw new Error("A recovery quest must link to its failed source");
     }
+    if (!input.relationships.some((relationship) => relationship.questId === failedSource.questId && relationship.type === "consequence")) {
+      throw new Error("A recovery quest must be a consequence of its failed source");
+    }
     const existingRecoveries = quests.filter((quest) => quest.recoveryOfQuestId === failedSource.questId);
     if (existingRecoveries.length >= 2) throw new Error("This failed quest already has two altered recovery quests");
     if (existingRecoveries.some((quest) => quest.recoveryPathUsed === input.recoveryPathUsed)) {
       throw new Error("This recovery path already has an altered quest");
     }
+    const failureEvents = db.prepare("SELECT sequence, turn, payload_json AS payloadJson FROM event_log WHERE campaign_id = ? AND event_type = 'quest_failed_recoverably' ORDER BY sequence")
+      .all(campaignId) as Array<{ sequence: number; turn: number; payloadJson: string }>;
+    const failureEvent = failureEvents.find((event) => {
+      const payload = JSON.parse(event.payloadJson) as { questId?: string };
+      return payload.questId === failedSource.questId;
+    });
+    if (!failureEvent) throw new Error("A recovery quest requires a recorded failure event");
+    if (input.recoveryEvidenceEventSequences.length < 1 || input.recoveryEvidenceEventSequences.length > 4 || new Set(input.recoveryEvidenceEventSequences).size !== input.recoveryEvidenceEventSequences.length) {
+      throw new Error("A recovery quest requires 1-4 distinct consequence-event references");
+    }
+    const allowedConsequenceTools = new Set(["change_faction_condition", "change_npc_reputation", "advance_faction_path", "record_location_consequence", "manage_npc_turn", "manage_story_thread", "create_story_thread"]);
+    for (const sequence of input.recoveryEvidenceEventSequences) {
+      const evidence = db.prepare("SELECT turn, event_type AS eventType, payload_json AS payloadJson FROM event_log WHERE campaign_id = ? AND sequence = ?")
+        .get(campaignId, sequence) as { turn: number; eventType: string; payloadJson: string } | undefined;
+      if (!evidence || evidence.eventType !== "tool_applied" || evidence.turn < failureEvent.turn) throw new Error("Recovery evidence must be a recorded consequence from the failure turn or later");
+      const payload = JSON.parse(evidence.payloadJson) as { type?: string };
+      if (!payload.type || !allowedConsequenceTools.has(payload.type)) throw new Error("Recovery evidence must reference a durable world consequence");
+    }
+  } else if (input.recoveryEvidenceEventSequences.length !== 0) {
+    throw new Error("Only an altered recovery quest may cite recovery evidence");
   }
   if (input.isTurningPoint && sourceThread.urgency !== 3) throw new Error("A three-outcome turning point requires an urgency-three source thread");
   if (STAGE_ORDER[input.minimumStage] > STAGE_ORDER[input.maximumStage]) throw new Error("Quest stage range is inverted");

@@ -94,8 +94,8 @@ type SubmittedPlan = {
     recoveryPaths: string[];
     reason: string;
   }>;
-  questGenerations: Array<{ sourceThreadId: string; reason: string }>;
-  questRecoveries: Array<{ failedQuestId: string; recoveryPath: string; reason: string }>;
+  questGenerations: Array<{ sourceThreadId: string; relationships: Array<{ questId: string; type: "prerequisite" | "parallel" | "optional_branch" | "consequence" }>; reason: string }>;
+  questRecoveries: Array<{ failedQuestId: string; recoveryPath: string; consequenceEventSequences: number[]; reason: string }>;
   questUpdates: Array<{
     questId: string;
     action: "make_available" | "activate" | "complete_objective" | "fail_objective" | "complete" | "fail_recoverably";
@@ -339,9 +339,22 @@ const PLAN_TOOL = {
           type: "object",
           properties: {
             sourceThreadId: { type: "string" },
+            relationships: {
+              type: "array",
+              maxItems: 6,
+              items: {
+                type: "object",
+                properties: {
+                  questId: { type: "string" },
+                  type: { type: "string", enum: ["prerequisite", "parallel", "optional_branch", "consequence"] }
+                },
+                required: ["questId", "type"],
+                additionalProperties: false
+              }
+            },
             reason: { type: "string" }
           },
-          required: ["sourceThreadId", "reason"],
+          required: ["sourceThreadId", "relationships", "reason"],
           additionalProperties: false
         }
       },
@@ -354,9 +367,10 @@ const PLAN_TOOL = {
           properties: {
             failedQuestId: { type: "string" },
             recoveryPath: { type: "string" },
+            consequenceEventSequences: { type: "array", items: { type: "integer", minimum: 1 }, minItems: 1, maxItems: 4 },
             reason: { type: "string" }
           },
-          required: ["failedQuestId", "recoveryPath", "reason"],
+          required: ["failedQuestId", "recoveryPath", "consequenceEventSequences", "reason"],
           additionalProperties: false
         }
       },
@@ -416,7 +430,7 @@ Use the supplied npcContext for portrayal. A full NPC may use only that NPC's su
 For existing NPCs directly affected by the turn, submit a bounded npcUpdate. Record only memories and relationship changes justified by the player's action. Standing may move only one step. New knowledge must reference an existing supplied public fact; never invent a fact or reveal a restricted fact. Ordinary NPC updates may not cause death. Mark involvement as ends when that NPC should leave the foreground; category changes are owned by the engine.
 Manage story continuity through storyThreadUpdates. Advance only a thread materially changed by the player's action. Activate dormant threads when play reaches them; block a route only if it retains a recovery path; resolve only when its promise is actually answered. Replace a broken route only by consuming one of that thread's exact recoveryPaths. A replacement is a route around the same story problem, not permission to invent a new canon truth. Never alter visibility or stage limits, and never surface a Director-only thread in player-visible narration.
 Create a new thread only when this turn genuinely produces durable unfinished business. Use storyThreadCreations for a player_goal, witnessed_consequence, npc_commitment, faction_development, or a branch from an unresolved supplied thread. Every creation must cite its exact basis and include a recovery path. Never create a main thread, new canon truth, predetermined answer, unsupported conspiracy, or early version of a later-stage event. Player goals, witnessed consequences, and NPC commitments remain player-visible. Unwitnessed faction developments remain Director-only. Existing-thread branches inherit the source's visibility and may not outlive its stage gate.
-Use questGenerations only to ask the engine to build a quest from an active supplied story thread; do not write the quest yourself. Use questRecoveries only after a recoverable quest has failed, selecting up to two distinct exact supplied recovery paths. Both altered routes may remain pursuable, but the source thread may never exceed two simultaneous unresolved quests. Recovery changes the route while preserving the failed quest as history, its source thread, secrecy, and stage ceiling. Use questUpdates only for a transition justified by the current action. Resolve one active objective at a time. Complete a quest only after every objective is complete and select exactly one of its recorded outcomes. Outcome consequences must be submitted through the ordinary validated faction, NPC, location, or story-thread tools in the same plan so the engine commits the outcome and its effects atomically. Fail recoverably only when the supplied quest records a recovery path; never invent permanent failure authority.
+Use questGenerations only to ask the engine to build a quest from an active supplied story thread; do not write the quest yourself. Describe follow-up causality with explicit prerequisite, parallel, optional_branch, or consequence relationships justified by the referenced quest's current state. Never close another unresolved route merely because one route completed; it remains unless validated consequences invalidate its premise. Use questRecoveries only after a recoverable quest has failed and durable world consequences have been recorded, selecting up to two distinct exact supplied recovery paths and citing the exact consequence-event sequences. Both altered routes may remain pursuable, but the source thread may never exceed two simultaneous unresolved quests. Recovery may appear immediately after the consequence-bearing failure turn or later; it may not appear before evidence exists. Recovery changes the route while preserving the failed quest as history, its source thread, secrecy, and stage ceiling. Use questUpdates only for a transition justified by the current action. Resolve one active objective at a time. Complete a quest only after every objective is complete and select exactly one of its recorded outcomes. Outcome consequences must be submitted through the ordinary validated faction, NPC, location, or story-thread tools in the same plan so the engine commits the outcome and its effects atomically. Fail recoverably only when the supplied quest records a recovery path; never invent permanent failure authority.
 If actionResolution is automatic, honor its reason, including when the declared intent is impossible. If actionResolution contains a roll, resolve the action in strict accordance with that outcome. Success with a cost achieves the immediate intent but introduces a proportional complication. Failure changes the situation and preserves a credible recovery route instead of simply stopping play. Critical results remain proportional and never accomplish the impossible or break canon.
 Always call submit_turn_plan exactly once. Provide exactly two suggested actions while allowing free text. If validation feedback is supplied, repair only the rejected fields.`;
 

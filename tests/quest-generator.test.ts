@@ -5,9 +5,9 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { buildDirectorPlanningContext, buildPerspectiveContext } from "../src/application/context-builder.ts";
-import { applyRecoveryQuest, composeQuestFromThread, composeRecoveryQuest, generateQuestFromThread } from "../src/application/quest-generator.ts";
+import { applyRecoveryQuest, composeQuestFromThread, composeRecoveryQuest, generateQuestFromThread, validateRecoveryQuest } from "../src/application/quest-generator.ts";
 import { activateQuest, completeQuest, failQuestRecoverably, makeQuestAvailable, updateQuestObjective } from "../src/application/quest-system.ts";
-import { createCampaign, listQuestInstances, listStoryThreads, openDatabase, persistStoryThread } from "../src/persistence/database.ts";
+import { appendEvent, createCampaign, listEvents, listQuestInstances, listStoryThreads, openDatabase, persistStoryThread } from "../src/persistence/database.ts";
 
 async function setup(name: string, seed: string) {
   const content = await loadVelmoraContent(resolve(import.meta.dirname, ".."));
@@ -53,11 +53,15 @@ test("a thread permits one primary and one alternative unresolved quest, then en
   const { content, db, campaignId } = await setup("quest-sequence", "quest-sequence-seed");
   try {
     const first = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
-    const alternative = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    assert.throws(
+      () => generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE"),
+      /must explicitly link to the existing route/
+    );
+    const alternative = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE", [{ questId: first.questId, type: "optional_branch" }]);
     assert.notEqual(alternative.questId, first.questId);
     assert.equal(listQuestInstances(db, campaignId).filter((quest) => !["completed", "failed"].includes(quest.state)).length, 2);
     assert.throws(
-      () => generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE"),
+      () => generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE", [{ questId: first.questId, type: "parallel" }]),
       /already has two unresolved quests/
     );
     activateQuest(db, campaignId, first.questId);
@@ -66,8 +70,15 @@ test("a thread permits one primary and one alternative unresolved quest, then en
     }
     completeQuest(db, campaignId, first.questId, first.outcomes[0]!.outcomeId);
 
-    const followUp = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    const followUp = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE", [
+      { questId: alternative.questId, type: "parallel" },
+      { questId: first.questId, type: "consequence" }
+    ]);
     assert.notEqual(followUp.questId, alternative.questId);
+    assert.deepEqual(followUp.relationships, [
+      { questId: alternative.questId, type: "parallel" },
+      { questId: first.questId, type: "consequence" }
+    ]);
     assert.equal(listQuestInstances(db, campaignId).length, 3);
     assert.equal(listQuestInstances(db, campaignId).filter((quest) => !["completed", "failed"].includes(quest.state)).length, 2);
   } finally { db.close(); }
@@ -92,17 +103,29 @@ test("dormant threads cannot generate quests and activated hidden threads remain
   } finally { db.close(); }
 });
 
-test("a failed quest creates one altered route without erasing the failure", async () => {
+test("a failed quest needs durable consequence evidence before creating an altered route", async () => {
   const { content, db, campaignId } = await setup("quest-recovery", "quest-recovery-seed");
   try {
     const original = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
     assert.throws(
-      () => composeRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!),
+      () => validateRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, []),
       /recoverably failed quest/
     );
     activateQuest(db, campaignId, original.questId);
     failQuestRecoverably(db, campaignId, original.questId);
-    const input = composeRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!);
+    assert.throws(
+      () => validateRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, []),
+      /requires 1-4 distinct consequence-event references/
+    );
+    appendEvent(db, campaignId, 0, "world_turn_committed", { note: "A generic turn record is not consequence evidence." });
+    const genericSequence = Number(listEvents(db, campaignId).at(-1)!.sequence);
+    assert.throws(
+      () => validateRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, [genericSequence]),
+      /must be a recorded consequence/
+    );
+    appendEvent(db, campaignId, 0, "tool_applied", { type: "record_location_consequence", locationId: "LOC-COUNCIL-CROWN", consequence: "The failed route changed the plaza.", reason: "Recorded test consequence." });
+    const consequenceSequence = Number(listEvents(db, campaignId).at(-1)!.sequence);
+    const input = composeRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, [consequenceSequence]);
     assert.equal(input.recoveryOfQuestId, original.questId);
     assert.equal(input.recoveryPathUsed, original.recoveryPaths[0]);
     assert.deepEqual(input.linkedQuestIds, [original.questId]);
@@ -110,11 +133,11 @@ test("a failed quest creates one altered route without erasing the failure", asy
     assert.equal(input.sourceThreadId, original.sourceThreadId);
     assert.equal(input.maximumStage, original.maximumStage);
 
-    const recovery = applyRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, 0);
+    const recovery = applyRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, [consequenceSequence], 0);
     assert.equal(recovery.state, "available");
     assert.equal(listQuestInstances(db, campaignId).find((quest) => quest.questId === original.questId)?.state, "failed");
     assert.throws(
-      () => composeRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!),
+      () => composeRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, [consequenceSequence]),
       /recovery path already has an altered quest/i
     );
   } finally { db.close(); }
@@ -129,7 +152,9 @@ test("hidden faction recovery preserves Director-only visibility", async () => {
     makeQuestAvailable(db, campaignId, original.questId);
     activateQuest(db, campaignId, original.questId);
     failQuestRecoverably(db, campaignId, original.questId);
-    const recovery = applyRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, 0);
+    appendEvent(db, campaignId, 0, "tool_applied", { type: "manage_story_thread", threadId: factionThread.threadId, action: "advance", reason: "Recorded hidden consequence." });
+    const consequenceSequence = Number(listEvents(db, campaignId).at(-1)!.sequence);
+    const recovery = applyRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, [consequenceSequence], 0);
     assert.equal(recovery.visibility, "director");
     assert.equal(recovery.state, "locked");
     assert.equal(JSON.stringify(buildPerspectiveContext(db, content, "quest-hidden-recovery")).includes(recovery.questId), false);

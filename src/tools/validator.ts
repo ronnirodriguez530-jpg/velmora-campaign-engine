@@ -81,12 +81,12 @@ export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, c
   }
 
   if (request.type === "generate_quest") {
-    validateGeneratedQuest(db, content, campaignId, request.sourceThreadId);
+    validateGeneratedQuest(db, content, campaignId, request.sourceThreadId, request.relationships);
     return;
   }
 
   if (request.type === "generate_recovery_quest") {
-    validateRecoveryQuest(db, content, campaignId, request.failedQuestId, request.recoveryPath);
+    validateRecoveryQuest(db, content, campaignId, request.failedQuestId, request.recoveryPath, request.consequenceEventSequences);
     return;
   }
 

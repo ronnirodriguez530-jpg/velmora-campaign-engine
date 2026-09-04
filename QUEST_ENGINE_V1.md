@@ -31,10 +31,10 @@ The seeded quest composer turns an active story thread into a validated test str
 - Player-visible threads create available quests; hidden threads create locked Director-only quests
 - Current locations, involved factions and NPCs, stage gates, and recovery paths carry forward
 - Each source thread may have at most two unresolved quests at a time; the approved intent is one primary route and one meaningfully different alternative
-- Completed quests become prerequisites and links for later quests on the same thread
+- Follow-ups declare explicit prerequisite, parallel, optional-branch, or consequence relationships; no previous quest becomes a prerequisite automatically
 - Every generated quest defaults to recoverable failure, meaningful neglect triggers, and exactly two outcomes
 
-The composer currently proves that generated quest structures can be stored and validated. Flexible objective flow and the hard two-unresolved-quest cap are approved. The four formulas, meaningful primary/alternative distinction, automatic follow-up linking, generic recovery default, and authored placeholder text require user review before this becomes the approved campaign-flow generator.
+The composer currently proves that generated quest structures can be stored and validated. Flexible objective flow, explicit follow-up relationships, the hard two-unresolved-quest cap, and consequence-backed recovery are approved. The four formulas, meaningful primary/alternative distinction, route-invalidation evidence, generic recovery default, and authored placeholder text require user review before this becomes the approved campaign-flow generator.
 
 ## Provisional checkpoint 3A
 
@@ -62,6 +62,8 @@ Recoverably failed quests can produce up to two simultaneously pursuable altered
 - The replacement inherits the same story thread, visibility, and maximum campaign stage
 - Failed quests are linked as history, not treated as completed prerequisites
 - Each altered quest must use a distinct exact recovery path recorded on the failed quest
+- Each altered quest must cite 1-4 durable consequence events from the failure turn or later; the failure and a recovery-path sentence alone are insufficient
+- Recovery may appear immediately after those consequences are committed or later when new consequences support a credible route
 - The source thread's hard two-unresolved-quest cap always applies, so existing unresolved work reduces recovery capacity
 - Unrecorded paths, premature recovery, duplicate paths, and attempts beyond two recoveries are rejected
 - Hidden faction recovery remains Director-only

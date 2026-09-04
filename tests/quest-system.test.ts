@@ -45,8 +45,10 @@ function openingQuest(overrides: Partial<CreateQuestInput> = {}): CreateQuestInp
     recoveryPaths: ["Survivors, changed conditions, or lost evidence create an altered route forward."],
     prerequisiteQuestIds: [],
     linkedQuestIds: [],
+    relationships: [],
     recoveryOfQuestId: null,
     recoveryPathUsed: null,
+    recoveryEvidenceEventSequences: [],
     truthEvidenceIds: [],
     isTurningPoint: false,
     ...overrides
@@ -134,7 +136,9 @@ test("advances objectives and completes through one selected major outcome", asy
       questId: "QUEST-OPENING-AFTERMATH",
       title: "Face the Immediate Aftermath",
       state: "locked",
-      prerequisiteQuestIds: [completed.questId]
+      prerequisiteQuestIds: [completed.questId],
+      linkedQuestIds: [completed.questId],
+      relationships: [{ questId: completed.questId, type: "prerequisite" }]
     }));
     assert.equal(makeQuestAvailable(db, campaignId, "QUEST-OPENING-AFTERMATH").state, "available");
   } finally { db.close(); }

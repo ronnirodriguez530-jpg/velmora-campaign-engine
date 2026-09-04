@@ -204,6 +204,8 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Flexible sequential, parallel, branching, and optional objective graph with dependency validation
 - [x] Hard cap of two simultaneous unresolved quests per story thread: one primary route and one alternative
 - [x] Up to two distinct altered routes per failed quest may remain pursuable within the same thread cap
+- [x] Explicit prerequisite, parallel, optional-branch, and consequence relationships replace automatic predecessor linking
+- [x] Recovery requires recorded failure plus durable consequence-event evidence and may emerge immediately or later
 - [x] Exactly two major outcomes for normal quests and three only for urgency-backed turning points
 - [x] Main, faction, side, personal, dynamic, and fragment classification
 - [x] Player and Director perspective filtering with bounded retrieval

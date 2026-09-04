@@ -7,10 +7,11 @@ import type { CampaignDirector } from "../src/director/director.ts";
 import type { DirectorTurnPlan, ToolRequest } from "../src/domain/types.ts";
 import { MockDirector } from "../src/director/mock-director.ts";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
+import { buildDirectorPlanningContext } from "../src/application/context-builder.ts";
 import { generateQuestFromThread } from "../src/application/quest-generator.ts";
 import { activateQuest, failQuestRecoverably, updateQuestObjective } from "../src/application/quest-system.ts";
 import { runPlayerAction } from "../src/application/turn-orchestrator.ts";
-import { createCampaign, getFactionCondition, listQuestInstances, openDatabase, persistQuestInstance, restorePreviousTurn } from "../src/persistence/database.ts";
+import { appendEvent, createCampaign, getFactionCondition, listEvents, listQuestInstances, openDatabase, persistQuestInstance, restorePreviousTurn } from "../src/persistence/database.ts";
 
 async function setup(name: string) {
   const content = await loadVelmoraContent(resolve(import.meta.dirname, ".."));
@@ -49,6 +50,7 @@ test("Campaign Master can generate, activate, and advance an engine-owned quest"
     const result = await runPlayerAction(db, content, directorFor([{
       type: "generate_quest",
       sourceThreadId: "THREAD-OPENING-PRESSURE",
+      relationships: [],
       reason: "The visible opening pressure now needs a concrete player objective."
     }]), "quest-tool-generate", "commit to responding to the crisis");
     const quest = listQuestInstances(db, campaignId)[0]!;
@@ -151,17 +153,27 @@ test("Campaign Master can keep two distinct recovery routes pursuable and rollba
     persistQuestInstance(db, { ...original, recoveryPaths: [original.recoveryPaths[0]!, secondPath] });
     activateQuest(db, campaignId, original.questId);
     failQuestRecoverably(db, campaignId, original.questId);
+    appendEvent(db, campaignId, 0, "tool_applied", {
+      type: "record_location_consequence",
+      locationId: "LOC-COUNCIL-CROWN",
+      consequence: "The failed response leaves changed evidence in the plaza.",
+      reason: "This durable consequence makes altered recovery credible."
+    });
+    const consequenceSequence = Number(listEvents(db, campaignId).at(-1)!.sequence);
+    assert.equal(buildDirectorPlanningContext(db, content, "quest-tool-recovery").recoveryEvidenceEvents[0]?.sequence, consequenceSequence);
     await runPlayerAction(db, content, directorFor([
       {
         type: "generate_recovery_quest",
         failedQuestId: original.questId,
         recoveryPath: original.recoveryPaths[0]!,
+        consequenceEventSequences: [consequenceSequence],
         reason: "The failed approach now permits its first recorded altered route."
       },
       {
         type: "generate_recovery_quest",
         failedQuestId: original.questId,
         recoveryPath: secondPath,
+        consequenceEventSequences: [consequenceSequence],
         reason: "The consequences also support a distinct second recorded route."
       }
     ]), "quest-tool-recovery", "commit to preserving both altered recovery routes");

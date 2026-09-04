@@ -365,6 +365,7 @@ export type DirectorPlanningContext = PerspectiveContext & {
   directorStoryThreads: StoryThread[];
   directorQuests: QuestInstance[];
   campaignBlueprint: CampaignBlueprint;
+  recoveryEvidenceEvents: Array<{ sequence: number; turn: number; toolType: string; reason: string }>;
 };
 
 export type QuestType = "main" | "faction" | "side" | "personal" | "dynamic" | "fragment";
@@ -386,6 +387,13 @@ export type QuestOutcome = {
   outcomeId: string;
   summary: string;
   consequenceSeeds: string[];
+};
+
+export type QuestRelationshipType = "prerequisite" | "parallel" | "optional_branch" | "consequence";
+
+export type QuestRelationship = {
+  questId: string;
+  type: QuestRelationshipType;
 };
 
 export type QuestInstance = {
@@ -412,8 +420,10 @@ export type QuestInstance = {
   recoveryPaths: string[];
   prerequisiteQuestIds: string[];
   linkedQuestIds: string[];
+  relationships: QuestRelationship[];
   recoveryOfQuestId: string | null;
   recoveryPathUsed: string | null;
+  recoveryEvidenceEventSequences: number[];
   truthEvidenceIds: string[];
   isTurningPoint: boolean;
   selectedOutcomeId: string | null;
@@ -699,6 +709,7 @@ export type CreateStoryThreadRequest = {
 export type GenerateQuestRequest = {
   type: "generate_quest";
   sourceThreadId: string;
+  relationships: QuestRelationship[];
   reason: string;
 };
 
@@ -706,6 +717,7 @@ export type GenerateRecoveryQuestRequest = {
   type: "generate_recovery_quest";
   failedQuestId: string;
   recoveryPath: string;
+  consequenceEventSequences: number[];
   reason: string;
 };
 

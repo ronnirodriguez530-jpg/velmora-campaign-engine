@@ -26,6 +26,8 @@ const context: DirectorPlanningContext = {
   playerKnownStoryThreads: [],
   visibleOpeningPressure: null,
   directorStoryThreads: [],
+  directorQuests: [],
+  recoveryEvidenceEvents: [],
   campaignBlueprint: {
     campaignId: "SAVE-TEST",
     version: 1,
@@ -234,11 +236,13 @@ test("cloud Director can request engine-owned quest generation and recovery", as
         storyThreadCreations: [],
         questGenerations: [{
           sourceThreadId: "THREAD-OPENING-PRESSURE",
+          relationships: [],
           reason: "The active visible crisis needs a playable quest structure."
         }],
         questRecoveries: [{
           failedQuestId: "QUEST-OPENING-PRESSURE-01",
           recoveryPath: "A survivor can reveal an altered route.",
+          consequenceEventSequences: [12],
           reason: "The supplied failed quest retains this exact recovery path."
         }],
         questUpdates: [],

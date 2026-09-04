@@ -5,6 +5,22 @@ import { buildNpcContext } from "../npc/npc-context-gate.ts";
 import { listOwnedPlayerPowers } from "./power-system.ts";
 import { listOwnedInventory } from "./inventory-system.ts";
 
+function listRecentConsequenceEvents(
+  db: DatabaseSync,
+  campaignId: string,
+  limit = 20
+): Array<{ sequence: number; turn: number; toolType: string; reason: string }> {
+  const allowed = new Set(["change_faction_condition", "change_npc_reputation", "advance_faction_path", "record_location_consequence", "manage_npc_turn", "manage_story_thread", "create_story_thread"]);
+  const rows = db.prepare(`SELECT sequence, turn, payload_json AS payloadJson
+    FROM event_log WHERE campaign_id = ? AND event_type = 'tool_applied'
+    ORDER BY sequence DESC LIMIT ?`).all(campaignId, Math.max(1, Math.min(limit * 3, 60))) as Array<{ sequence: number; turn: number; payloadJson: string }>;
+  return rows.flatMap((row) => {
+    const payload = JSON.parse(row.payloadJson) as { type?: string; reason?: string };
+    if (!payload.type || !allowed.has(payload.type)) return [];
+    return [{ sequence: row.sequence, turn: row.turn, toolType: payload.type, reason: payload.reason ?? "Recorded durable consequence." }];
+  }).slice(0, limit);
+}
+
 export function buildPerspectiveContext(
   db: DatabaseSync,
   content: VelmoraContent,
@@ -72,6 +88,7 @@ export function buildDirectorPlanningContext(
     ...perspective,
     campaignBlueprint,
     directorQuests: listRelevantQuestInstances(db, perspective.campaignId, perspective.stage, "director"),
+    recoveryEvidenceEvents: listRecentConsequenceEvents(db, perspective.campaignId),
     directorStoryThreads: listRelevantStoryThreads(
       db,
       perspective.campaignId,

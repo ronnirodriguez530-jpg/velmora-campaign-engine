@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { CreateQuestInput } from "./quest-system.ts";
-import type { QuestType, StoryThread, VelmoraContent } from "../domain/types.ts";
+import type { QuestRelationship, QuestType, StoryThread, VelmoraContent } from "../domain/types.ts";
 import { listQuestInstances, listStoryThreads } from "../persistence/database.ts";
 import { seededChoice } from "./seeded-random.ts";
 import { applyQuestCreation, createQuestInstance, validateQuestCreation } from "./quest-system.ts";
@@ -62,7 +62,8 @@ export function composeQuestFromThread(
   db: DatabaseSync,
   content: VelmoraContent,
   campaignId: string,
-  threadId: string
+  threadId: string,
+  relationships: QuestRelationship[] = []
 ): CreateQuestInput {
   const campaign = db.prepare("SELECT seed, stage, turn, current_location_id AS currentLocationId FROM campaigns WHERE id = ?")
     .get(campaignId) as { seed: string; stage: StoryThread["minimumStage"]; turn: number; currentLocationId: string } | undefined;
@@ -75,11 +76,13 @@ export function composeQuestFromThread(
   if (unresolved.length >= 2) {
     throw new Error("This story thread already has two unresolved quests");
   }
+  if (unresolved.length === 1 && !relationships.some((relationship) => ["parallel", "optional_branch"].includes(relationship.type) && relationship.questId === unresolved[0]!.questId)) {
+    throw new Error("A second unresolved route must explicitly link to the existing route as parallel or optional");
+  }
   const sequence = existing.length + 1;
   const pattern = seededChoice(`${campaign.seed}|quest|${threadId}|${sequence}`, QUEST_PATTERNS);
   const baseId = thread.threadId.replace(/^THREAD-/, "");
   const questId = `QUEST-${baseId}-${String(sequence).padStart(2, "0")}`;
-  const previous = existing.at(-1);
   const locationIds = thread.locationIds.length > 0 ? thread.locationIds : [campaign.currentLocationId];
   const recoveryPaths = thread.recoveryPaths.length > 0
     ? thread.recoveryPaths.slice(0, 4)
@@ -125,10 +128,12 @@ export function composeQuestFromThread(
     warningSignals: [],
     neglectTriggers: [`A committed world event directly advances or worsens ${thread.title}.`],
     recoveryPaths,
-    prerequisiteQuestIds: previous?.state === "completed" ? [previous.questId] : [],
-    linkedQuestIds: previous ? [previous.questId] : [],
+    prerequisiteQuestIds: relationships.filter((relationship) => relationship.type === "prerequisite").map((relationship) => relationship.questId),
+    linkedQuestIds: relationships.map((relationship) => relationship.questId),
+    relationships,
     recoveryOfQuestId: null,
     recoveryPathUsed: null,
+    recoveryEvidenceEventSequences: [],
     truthEvidenceIds: [],
     isTurningPoint: false
   };
@@ -138,18 +143,20 @@ export function generateQuestFromThread(
   db: DatabaseSync,
   content: VelmoraContent,
   campaignId: string,
-  threadId: string
+  threadId: string,
+  relationships: QuestRelationship[] = []
 ) {
-  return createQuestInstance(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId));
+  return createQuestInstance(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId, relationships));
 }
 
 export function validateGeneratedQuest(
   db: DatabaseSync,
   content: VelmoraContent,
   campaignId: string,
-  threadId: string
+  threadId: string,
+  relationships: QuestRelationship[] = []
 ): void {
-  validateQuestCreation(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId));
+  validateQuestCreation(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId, relationships));
 }
 
 export function applyGeneratedQuest(
@@ -157,9 +164,10 @@ export function applyGeneratedQuest(
   content: VelmoraContent,
   campaignId: string,
   threadId: string,
-  turn: number
+  turn: number,
+  relationships: QuestRelationship[] = []
 ) {
-  return applyQuestCreation(db, content, campaignId, turn, composeQuestFromThread(db, content, campaignId, threadId));
+  return applyQuestCreation(db, content, campaignId, turn, composeQuestFromThread(db, content, campaignId, threadId, relationships));
 }
 
 export function composeRecoveryQuest(
@@ -167,7 +175,8 @@ export function composeRecoveryQuest(
   content: VelmoraContent,
   campaignId: string,
   failedQuestId: string,
-  recoveryPath: string
+  recoveryPath: string,
+  consequenceEventSequences: number[]
 ): CreateQuestInput {
   const failedQuest = listQuestInstances(db, campaignId).find((quest) => quest.questId === failedQuestId);
   if (!failedQuest || failedQuest.state !== "failed" || failedQuest.failureMode !== "recoverable") {
@@ -182,7 +191,11 @@ export function composeRecoveryQuest(
   if (existingRecoveries.some((quest) => quest.recoveryPathUsed === recoveryPath)) {
     throw new Error("This recovery path already has an altered quest");
   }
-  const base = composeQuestFromThread(db, content, campaignId, failedQuest.sourceThreadId);
+  const unresolved = listQuestInstances(db, campaignId).filter((quest) => quest.sourceThreadId === failedQuest.sourceThreadId && !["completed", "failed"].includes(quest.state));
+  const baseRelationships: QuestRelationship[] = unresolved.length === 1
+    ? [{ questId: unresolved[0]!.questId, type: "parallel" }]
+    : [];
+  const base = composeQuestFromThread(db, content, campaignId, failedQuest.sourceThreadId, baseRelationships);
   const alteredTitle = bounded(`Altered Route: ${failedQuest.title}`, 120);
   return {
     ...base,
@@ -200,9 +213,14 @@ export function composeRecoveryQuest(
     ],
     stakes: bounded(`This route preserves the underlying story problem, but the failed approach and its consequences remain part of the world.`, 300),
     prerequisiteQuestIds: [],
-    linkedQuestIds: [failedQuest.questId],
+    linkedQuestIds: [...new Set([failedQuest.questId, ...(unresolved.length === 1 ? [unresolved[0]!.questId] : [])])],
+    relationships: [
+      { questId: failedQuest.questId, type: "consequence" },
+      ...(unresolved.length === 1 ? [{ questId: unresolved[0]!.questId, type: "parallel" as const }] : [])
+    ],
     recoveryOfQuestId: failedQuest.questId,
-    recoveryPathUsed: recoveryPath
+    recoveryPathUsed: recoveryPath,
+    recoveryEvidenceEventSequences: consequenceEventSequences
   };
 }
 
@@ -211,9 +229,10 @@ export function validateRecoveryQuest(
   content: VelmoraContent,
   campaignId: string,
   failedQuestId: string,
-  recoveryPath: string
+  recoveryPath: string,
+  consequenceEventSequences: number[]
 ): void {
-  validateQuestCreation(db, content, campaignId, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath));
+  validateQuestCreation(db, content, campaignId, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath, consequenceEventSequences));
 }
 
 export function applyRecoveryQuest(
@@ -222,7 +241,8 @@ export function applyRecoveryQuest(
   campaignId: string,
   failedQuestId: string,
   recoveryPath: string,
+  consequenceEventSequences: number[],
   turn: number
 ) {
-  return applyQuestCreation(db, content, campaignId, turn, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath));
+  return applyQuestCreation(db, content, campaignId, turn, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath, consequenceEventSequences));
 }
