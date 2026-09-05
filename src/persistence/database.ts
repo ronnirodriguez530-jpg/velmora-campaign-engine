@@ -730,9 +730,12 @@ function questFromRow(row: Record<string, unknown>): QuestInstance {
     campaignId: String(row.campaignId),
     questId: String(row.questId),
     title: String(row.title),
+    goal: stored.goal ?? stored.summary,
     questType: row.questType as QuestInstance["questType"],
     state: row.state as QuestInstance["state"],
     objectives,
+    possibleDirections: stored.possibleDirections ?? [],
+    selectedDirectionId: stored.selectedDirectionId ?? null,
     relationships: stored.relationships ?? [],
     routeProfile: stored.routeProfile ?? {
       approachKey: `legacy:${objectives[0]?.summary ?? stored.questId}`,

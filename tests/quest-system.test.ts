@@ -19,6 +19,7 @@ function openingQuest(overrides: Partial<CreateQuestInput> = {}): CreateQuestInp
   return {
     questId: "QUEST-OPENING-RESPONSE",
     title: "Survive the Broken Address",
+    goal: "Protect the plaza and understand what changed when the Surge failed to end.",
     summary: "Respond to the immediate Council Plaza crisis after the First Speaker falls.",
     questType: "main",
     state: "available",
@@ -34,6 +35,11 @@ function openingQuest(overrides: Partial<CreateQuestInput> = {}): CreateQuestInp
       { objectiveId: "OBJ-READ-THE-CRISIS", summary: "Determine the immediate danger in the plaza.", state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: [], branchGroupId: null },
       { objectiveId: "OBJ-CHOOSE-A-RESPONSE", summary: "Commit to a response that protects someone or something at risk.", state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: ["OBJ-READ-THE-CRISIS"], branchGroupId: null }
     ],
+    possibleDirections: [
+      { directionId: "DIR-OPENING-DIRECT", summary: "Protect the people closest to the collapse.", likelyTradeoff: "The source of the danger may gain distance.", approachKey: "protection-first", tradeoffKey: "safety-before-pursuit", costKey: "lost-ground" },
+      { directionId: "DIR-OPENING-INQUIRY", summary: "Investigate the failed Surge before acting.", likelyTradeoff: "Gathering evidence may cost immediate response time.", approachKey: "evidence-first", tradeoffKey: "certainty-before-speed", costKey: "time" }
+    ],
+    selectedDirectionId: null,
     stakes: "Lives, evidence, and the player's first relationships may change.",
     outcomes: [
       { outcomeId: "OUT-PROTECT-PEOPLE", summary: "Prioritize people endangered by the crisis.", consequenceSeeds: ["Survivors remember who intervened."] },

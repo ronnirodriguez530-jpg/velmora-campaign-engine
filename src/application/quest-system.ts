@@ -212,6 +212,7 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
   if (!stableId(input.questId, "QUEST")) throw new Error("Quest ID must be a stable QUEST identifier");
   if (listQuestInstances(db, campaignId).some((quest) => quest.questId === input.questId)) throw new Error(`Quest ${input.questId} already exists`);
   requireText(input.title, "Quest title", 3, 120);
+  requireText(input.goal, "Quest goal", 3, 300);
   requireText(input.summary, "Quest summary", 3, 600);
   requireText(input.stakes, "Quest stakes", 3, 300);
   if (!["main", "faction", "side", "personal", "dynamic", "fragment"].includes(input.questType)) throw new Error("Unknown quest type");
@@ -219,6 +220,17 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
   if (!Object.hasOwn(STAGE_ORDER, input.minimumStage) || !Object.hasOwn(STAGE_ORDER, input.maximumStage)) throw new Error("Unknown quest campaign stage");
   if (!["recoverable", "warned_deadline", "irreversible_choice", "major_world_event"].includes(input.failureMode)) throw new Error("Unknown quest failure mode");
   if (input.state !== "locked" && input.state !== "available") throw new Error("A new quest must begin locked or available");
+  if (input.selectedDirectionId !== null) throw new Error("A new quest cannot begin with a committed direction");
+  if (input.possibleDirections.length < 2 || input.possibleDirections.length > 3) throw new Error("A new quest requires two credible directions and permits at most three");
+  if (new Set(input.possibleDirections.map((direction) => direction.directionId)).size !== input.possibleDirections.length) throw new Error("Quest direction IDs must be unique");
+  for (const direction of input.possibleDirections) {
+    if (!stableId(direction.directionId, "DIR")) throw new Error("Quest direction IDs must be stable DIR identifiers");
+    requireText(direction.summary, "Quest direction", 3, 240);
+    requireText(direction.likelyTradeoff, "Quest likely tradeoff", 3, 240);
+    requireText(direction.approachKey, "Quest direction approach", 2, 100);
+    requireText(direction.tradeoffKey, "Quest direction tradeoff", 2, 100);
+    requireText(direction.costKey, "Quest direction cost", 2, 100);
+  }
   if (input.failureReason !== null || input.failureEvidenceEventSequences.length !== 0) throw new Error("A new quest cannot begin with recorded failure evidence");
   if (input.warningHistory.length !== 0 || input.neglectHistory.length !== 0) throw new Error("A new quest cannot begin with warning or neglect history");
   const sourceThread = listStoryThreads(db, campaignId).find((thread) => thread.threadId === input.sourceThreadId);
@@ -351,6 +363,7 @@ export function applyQuestCreation(
   const quest: QuestInstance = {
     ...input,
     title: input.title.trim(),
+    goal: input.goal.trim(),
     summary: input.summary.trim(),
     stakes: input.stakes.trim(),
     locationIds: [...new Set(input.locationIds)],

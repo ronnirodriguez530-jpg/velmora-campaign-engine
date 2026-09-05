@@ -31,22 +31,46 @@ test("the same campaign seed composes the same opening quest structure", async (
   }
 });
 
-test("different campaign seeds produce varied but valid opening quests", async () => {
-  const signatures = new Set<string>();
+test("causal fit determines directions while the seed varies only valid ties", async () => {
+  const directionSets = new Set<string>();
+  const directionOrders = new Set<string>();
   for (let index = 0; index < 24; index += 1) {
     const campaign = await setup(`quest-variety-${index}`, `quest-variety-seed-${index}`);
     try {
       const generated = generateQuestFromThread(campaign.db, campaign.content, campaign.campaignId, "THREAD-OPENING-PRESSURE");
-      signatures.add(`${generated.title}|${generated.objectives[0]?.summary}`);
+      directionSets.add(generated.possibleDirections.map((direction) => direction.approachKey).sort().join("|"));
+      directionOrders.add(generated.possibleDirections.map((direction) => direction.approachKey).join("|"));
       assert.equal(generated.state, "available");
       assert.equal(generated.questType, "main");
       assert.equal(generated.visibility, "player");
       assert.equal(generated.outcomes.length, 2);
+      assert.ok(generated.possibleDirections.length >= 2 && generated.possibleDirections.length <= 3);
       assert.ok(generated.recoveryPaths.length > 0);
       assert.ok(generated.neglectTriggers.length > 0);
     } finally { campaign.db.close(); }
   }
-  assert.ok(signatures.size >= 8, `Expected substantial quest variation, received ${signatures.size} structures`);
+  assert.equal(directionSets.size, 1, "Campaign seed must not override the causally strongest direction set");
+  assert.ok(directionOrders.size >= 2, "Campaign seed should break ties between equally credible directions");
+});
+
+test("player quest context exposes directions and tradeoffs without exact objectives or outcomes", async () => {
+  const { content, db, campaignId } = await setup("quest-player-boundary", "quest-player-boundary-seed");
+  try {
+    const stored = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    const playerQuest = buildPerspectiveContext(db, content, "quest-player-boundary").playerQuests[0]!;
+    const planningQuest = buildDirectorPlanningContext(db, content, "quest-player-boundary").directorQuestDetails.find((quest) => quest.questId === stored.questId)!;
+    assert.equal(playerQuest.goal, stored.goal);
+    assert.equal(playerQuest.possibleDirections.length, stored.possibleDirections.length);
+    assert.equal("approachKey" in playerQuest.possibleDirections[0]!, false);
+    assert.equal("tradeoffKey" in playerQuest.possibleDirections[0]!, false);
+    assert.equal("costKey" in playerQuest.possibleDirections[0]!, false);
+    assert.equal(playerQuest.objectives.length, 0);
+    assert.equal(playerQuest.outcomes.length, 0);
+    assert.equal("recoveryEvidenceEventSequences" in playerQuest, false);
+    assert.equal("failureEvidenceEventSequences" in playerQuest, false);
+    assert.equal(planningQuest.objectives.length, 2);
+    assert.equal(planningQuest.outcomes.length, 2);
+  } finally { db.close(); }
 });
 
 test("a thread permits one primary and one alternative unresolved quest, then enforces the hard cap", async () => {

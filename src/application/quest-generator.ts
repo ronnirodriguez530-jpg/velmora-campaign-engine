@@ -1,12 +1,14 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { CreateQuestInput } from "./quest-system.ts";
-import type { QuestRelationship, StoryThread, VelmoraContent } from "../domain/types.ts";
+import type { QuestDirection, QuestRelationship, StoryThread, VelmoraContent } from "../domain/types.ts";
 import { listQuestInstances, listStoryThreads } from "../persistence/database.ts";
-import { seededChoice } from "./seeded-random.ts";
+import { seededSample } from "./seeded-random.ts";
 import { applyQuestCreation, createQuestInstance, QUEST_TYPE_BY_THREAD_KIND, validateQuestCreation } from "./quest-system.ts";
 
 type QuestPattern = {
   key: string;
+  directionSummary: string;
+  likelyTradeoff: string;
   approachKey: string;
   tradeoffKey: string;
   costKey: string;
@@ -14,50 +16,87 @@ type QuestPattern = {
   secondObjective: (title: string) => string;
   firstOutcome: string;
   secondOutcome: string;
+  causalScore: (thread: StoryThread) => number;
 };
 
 const QUEST_PATTERNS: QuestPattern[] = [
   {
     key: "investigate-and-act",
+    directionSummary: "Investigate the cause before committing to an intervention.",
+    likelyTradeoff: "Greater certainty may cost time and allow the immediate pressure to move.",
     approachKey: "evidence-first",
     tradeoffKey: "certainty-before-speed",
     costKey: "time-and-exposure",
     firstObjective: (title) => `Establish what is actually happening behind ${title}.`,
     secondObjective: (title) => `Use the evidence to choose and carry out a response to ${title}.`,
     firstOutcome: "Intervene directly using the clearest available evidence.",
-    secondOutcome: "Use the evidence as leverage for an indirect solution."
+    secondOutcome: "Use the evidence as leverage for an indirect solution.",
+    causalScore: (thread) => 1 + Number(thread.kind === "main" || thread.kind === "mystery") + Number(thread.urgency >= 2)
   },
   {
     key: "protect-and-pursue",
+    directionSummary: "Protect the people or place currently exposed by the threat.",
+    likelyTradeoff: "Immediate safety may give the source of the danger room to escape or advance.",
     approachKey: "protection-first",
     tradeoffKey: "safety-before-pursuit",
     costKey: "lost-ground-or-limited-cover",
     firstObjective: (title) => `Identify who or what is most exposed by ${title}.`,
     secondObjective: (title) => `Protect the immediate target while preserving a route toward ${title}.`,
     firstOutcome: "Prioritize immediate protection and accept what escapes attention.",
-    secondOutcome: "Prioritize pursuing the source while arranging limited protection."
+    secondOutcome: "Prioritize pursuing the source while arranging limited protection.",
+    causalScore: (thread) => Number(thread.npcIds.length > 0 || thread.locationIds.length > 0) + Number(thread.urgency >= 2) + Number(thread.kind === "personal")
   },
   {
     key: "negotiate-and-commit",
+    directionSummary: "Seek cooperation, terms, or leverage from the people involved.",
+    likelyTradeoff: "Support may require an obligation, concession, or loss of independence.",
     approachKey: "negotiation-first",
     tradeoffKey: "obligation-for-cooperation",
     costKey: "independence-or-political-capital",
     firstObjective: (title) => `Learn what the involved sides want from ${title}.`,
     secondObjective: (title) => `Commit to an agreement, refusal, or third path that changes ${title}.`,
     firstOutcome: "Reach terms with one involved side and inherit its obligations.",
-    secondOutcome: "Reject the offered terms and create independent leverage."
+    secondOutcome: "Reject the offered terms and create independent leverage.",
+    causalScore: (thread) => Number(thread.npcIds.length > 0) + Number(thread.factionIds.length > 0) * 2 + Number(thread.kind === "faction")
   },
   {
     key: "recover-and-contain",
+    directionSummary: "Secure or contain the unstable source before it spreads further.",
+    likelyTradeoff: "Control may restrict access, damage trust, or place the danger in contested custody.",
     approachKey: "control-the-instability",
     tradeoffKey: "custody-versus-access",
     costKey: "control-or-public-trust",
     firstObjective: (title) => `Locate the unstable person, object, or information driving ${title}.`,
     secondObjective: (title) => `Recover, contain, or deliberately release it before ${title} worsens.`,
     firstOutcome: "Secure the unstable element under controlled custody.",
-    secondOutcome: "Leave it outside official control for a specific immediate reason."
+    secondOutcome: "Leave it outside official control for a specific immediate reason.",
+    causalScore: (thread) => Number(thread.locationIds.length > 0) + Number(thread.kind === "dynamic" || thread.kind === "mystery") + Number(thread.urgency >= 2)
   }
 ];
+
+function chooseCausalDirections(seed: string, thread: StoryThread, baseId: string, sequence: number, modules: QuestPattern[]): Array<{ module: QuestPattern; direction: QuestDirection }> {
+  const ranked = modules
+    .map((module) => ({ module, score: module.causalScore(thread) }))
+    .filter((entry) => entry.score > 0)
+    .sort((left, right) => right.score - left.score);
+  if (ranked.length < 2) throw new Error("The established quest state does not support two credible directions");
+  const directionCount = thread.urgency === 3 && ranked.length >= 3 ? 3 : 2;
+  const ordered: typeof ranked = [];
+  for (const score of [...new Set(ranked.map((entry) => entry.score))].sort((a, b) => b - a)) {
+    ordered.push(...seededSample(`${seed}|direction-tie|${score}`, ranked.filter((entry) => entry.score === score), ranked.filter((entry) => entry.score === score).length));
+  }
+  return ordered.slice(0, directionCount).map(({ module }, index) => ({
+    module,
+    direction: {
+      directionId: `DIR-${baseId}-${String(sequence).padStart(2, "0")}-${String.fromCharCode(65 + index)}`,
+      summary: module.directionSummary,
+      likelyTradeoff: module.likelyTradeoff,
+      approachKey: module.approachKey,
+      tradeoffKey: module.tradeoffKey,
+      costKey: module.costKey
+    }
+  }));
+}
 
 function bounded(value: string, maximum: number): string {
   if (value.length <= maximum) return value;
@@ -110,8 +149,13 @@ export function composeQuestFromThread(
   if (candidatePatterns.length === 0) {
     throw new Error("No credible alternative route can be constructed from the established people, locations, costs, and approaches");
   }
-  const pattern = seededChoice(`${campaign.seed}|quest|${threadId}|${sequence}`, candidatePatterns);
   const baseId = thread.threadId.replace(/^THREAD-/, "");
+  const causalDirections = chooseCausalDirections(`${campaign.seed}|quest|${threadId}|${sequence}`, thread, baseId, sequence, candidatePatterns);
+  if (causalDirections.length < 2) {
+    throw new Error("No credible alternative route can be constructed from the established people, locations, costs, and approaches");
+  }
+  const possibleDirections = causalDirections.slice(0, thread.urgency === 3 ? 3 : 2);
+  const pattern = possibleDirections[0]!.module;
   const questId = `QUEST-${baseId}-${String(sequence).padStart(2, "0")}`;
   const recoveryPaths = thread.recoveryPaths.length > 0
     ? thread.recoveryPaths.slice(0, 4)
@@ -125,6 +169,7 @@ export function composeQuestFromThread(
   return {
     questId,
     title: bounded(thread.title, 120),
+    goal: bounded(`Meaningfully change the active pressure represented by ${thread.title}.`, 300),
     summary: bounded(`Pursue a concrete response to this active thread: ${thread.summary}`, 600),
     questType,
     state: thread.visibility === "player" ? "available" : "locked",
@@ -140,6 +185,8 @@ export function composeQuestFromThread(
       { objectiveId: `OBJ-${baseId}-${String(sequence).padStart(2, "0")}-A`, summary: bounded(pattern.firstObjective(thread.title), 240), state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: [], branchGroupId: null },
       { objectiveId: `OBJ-${baseId}-${String(sequence).padStart(2, "0")}-B`, summary: bounded(pattern.secondObjective(thread.title), 240), state: "pending", required: true, isMajorObjective: hasPacedMajorObjective, dependsOnObjectiveIds: [`OBJ-${baseId}-${String(sequence).padStart(2, "0")}-A`], branchGroupId: null }
     ],
+    possibleDirections: possibleDirections.map((entry) => entry.direction),
+    selectedDirectionId: null,
     stakes: bounded(`If no one meaningfully responds, the pressure represented by ${thread.title} may change the people, factions, or locations already involved.`, 300),
     outcomes: [
       {

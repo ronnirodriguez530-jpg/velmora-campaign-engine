@@ -56,6 +56,7 @@
   letter-spacing: .06em;
 }
 
+.quest-goal,
 .quest-summary,
 .quest-stakes,
 .quest-recovery,
@@ -72,6 +73,27 @@
   gap: 8px;
   margin: 0;
   padding-left: 22px;
+}
+
+.quest-directions {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.quest-directions li {
+  padding: 10px 12px;
+  color: #e4dce9;
+  background: #211827;
+  border-radius: 8px;
+}
+
+.quest-directions li span {
+  display: block;
+  margin-top: 6px;
+  color: #b9a7c4;
+  font-size: .82rem;
 }
 
 .quest-objectives li {

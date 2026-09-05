@@ -51,6 +51,14 @@ This audit separates protected user-approved direction, implementation-only mach
 - **Paced advancement:** One designated major objective or full completion of a verified turning point may award one advancement opportunity. The first quest from a high-urgency thread may contain one required major objective; later quests on that thread do not receive one automatically. A quest can award at most once.
 - **Per-turn quest limits:** One ordinary quest may be generated per turn. Up to two new quests are permitted only when both are altered recovery routes. Ordinary and recovery generation cannot be mixed, and no more than three quest updates may occur in one turn.
 
+## Approved in review batch 4
+
+- **Initial commitment boundary:** A newly offered quest fixes only its goal, stakes, and credible possible directions. Concrete objectives and exact outcome paths are not player commitments until the player acts.
+- **Causality before randomness:** Current story-thread state determines which directions are credible. The campaign seed may order or select only among equally credible choices; RNG cannot force an unsuitable direction.
+- **Player outcome visibility:** The player sees likely tradeoffs rather than exact unselected outcomes. Exact outcome structures and consequence seeds remain Director-only, while the result actually reached becomes visible after completion.
+- **Natural commitment:** The player commits through an ordinary free-text action. The engine must confirm the direction it interpreted before materializing concrete objectives.
+- **Direction bounds and invalidation:** A quest normally offers two credible directions and may offer three only when justified. If an unchosen direction becomes impossible, it is removed and replaced only when current world evidence supports another credible route.
+
 ## Review order
 
 Review decisions in dependency order:
@@ -62,4 +70,4 @@ Review decisions in dependency order:
 
 ## Implementation boundary
 
-Until review is complete, the current quest composer proves storage and validation only. It is not the approved final campaign-flow generator. Later systems may rely on its data contracts, flexible objective graph, safety boundaries, concurrency, follow-up linkage, recovery cadence, fixed classification, and reward cadence, but not on its provisional story formulas or module text.
+The first staged-presentation checkpoint now enforces causal direction ranking and the player/Director privacy boundary. Natural-action direction commitment and responsive materialization remain unfinished. Until those exist, the current composer is not the approved final campaign-flow generator. Later systems may rely on its data contracts, flexible objective graph, safety boundaries, concurrency, follow-up linkage, recovery cadence, fixed classification, reward cadence, and staged visibility, but not on its provisional objective/outcome formulas or module text.

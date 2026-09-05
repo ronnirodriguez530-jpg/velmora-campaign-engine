@@ -1,9 +1,27 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { DirectorPlanningContext, PerspectiveContext, VelmoraContent } from "../domain/types.ts";
+import type { DirectorPlanningContext, PerspectiveContext, PlayerQuestView, QuestInstance, VelmoraContent } from "../domain/types.ts";
 import { getCampaign, getCampaignBlueprint, getPlayerCharacter, getPlayerProgression, getSceneForTurnAndLocation, listCharactersAtLocation, listFactionConditions, listFactionPathProgress, listLocationConsequences, listPresentCharacterStates, listPublicWorldFacts, listRecentTearArrivals, listRelevantQuestInstances, listRelevantStoryThreads } from "../persistence/database.ts";
 import { buildNpcContext } from "../npc/npc-context-gate.ts";
 import { listOwnedPlayerPowers } from "./power-system.ts";
 import { listOwnedInventory } from "./inventory-system.ts";
+
+function toPlayerQuestView(quest: QuestInstance): PlayerQuestView {
+  const { recoveryEvidenceEventSequences: _recoveryEvidence, failureEvidenceEventSequences: _failureEvidence, ...visible } = quest;
+  const selectedOutcome = quest.state === "completed" && quest.selectedOutcomeId
+    ? quest.outcomes.find((outcome) => outcome.outcomeId === quest.selectedOutcomeId)
+    : undefined;
+  const visibleDirections = quest.possibleDirections.map(({ directionId, summary, likelyTradeoff }) => ({
+    directionId,
+    summary,
+    likelyTradeoff
+  }));
+  return {
+    ...visible,
+    possibleDirections: visibleDirections,
+    objectives: quest.selectedDirectionId === null && quest.state === "available" ? [] : quest.objectives,
+    outcomes: selectedOutcome ? [{ outcomeId: selectedOutcome.outcomeId, summary: selectedOutcome.summary }] : []
+  };
+}
 
 function listRecentConsequenceEvents(
   db: DatabaseSync,
@@ -71,7 +89,7 @@ export function buildPerspectiveContext(
     playerPowers: listOwnedPlayerPowers(db, content, campaign.id),
     playerInventory: listOwnedInventory(db, content, campaign.id),
     playerProgression: getPlayerProgression(db, campaign.id),
-    playerQuests: listRelevantQuestInstances(db, campaign.id, campaign.stage, "player"),
+    playerQuests: listRelevantQuestInstances(db, campaign.id, campaign.stage, "player").map(toPlayerQuestView),
     playerKnownStoryThreads: listRelevantStoryThreads(db, campaign.id, campaign.stage, currentLocation.id, "player"),
     visibleOpeningPressure: campaign.stage === "opening" && campaign.turn === 0 ? blueprint.openingPressure : null
   };
@@ -84,10 +102,15 @@ export function buildDirectorPlanningContext(
 ): DirectorPlanningContext {
   const perspective = buildPerspectiveContext(db, content, campaignName);
   const campaignBlueprint = getCampaignBlueprint(db, perspective.campaignId)!;
+  const playerQuestDetails = listRelevantQuestInstances(db, perspective.campaignId, perspective.stage, "player");
+  const directorQuests = listRelevantQuestInstances(db, perspective.campaignId, perspective.stage, "director");
   return {
     ...perspective,
     campaignBlueprint,
-    directorQuests: listRelevantQuestInstances(db, perspective.campaignId, perspective.stage, "director"),
+    directorQuests,
+    directorQuestDetails: [...playerQuestDetails, ...directorQuests]
+      .sort((left, right) => right.updatedTurn - left.updatedTurn || left.questId.localeCompare(right.questId))
+      .slice(0, 24),
     recoveryEvidenceEvents: listRecentConsequenceEvents(db, perspective.campaignId),
     directorStoryThreads: listRelevantStoryThreads(
       db,

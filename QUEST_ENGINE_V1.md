@@ -98,6 +98,20 @@ Review batch 1 establishes these permanent directions:
 
 The objective graph is implemented. Each objective records whether it is required, which objectives it depends on, and whether it belongs to a mutually exclusive branch group. Activating a quest exposes every ready objective, completing a branch skips unused alternatives, optional objectives do not block completion, and malformed or cyclic structures are rejected. The modular content rules remain under review.
 
+## Working staged-presentation checkpoint 7A
+
+New quest records now separate the offered problem from uncommitted execution details:
+
+- The player receives a fixed goal, stakes, two normally credible directions, and a third only for an urgency-three situation with enough valid choices.
+- Direction modules receive causal scores from the source thread's kind, urgency, people, factions, and locations. Seeded ordering occurs only inside equal-score groups.
+- Each direction shows a likely tradeoff without exposing an exact ending.
+- Available quests with no committed direction omit their concrete objective graph from player context.
+- Unselected exact outcomes, consequence seeds, and internal evidence references remain outside player context.
+- The Director planning context retains bounded full quest details so later validation can complete the quest correctly.
+- Completed player quests expose only the selected outcome rather than alternate endings.
+
+Natural-action direction confirmation and responsive objective/outcome materialization are deliberately reserved for checkpoint 7B. Until then, the old internal objective formulas remain compatibility scaffolding and are not presented as player commitments.
+
 ## Branching rule
 
 Normal quests have exactly two major outcomes. Only a marked turning-point quest backed by an urgency-three story thread may have three. Smaller variations belong in consequence state rather than additional major branches.

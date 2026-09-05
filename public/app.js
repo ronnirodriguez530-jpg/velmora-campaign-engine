@@ -66,7 +66,16 @@ function renderQuests(quests = []) {
     const state = document.createElement("span"); state.className = "quest-state"; state.textContent = title(quest.state);
     header.append(heading, state);
     const meta = document.createElement("p"); meta.className = "quest-meta"; meta.textContent = `${title(quest.questType)} quest · ${title(quest.minimumStage)} stage`;
+    const goal = document.createElement("p"); goal.className = "quest-goal"; goal.textContent = `Goal: ${quest.goal}`;
     const summary = document.createElement("p"); summary.className = "quest-summary"; summary.textContent = quest.summary;
+    const directionTitle = document.createElement("h3"); directionTitle.textContent = quest.selectedDirectionId ? "Chosen direction" : "Possible directions";
+    const directions = document.createElement("ul"); directions.className = "quest-directions";
+    for (const direction of quest.possibleDirections || []) {
+      if (quest.selectedDirectionId && direction.directionId !== quest.selectedDirectionId) continue;
+      const item = document.createElement("li"); item.textContent = direction.summary;
+      const tradeoff = document.createElement("span"); tradeoff.textContent = `Likely tradeoff: ${direction.likelyTradeoff}`;
+      item.append(tradeoff); directions.append(item);
+    }
     const objectiveTitle = document.createElement("h3"); objectiveTitle.textContent = "Objectives";
     const objectives = document.createElement("ol"); objectives.className = "quest-objectives";
     for (const objective of quest.objectives) {
@@ -74,7 +83,9 @@ function renderQuests(quests = []) {
       const marker = document.createElement("span"); marker.textContent = title(objective.state); item.append(marker); objectives.append(item);
     }
     const stakes = document.createElement("p"); stakes.className = "quest-stakes"; stakes.textContent = `Stakes: ${quest.stakes}`;
-    node.append(header, meta, summary, objectiveTitle, objectives, stakes);
+    node.append(header, meta, goal, summary, directionTitle, directions);
+    if (quest.objectives.length > 0) node.append(objectiveTitle, objectives);
+    node.append(stakes);
     const latestWarning = quest.warningHistory?.at(-1);
     if (latestWarning) {
       const warning = document.createElement("p"); warning.className = "quest-warning"; warning.textContent = `Warning received: ${latestWarning.signal}`; node.append(warning);

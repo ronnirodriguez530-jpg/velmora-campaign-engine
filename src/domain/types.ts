@@ -326,7 +326,7 @@ export type PerspectiveContext = {
   playerPowers: Array<PlayerPower & { definition: PowerDefinition }>;
   playerInventory: Array<PlayerInventoryItem & { definition: ItemDefinition }>;
   playerProgression: PlayerProgression;
-  playerQuests: QuestInstance[];
+  playerQuests: PlayerQuestView[];
   playerKnownStoryThreads: StoryThread[];
   visibleOpeningPressure: OpeningPressureDefinition | null;
 };
@@ -364,6 +364,7 @@ export type StoryThread = {
 export type DirectorPlanningContext = PerspectiveContext & {
   directorStoryThreads: StoryThread[];
   directorQuests: QuestInstance[];
+  directorQuestDetails: QuestInstance[];
   campaignBlueprint: CampaignBlueprint;
   recoveryEvidenceEvents: Array<{ sequence: number; turn: number; toolType: string; reason: string }>;
 };
@@ -388,6 +389,15 @@ export type QuestOutcome = {
   outcomeId: string;
   summary: string;
   consequenceSeeds: string[];
+};
+
+export type QuestDirection = {
+  directionId: string;
+  summary: string;
+  likelyTradeoff: string;
+  approachKey: string;
+  tradeoffKey: string;
+  costKey: string;
 };
 
 export type QuestRelationshipType = "prerequisite" | "parallel" | "optional_branch" | "consequence";
@@ -428,6 +438,7 @@ export type QuestInstance = {
   campaignId: string;
   questId: string;
   title: string;
+  goal: string;
   summary: string;
   questType: QuestType;
   state: QuestState;
@@ -440,6 +451,8 @@ export type QuestInstance = {
   factionIds: string[];
   npcIds: string[];
   objectives: QuestObjective[];
+  possibleDirections: QuestDirection[];
+  selectedDirectionId: string | null;
   stakes: string;
   outcomes: QuestOutcome[];
   failureMode: QuestFailureMode;
@@ -463,6 +476,16 @@ export type QuestInstance = {
   selectedOutcomeId: string | null;
   createdTurn: number;
   updatedTurn: number;
+};
+
+export type PlayerQuestDirection = Pick<QuestDirection, "directionId" | "summary" | "likelyTradeoff">;
+
+export type PlayerQuestView = Omit<
+  QuestInstance,
+  "outcomes" | "possibleDirections" | "recoveryEvidenceEventSequences" | "failureEvidenceEventSequences"
+> & {
+  possibleDirections: PlayerQuestDirection[];
+  outcomes: Array<Pick<QuestOutcome, "outcomeId" | "summary">>;
 };
 
 export type NpcCategory = "active" | "known" | "background";
