@@ -5,7 +5,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { buildDirectorPlanningContext, buildPerspectiveContext } from "../src/application/context-builder.ts";
-import { activateQuest, completeQuest, createQuestInstance, failQuestRecoverably, makeQuestAvailable, type CreateQuestInput, updateQuestObjective } from "../src/application/quest-system.ts";
+import { activateQuest, commitQuestDirection, completeQuest, createQuestInstance, failQuestRecoverably, makeQuestAvailable, type CreateQuestInput, updateQuestObjective } from "../src/application/quest-system.ts";
 import { captureSnapshot, createCampaign, insertCheckpoint, listQuestInstances, openDatabase, restorePreviousTurn } from "../src/persistence/database.ts";
 
 async function setup(name: string) {
@@ -78,6 +78,36 @@ test("creates a validated player quest from an existing main story thread", asyn
     assert.equal(quest.selectedOutcomeId, null);
     assert.equal(buildPerspectiveContext(db, content, "quest-create").playerQuests[0]?.questId, quest.questId);
     assert.equal(buildDirectorPlanningContext(db, content, "quest-create").directorQuests.length, 0);
+  } finally { db.close(); }
+});
+
+test("committing a direction materializes its objectives and outcomes exactly once", async () => {
+  const { content, db, campaignId } = await setup("quest-direction-commit");
+  try {
+    const created = createQuestInstance(db, content, campaignId, openingQuest());
+    const committed = commitQuestDirection(db, campaignId, created.questId, "DIR-OPENING-INQUIRY");
+    assert.equal(committed.state, "active");
+    assert.equal(committed.selectedDirectionId, "DIR-OPENING-INQUIRY");
+    assert.equal(committed.routeProfile.approachKey, "evidence-first");
+    assert.equal(committed.objectives[0]?.state, "active");
+    assert.match(committed.objectives[0]?.summary ?? "", /Investigate the failed Surge/);
+    assert.match(committed.outcomes[0]?.consequenceSeeds[0] ?? "", /evidence-first/);
+    const playerView = buildPerspectiveContext(db, content, "quest-direction-commit").playerQuests[0]!;
+    assert.equal(playerView.objectives.length, 2);
+    assert.equal(playerView.outcomes.length, 0, "Exact outcomes remain hidden until one is completed");
+    assert.throws(() => commitQuestDirection(db, campaignId, created.questId, "DIR-OPENING-DIRECT"), /Only an available quest|already has a committed direction/);
+  } finally { db.close(); }
+});
+
+test("an invalid direction cannot mutate an uncommitted quest", async () => {
+  const { content, db, campaignId } = await setup("quest-direction-invalid");
+  try {
+    const created = createQuestInstance(db, content, campaignId, openingQuest());
+    assert.throws(() => commitQuestDirection(db, campaignId, created.questId, "DIR-NOT-RECORDED"), /Unknown quest direction/);
+    const unchanged = listQuestInstances(db, campaignId).find((quest) => quest.questId === created.questId)!;
+    assert.equal(unchanged.state, "available");
+    assert.equal(unchanged.selectedDirectionId, null);
+    assert.deepEqual(unchanged.objectives, created.objectives);
   } finally { db.close(); }
 });
 

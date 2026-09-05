@@ -428,6 +428,93 @@ export function activateQuest(db: DatabaseSync, campaignId: string, questId: str
   return commitQuestUpdate(db, updated, "quest_activated", { questId });
 }
 
+function materializeDirectionObjectives(quest: QuestInstance, direction: QuestInstance["possibleDirections"][number]): QuestInstance["objectives"] {
+  const baseId = quest.questId.replace(/^QUEST-/, "").slice(0, 60);
+  const firstId = quest.objectives[0]?.objectiveId ?? `OBJ-${baseId}-COMMIT`;
+  const secondId = quest.objectives[1]?.objectiveId ?? `OBJ-${baseId}-FOLLOW-THROUGH`;
+  const carriesMajorObjective = quest.objectives.some((objective) => objective.isMajorObjective);
+  return [
+    {
+      objectiveId: firstId,
+      summary: `Begin the chosen approach: ${direction.summary}`,
+      state: "active",
+      required: true,
+      isMajorObjective: false,
+      dependsOnObjectiveIds: [],
+      branchGroupId: null
+    },
+    {
+      objectiveId: secondId,
+      summary: `Carry that approach far enough to meaningfully change: ${quest.goal}`,
+      state: "pending",
+      required: true,
+      isMajorObjective: carriesMajorObjective,
+      dependsOnObjectiveIds: [firstId],
+      branchGroupId: null
+    }
+  ];
+}
+
+function materializeDirectionOutcomes(quest: QuestInstance, direction: QuestInstance["possibleDirections"][number]): QuestInstance["outcomes"] {
+  const baseId = quest.questId.replace(/^QUEST-/, "").slice(0, 60);
+  const outcomeIds = quest.outcomes.map((outcome) => outcome.outcomeId);
+  const outcomes: QuestInstance["outcomes"] = [
+    {
+      outcomeId: outcomeIds[0] ?? `OUT-${baseId}-ACCEPT-COST`,
+      summary: `Achieve the quest goal through the chosen approach while accepting its likely tradeoff.`,
+      consequenceSeeds: [`The ${direction.approachKey} approach succeeds, but ${direction.tradeoffKey} shapes the consequence.`]
+    },
+    {
+      outcomeId: outcomeIds[1] ?? `OUT-${baseId}-CHANGE-TERMS`,
+      summary: `Preserve what the tradeoff threatens, accepting a changed or incomplete result.`,
+      consequenceSeeds: [`The player limits ${direction.costKey}, changing what full success can still mean.`]
+    }
+  ];
+  if (quest.isTurningPoint) {
+    outcomes.push({
+      outcomeId: outcomeIds[2] ?? `OUT-${baseId}-DECISIVE-BREAK`,
+      summary: `Force a decisive break that permanently changes the pressure surrounding the quest.`,
+      consequenceSeeds: [`The turning point resolves through ${direction.approachKey} and creates a lasting world change.`]
+    });
+  }
+  return outcomes;
+}
+
+export function commitQuestDirection(
+  db: DatabaseSync,
+  campaignId: string,
+  questId: string,
+  directionId: string
+): QuestInstance {
+  const quest = getQuest(db, campaignId, questId);
+  if (quest.state !== "available") throw new Error("Only an available quest can commit a direction");
+  if (quest.selectedDirectionId !== null) throw new Error("This quest already has a committed direction");
+  const direction = quest.possibleDirections.find((candidate) => candidate.directionId === directionId);
+  if (!direction) throw new Error(`Unknown quest direction ${directionId}`);
+  const objectives = materializeDirectionObjectives(quest, direction);
+  const outcomes = materializeDirectionOutcomes(quest, direction);
+  validateObjectiveGraph(objectives);
+  const turn = getCampaignState(db, campaignId).turn;
+  const updated: QuestInstance = {
+    ...quest,
+    state: "active",
+    selectedDirectionId: direction.directionId,
+    objectives,
+    outcomes,
+    routeProfile: {
+      approachKey: direction.approachKey,
+      tradeoffKey: direction.tradeoffKey,
+      costKey: direction.costKey
+    },
+    updatedTurn: turn
+  };
+  return commitQuestUpdate(db, updated, "quest_direction_committed", {
+    questId,
+    directionId: direction.directionId,
+    approachKey: direction.approachKey
+  });
+}
+
 export function updateQuestObjective(
   db: DatabaseSync,
   campaignId: string,

@@ -110,7 +110,7 @@ New quest records now separate the offered problem from uncommitted execution de
 - The Director planning context retains bounded full quest details so later validation can complete the quest correctly.
 - Completed player quests expose only the selected outcome rather than alternate endings.
 
-Natural-action direction confirmation and responsive objective/outcome materialization are deliberately reserved for checkpoint 7B. Until then, the old internal objective formulas remain compatibility scaffolding and are not presented as player commitments.
+The first half of checkpoint 7B is implemented behind the player interface. `commitQuestDirection` accepts exactly one recorded direction while the quest is available and uncommitted, activates the quest, aligns its durable route profile with that direction, and replaces provisional scaffolding with responsive objectives and hidden outcomes. Invalid or repeated commitments leave the quest unchanged. Natural-action interpretation, persisted player confirmation, and browser controls remain unfinished and must sit in front of this operation before the flow is player-ready.
 
 ## Branching rule
 
