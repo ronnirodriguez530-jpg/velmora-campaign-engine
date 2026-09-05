@@ -59,6 +59,17 @@ test("a thread permits one primary and one alternative unresolved quest, then en
     );
     const alternative = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE", [{ questId: first.questId, type: "optional_branch" }]);
     assert.notEqual(alternative.questId, first.questId);
+    assert.equal(
+      (alternative.routeProfile.approachKey !== first.routeProfile.approachKey && alternative.routeProfile.tradeoffKey !== first.routeProfile.tradeoffKey)
+        || alternative.routeProfile.costKey !== first.routeProfile.costKey
+        || JSON.stringify(alternative.locationIds) !== JSON.stringify(first.locationIds)
+        || JSON.stringify(alternative.npcIds) !== JSON.stringify(first.npcIds),
+      true
+    );
+    assert.deepEqual(alternative.neglectPolicy, {
+      allowedTriggers: ["ignored_warning_after_deliberate_choice", "recorded_world_event_advances_threat"],
+      maximumEffect: "proportional_complication"
+    });
     assert.equal(listQuestInstances(db, campaignId).filter((quest) => !["completed", "failed"].includes(quest.state)).length, 2);
     assert.throws(
       () => generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE", [{ questId: first.questId, type: "parallel" }]),

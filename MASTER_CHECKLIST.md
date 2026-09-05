@@ -203,11 +203,14 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Objectives, stakes, prerequisites, meaningful neglect triggers, warnings, recovery paths, and consequence seeds
 - [x] Flexible sequential, parallel, branching, and optional objective graph with dependency validation
 - [x] Hard cap of two simultaneous unresolved quests per story thread: one primary route and one alternative
+- [x] The alternative slot is optional and requires a distinct approach/tradeoff, allies/location, or moral/resource cost; duplicate routes are rejected
 - [x] Up to two distinct altered routes per failed quest may remain pursuable within the same thread cap
 - [x] Explicit prerequisite, parallel, optional-branch, and consequence relationships replace automatic predecessor linking
 - [x] Recovery requires recorded failure plus durable consequence-event evidence and may emerge immediately or later
 - [x] Unresolved routes remain open unless 1-4 cited durable consequences make them impossible; invalidated routes remain visible as failed with reason and evidence
 - [x] Ordinary generated quests default to recoverable failure; permanent failure remains blocked until exceptional stakes can be verified
+- [x] Approved neglect contract permits only ignored recorded warnings after a deliberate choice or recorded threat-advancing events, with proportional complications as the normal ceiling
+- [ ] Durable warning-delivery and neglect-trigger execution events
 - [x] Exactly two major outcomes for normal quests and three only for urgency-backed turning points
 - [x] Main, faction, side, personal, dynamic, and fragment classification
 - [x] Player and Director perspective filtering with bounded retrieval
@@ -218,7 +221,7 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [ ] Major-objective milestone designation and rewards
 - [x] Functional Quest page and actionable notifications
 
-Implemented quest engineering: the durable contract, lifecycle, flexible objective graph, hard two-unresolved-quest-per-thread cap, bounded Campaign Master controls, atomic consequences, evidence-backed route invalidation, recoverable ordinary failure, player-visible browser journal, persistence, privacy, and rollback work. The first quest is now correctly withheld until the future d6-and-attack opening flow. The current composer formulas, meaningful primary/alternative distinction, modular content, generic neglect trigger, quest classification, and progression trigger remain provisional pending `QUEST_ENGINE_DECISION_AUDIT.md`. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+Implemented quest engineering: the durable contract, lifecycle, flexible objective graph, hard two-unresolved-quest-per-thread cap, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, evidence-backed route invalidation, recoverable ordinary failure, bounded neglect policy, player-visible browser journal, persistence, privacy, and rollback work. The first quest is correctly withheld until the future d6-and-attack opening flow. The current composer formulas, modular content, neglect execution events, quest classification, and progression trigger remain provisional pending `QUEST_ENGINE_DECISION_AUDIT.md`. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
 Provisional progression bridge: the engine can validate a completed turning-point quest with a recorded outcome and prevent duplicate awards. The reward trigger and major-objective cadence require approval before they become final campaign rules.
 
@@ -401,7 +404,7 @@ Provisional progression bridge: the engine can validate a completed turning-poin
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the engineering foundation of step 6. The strict quest contract, persistence, flexible objective graph, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, evidence-backed route invalidation, context retrieval, save compatibility, rollback, and player Quest journal work. Opening timing is approved and automatic pre-opening quest creation has been removed. The current quest formulas, modular content, meaningful primary/alternative distinction, generic neglect trigger, quest classification, and quest reward trigger remain provisional and must be reviewed through `QUEST_ENGINE_DECISION_AUDIT.md` before step 6 is complete. Combat, sustained live-play validation, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the engineering foundation of step 6. The strict quest contract, persistence, flexible objective graph, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, bounded neglect policy, evidence-backed route invalidation, context retrieval, save compatibility, rollback, and player Quest journal work. Opening timing is approved and automatic pre-opening quest creation has been removed. The current quest formulas, modular content, neglect execution events, quest classification, and quest reward trigger remain provisional and must be reviewed through `QUEST_ENGINE_DECISION_AUDIT.md` before step 6 is complete. Combat, sustained live-play validation, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

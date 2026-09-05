@@ -733,6 +733,15 @@ function questFromRow(row: Record<string, unknown>): QuestInstance {
     state: row.state as QuestInstance["state"],
     objectives,
     relationships: stored.relationships ?? [],
+    routeProfile: stored.routeProfile ?? {
+      approachKey: `legacy:${objectives[0]?.summary ?? stored.questId}`,
+      tradeoffKey: `legacy:${stored.outcomes.map((outcome) => outcome.summary).join("|")}`,
+      costKey: `legacy:${stored.stakes}`
+    },
+    neglectPolicy: stored.neglectPolicy ?? {
+      allowedTriggers: ["ignored_warning_after_deliberate_choice", "recorded_world_event_advances_threat"],
+      maximumEffect: "proportional_complication"
+    },
     isTurningPoint: Number(row.isTurningPoint) === 1,
     recoveryOfQuestId: stored.recoveryOfQuestId ?? null,
     recoveryPathUsed: stored.recoveryPathUsed ?? null,

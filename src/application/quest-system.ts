@@ -141,6 +141,17 @@ function characterExists(db: DatabaseSync, content: VelmoraContent, campaignId: 
   return Boolean(db.prepare("SELECT 1 FROM npc_records WHERE campaign_id = ? AND npc_id = ?").get(campaignId, characterId));
 }
 
+function sameIds(left: string[], right: string[]): boolean {
+  return JSON.stringify([...left].sort()) === JSON.stringify([...right].sort());
+}
+
+function routesAreMeaningfullyDistinct(existing: QuestInstance, input: CreateQuestInput): boolean {
+  const differentApproachAndTradeoff = existing.routeProfile.approachKey !== input.routeProfile.approachKey && existing.routeProfile.tradeoffKey !== input.routeProfile.tradeoffKey;
+  const differentAlliesOrLocation = !sameIds(existing.npcIds, input.npcIds) || !sameIds(existing.locationIds, input.locationIds);
+  const differentMoralOrResourceCost = existing.routeProfile.costKey !== input.routeProfile.costKey;
+  return differentApproachAndTradeoff || differentAlliesOrLocation || differentMoralOrResourceCost;
+}
+
 function validateQuestLinks(db: DatabaseSync, content: VelmoraContent, campaignId: string, input: CreateQuestInput): void {
   if (input.locationIds.length > 8 || input.factionIds.length > 6 || input.npcIds.length > 8 || input.prerequisiteQuestIds.length > 6 || input.linkedQuestIds.length > 6 || input.relationships.length > 6 || input.truthEvidenceIds.length > 8) {
     throw new Error("Quest link limit exceeded");
@@ -207,6 +218,19 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
     .filter((quest) => quest.state !== "completed" && quest.state !== "failed");
   if (unresolvedOnSourceThread.length >= 2) {
     throw new Error("A story thread may have at most two simultaneous unresolved quests");
+  }
+  for (const key of [input.routeProfile?.approachKey, input.routeProfile?.tradeoffKey, input.routeProfile?.costKey]) {
+    if (typeof key !== "string") throw new Error("A quest requires an approach, tradeoff, and cost route profile");
+    requireText(key, "Quest route-profile key", 2, 100);
+  }
+  if (unresolvedOnSourceThread.length === 1) {
+    const existingRoute = unresolvedOnSourceThread[0]!;
+    if (!input.relationships.some((relationship) => relationship.questId === existingRoute.questId && (relationship.type === "parallel" || relationship.type === "optional_branch"))) {
+      throw new Error("A second unresolved quest must explicitly link to the existing route as parallel or optional");
+    }
+    if (!routesAreMeaningfullyDistinct(existingRoute, input)) {
+      throw new Error("A second unresolved quest must use a meaningfully different approach and tradeoff, allies or location, or moral or resource cost");
+    }
   }
   if (input.visibility !== sourceThread.visibility) throw new Error("A quest must inherit its source thread visibility");
   if (input.questType === "main" && sourceThread.kind !== "main") throw new Error("A main quest must originate from an existing main story thread");
@@ -277,6 +301,14 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
   for (const warning of input.warningSignals) requireText(warning, "Quest warning signal", 3, 240);
   for (const trigger of input.neglectTriggers) requireText(trigger, "Quest neglect trigger", 3, 240);
   for (const path of input.recoveryPaths) requireText(path, "Quest recovery path", 3, 240);
+  const allowedNeglectTriggers = new Set(["ignored_warning_after_deliberate_choice", "recorded_world_event_advances_threat"]);
+  if (!input.neglectPolicy || input.neglectPolicy.maximumEffect !== "proportional_complication") throw new Error("Quest neglect may cause only a proportional complication");
+  if (input.neglectPolicy.allowedTriggers.length < 1 || input.neglectPolicy.allowedTriggers.length > 2 || new Set(input.neglectPolicy.allowedTriggers).size !== input.neglectPolicy.allowedTriggers.length || input.neglectPolicy.allowedTriggers.some((trigger) => !allowedNeglectTriggers.has(trigger))) {
+    throw new Error("Quest neglect requires one or both approved meaningful trigger types");
+  }
+  if (input.neglectPolicy.allowedTriggers.includes("ignored_warning_after_deliberate_choice") && input.warningSignals.length === 0) {
+    throw new Error("Ignored-warning neglect requires a recorded warning signal");
+  }
   if (input.failureMode === "recoverable" && input.recoveryPaths.length === 0) throw new Error("A recoverable quest requires at least one recovery path");
   if (input.failureMode === "warned_deadline" && input.warningSignals.length === 0) throw new Error("A warned-deadline quest requires at least one warning signal");
   validateQuestLinks(db, content, campaignId, input);

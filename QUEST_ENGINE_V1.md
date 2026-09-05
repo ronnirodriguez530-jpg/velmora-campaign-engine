@@ -30,11 +30,11 @@ The seeded quest composer turns an active story thread into a validated test str
 - Main, faction, side, personal, dynamic, and fragment types derive from the source thread
 - Player-visible threads create available quests; hidden threads create locked Director-only quests
 - Current locations, involved factions and NPCs, stage gates, and recovery paths carry forward
-- Each source thread may have at most two unresolved quests at a time; the approved intent is one primary route and one meaningfully different alternative
+- Each source thread may have at most two unresolved quests at a time; the second slot is optional and may contain one meaningfully different alternative
 - Follow-ups declare explicit prerequisite, parallel, optional-branch, or consequence relationships; no previous quest becomes a prerequisite automatically
 - Every generated quest defaults to recoverable failure, meaningful neglect triggers, and exactly two outcomes
 
-The composer currently proves that generated quest structures can be stored and validated. Flexible objective flow, explicit follow-up relationships, the hard two-unresolved-quest cap, consequence-backed recovery, evidence-backed route invalidation, and recoverable ordinary failure are approved. The four formulas, meaningful primary/alternative distinction, generic neglect trigger, and authored placeholder text require user review before this becomes the approved campaign-flow generator.
+The composer now stores and validates route profiles. A second unresolved route must explicitly link to the first and differ through approach and tradeoff, allies or location, or moral or resource cost. It is never generated merely to fill capacity. The four formulas and authored placeholder text still require review before this becomes the approved campaign-flow generator.
 
 ## Provisional checkpoint 3A
 
@@ -106,7 +106,7 @@ Questlines may link and require one another as a spiderweb. A player is not limi
 
 ## Failure and neglect rule
 
-Inactivity alone never worsens a quest. A quest may react to neglect only through one of its recorded meaningful triggers.
+Inactivity alone never worsens a quest. A quest may react to neglect only after a recorded warning followed by the player's deliberate choice of another priority, or when a recorded world event advances the threat. The quest stores these allowed triggers and caps ordinary neglect effects at a proportional complication; warning-delivery and trigger-application events remain to be implemented.
 
 Ordinary generated quests begin recoverable and require at least one recorded route forward. Permanent failure is reserved for a warned deadline, irreversible choice, or major world event. Permanent-failure execution remains withheld until those exceptional stakes can be verified from durable engine records.
 

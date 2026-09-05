@@ -40,12 +40,17 @@ function openingQuest(overrides: Partial<CreateQuestInput> = {}): CreateQuestInp
       { outcomeId: "OUT-PURSUE-CAUSE", summary: "Prioritize the source, evidence, or responsible actor.", consequenceSeeds: ["Immediate evidence is preserved while other needs worsen."] }
     ],
     failureMode: "recoverable",
-    warningSignals: [],
+    warningSignals: ["The plaza crisis visibly worsens before the player commits elsewhere."],
     neglectTriggers: ["A recorded world event materially worsens the immediate crisis."],
     recoveryPaths: ["Survivors, changed conditions, or lost evidence create an altered route forward."],
     prerequisiteQuestIds: [],
     linkedQuestIds: [],
     relationships: [],
+    routeProfile: { approachKey: "protect", tradeoffKey: "immediacy", costKey: "lost-evidence" },
+    neglectPolicy: {
+      allowedTriggers: ["ignored_warning_after_deliberate_choice", "recorded_world_event_advances_threat"],
+      maximumEffect: "proportional_complication"
+    },
     recoveryOfQuestId: null,
     recoveryPathUsed: null,
     recoveryEvidenceEventSequences: [],
@@ -72,9 +77,18 @@ test("direct quest creation cannot bypass the two-unresolved-quests-per-thread c
   const { content, db, campaignId } = await setup("quest-thread-cap");
   try {
     createQuestInstance(db, content, campaignId, openingQuest());
+    assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
+      questId: "QUEST-OPENING-ALTERNATIVE",
+      title: "Choose an Alternative Response",
+      linkedQuestIds: ["QUEST-OPENING-RESPONSE"],
+      relationships: [{ questId: "QUEST-OPENING-RESPONSE", type: "parallel" }]
+    })), /must use a meaningfully different/);
     createQuestInstance(db, content, campaignId, openingQuest({
       questId: "QUEST-OPENING-ALTERNATIVE",
-      title: "Choose an Alternative Response"
+      title: "Choose an Alternative Response",
+      routeProfile: { approachKey: "investigate", tradeoffKey: "time-for-certainty", costKey: "immediate-safety" },
+      linkedQuestIds: ["QUEST-OPENING-RESPONSE"],
+      relationships: [{ questId: "QUEST-OPENING-RESPONSE", type: "parallel" }]
     }));
     assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
       questId: "QUEST-OPENING-EXCESS",

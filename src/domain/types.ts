@@ -396,6 +396,17 @@ export type QuestRelationship = {
   type: QuestRelationshipType;
 };
 
+export type QuestRouteProfile = {
+  approachKey: string;
+  tradeoffKey: string;
+  costKey: string;
+};
+
+export type QuestNeglectPolicy = {
+  allowedTriggers: Array<"ignored_warning_after_deliberate_choice" | "recorded_world_event_advances_threat">;
+  maximumEffect: "proportional_complication";
+};
+
 export type QuestInstance = {
   campaignId: string;
   questId: string;
@@ -421,6 +432,8 @@ export type QuestInstance = {
   prerequisiteQuestIds: string[];
   linkedQuestIds: string[];
   relationships: QuestRelationship[];
+  routeProfile: QuestRouteProfile;
+  neglectPolicy: QuestNeglectPolicy;
   recoveryOfQuestId: string | null;
   recoveryPathUsed: string | null;
   recoveryEvidenceEventSequences: number[];

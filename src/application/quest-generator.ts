@@ -7,6 +7,9 @@ import { applyQuestCreation, createQuestInstance, validateQuestCreation } from "
 
 type QuestPattern = {
   key: string;
+  approachKey: string;
+  tradeoffKey: string;
+  costKey: string;
   firstObjective: (title: string) => string;
   secondObjective: (title: string) => string;
   firstOutcome: string;
@@ -16,6 +19,9 @@ type QuestPattern = {
 const QUEST_PATTERNS: QuestPattern[] = [
   {
     key: "investigate-and-act",
+    approachKey: "evidence-first",
+    tradeoffKey: "certainty-before-speed",
+    costKey: "time-and-exposure",
     firstObjective: (title) => `Establish what is actually happening behind ${title}.`,
     secondObjective: (title) => `Use the evidence to choose and carry out a response to ${title}.`,
     firstOutcome: "Intervene directly using the clearest available evidence.",
@@ -23,6 +29,9 @@ const QUEST_PATTERNS: QuestPattern[] = [
   },
   {
     key: "protect-and-pursue",
+    approachKey: "protection-first",
+    tradeoffKey: "safety-before-pursuit",
+    costKey: "lost-ground-or-limited-cover",
     firstObjective: (title) => `Identify who or what is most exposed by ${title}.`,
     secondObjective: (title) => `Protect the immediate target while preserving a route toward ${title}.`,
     firstOutcome: "Prioritize immediate protection and accept what escapes attention.",
@@ -30,6 +39,9 @@ const QUEST_PATTERNS: QuestPattern[] = [
   },
   {
     key: "negotiate-and-commit",
+    approachKey: "negotiation-first",
+    tradeoffKey: "obligation-for-cooperation",
+    costKey: "independence-or-political-capital",
     firstObjective: (title) => `Learn what the involved sides want from ${title}.`,
     secondObjective: (title) => `Commit to an agreement, refusal, or third path that changes ${title}.`,
     firstOutcome: "Reach terms with one involved side and inherit its obligations.",
@@ -37,6 +49,9 @@ const QUEST_PATTERNS: QuestPattern[] = [
   },
   {
     key: "recover-and-contain",
+    approachKey: "control-the-instability",
+    tradeoffKey: "custody-versus-access",
+    costKey: "control-or-public-trust",
     firstObjective: (title) => `Locate the unstable person, object, or information driving ${title}.`,
     secondObjective: (title) => `Recover, contain, or deliberately release it before ${title} worsens.`,
     firstOutcome: "Secure the unstable element under controlled custody.",
@@ -56,6 +71,22 @@ function questTypeForThread(thread: StoryThread): QuestType {
 function bounded(value: string, maximum: number): string {
   if (value.length <= maximum) return value;
   return `${value.slice(0, maximum - 1).trimEnd()}…`;
+}
+
+function sameIds(left: string[], right: string[]): boolean {
+  return JSON.stringify([...left].sort()) === JSON.stringify([...right].sort());
+}
+
+function isMeaningfullyDistinct(
+  existing: ReturnType<typeof listQuestInstances>[number],
+  pattern: QuestPattern,
+  locationIds: string[],
+  npcIds: string[]
+): boolean {
+  const differentApproachAndTradeoff = existing.routeProfile.approachKey !== pattern.approachKey && existing.routeProfile.tradeoffKey !== pattern.tradeoffKey;
+  const differentAlliesOrLocation = !sameIds(existing.npcIds, npcIds) || !sameIds(existing.locationIds, locationIds);
+  const differentMoralOrResourceCost = existing.routeProfile.costKey !== pattern.costKey;
+  return differentApproachAndTradeoff || differentAlliesOrLocation || differentMoralOrResourceCost;
 }
 
 export function composeQuestFromThread(
@@ -79,11 +110,17 @@ export function composeQuestFromThread(
   if (unresolved.length === 1 && !relationships.some((relationship) => ["parallel", "optional_branch"].includes(relationship.type) && relationship.questId === unresolved[0]!.questId)) {
     throw new Error("A second unresolved route must explicitly link to the existing route as parallel or optional");
   }
+  const locationIds = thread.locationIds.length > 0 ? thread.locationIds : [campaign.currentLocationId];
   const sequence = existing.length + 1;
-  const pattern = seededChoice(`${campaign.seed}|quest|${threadId}|${sequence}`, QUEST_PATTERNS);
+  const candidatePatterns = unresolved.length === 1
+    ? QUEST_PATTERNS.filter((candidate) => isMeaningfullyDistinct(unresolved[0]!, candidate, locationIds, thread.npcIds))
+    : QUEST_PATTERNS;
+  if (candidatePatterns.length === 0) {
+    throw new Error("No credible alternative route can be constructed from the established people, locations, costs, and approaches");
+  }
+  const pattern = seededChoice(`${campaign.seed}|quest|${threadId}|${sequence}`, candidatePatterns);
   const baseId = thread.threadId.replace(/^THREAD-/, "");
   const questId = `QUEST-${baseId}-${String(sequence).padStart(2, "0")}`;
-  const locationIds = thread.locationIds.length > 0 ? thread.locationIds : [campaign.currentLocationId];
   const recoveryPaths = thread.recoveryPaths.length > 0
     ? thread.recoveryPaths.slice(0, 4)
     : [`A changed condition tied to ${thread.title} must create another route forward.`];
@@ -125,12 +162,24 @@ export function composeQuestFromThread(
       }
     ],
     failureMode: "recoverable",
-    warningSignals: [],
-    neglectTriggers: [`A committed world event directly advances or worsens ${thread.title}.`],
+    warningSignals: [`The world clearly signals that ${thread.title} may worsen if the player deliberately chooses another priority.`],
+    neglectTriggers: [
+      `After receiving a recorded warning, the player deliberately chooses another priority instead of addressing ${thread.title}.`,
+      `A recorded world event directly advances the threat represented by ${thread.title}.`
+    ],
     recoveryPaths,
     prerequisiteQuestIds: relationships.filter((relationship) => relationship.type === "prerequisite").map((relationship) => relationship.questId),
     linkedQuestIds: relationships.map((relationship) => relationship.questId),
     relationships,
+    routeProfile: {
+      approachKey: pattern.approachKey,
+      tradeoffKey: pattern.tradeoffKey,
+      costKey: pattern.costKey
+    },
+    neglectPolicy: {
+      allowedTriggers: ["ignored_warning_after_deliberate_choice", "recorded_world_event_advances_threat"],
+      maximumEffect: "proportional_complication"
+    },
     recoveryOfQuestId: null,
     recoveryPathUsed: null,
     recoveryEvidenceEventSequences: [],
