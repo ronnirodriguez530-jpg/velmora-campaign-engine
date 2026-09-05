@@ -75,6 +75,14 @@ function renderQuests(quests = []) {
     }
     const stakes = document.createElement("p"); stakes.className = "quest-stakes"; stakes.textContent = `Stakes: ${quest.stakes}`;
     node.append(header, meta, summary, objectiveTitle, objectives, stakes);
+    const latestWarning = quest.warningHistory?.at(-1);
+    if (latestWarning) {
+      const warning = document.createElement("p"); warning.className = "quest-warning"; warning.textContent = `Warning received: ${latestWarning.signal}`; node.append(warning);
+    }
+    const latestNeglect = quest.neglectHistory?.at(-1);
+    if (latestNeglect) {
+      const complication = document.createElement("p"); complication.className = "quest-complication"; complication.textContent = `Complication: ${latestNeglect.reason}`; node.append(complication);
+    }
     if (quest.recoveryOfQuestId) {
       const recovery = document.createElement("p"); recovery.className = "quest-recovery"; recovery.textContent = `Altered route after ${quest.recoveryOfQuestId}: ${quest.recoveryPathUsed}`; node.append(recovery);
     }

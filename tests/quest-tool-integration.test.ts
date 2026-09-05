@@ -66,6 +66,11 @@ test("Campaign Master can generate, activate, and advance an engine-owned quest"
       objectiveId: null,
       outcomeId: null,
       consequenceEventSequences: [],
+      warningMethod: null,
+      warningSignal: null,
+      warningSourceNpcId: null,
+      neglectTrigger: null,
+      neglectComplicationTool: null,
       reason: "The player accepted the available objective."
     }]), "quest-tool-generate", "commit to the generated quest");
     const active = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
@@ -79,6 +84,11 @@ test("Campaign Master can generate, activate, and advance an engine-owned quest"
       objectiveId: active.objectives[0]!.objectiveId,
       outcomeId: null,
       consequenceEventSequences: [],
+      warningMethod: null,
+      warningSignal: null,
+      warningSourceNpcId: null,
+      neglectTrigger: null,
+      neglectComplicationTool: null,
       reason: "The player's completed action satisfied the current objective."
     }]), "quest-tool-generate", "complete the first objective");
     const advanced = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
@@ -100,6 +110,11 @@ test("quest completion and its validated world consequence commit in one turn", 
         objectiveId: null,
         outcomeId: quest.outcomes[0]!.outcomeId,
         consequenceEventSequences: [],
+        warningMethod: null,
+        warningSignal: null,
+        warningSourceNpcId: null,
+        neglectTrigger: null,
+        neglectComplicationTool: null,
         reason: "The player completed every objective and committed to the recorded direct outcome."
       },
       {
@@ -129,6 +144,11 @@ test("an invalid combined consequence plan leaves both quest and world state unc
         objectiveId: null,
         outcomeId: quest.outcomes[0]!.outcomeId,
         consequenceEventSequences: [],
+        warningMethod: null,
+        warningSignal: null,
+        warningSourceNpcId: null,
+        neglectTrigger: null,
+        neglectComplicationTool: null,
         reason: "The quest portion is valid but must not commit alone."
       },
       {
@@ -208,6 +228,11 @@ test("an unresolved route is preserved unless cited consequences prove it imposs
       objectiveId: null,
       outcomeId: null,
       consequenceEventSequences: [],
+      warningMethod: null,
+      warningSignal: null,
+      warningSourceNpcId: null,
+      neglectTrigger: null,
+      neglectComplicationTool: null,
       reason: "No recorded consequence supports closing this route."
     }), /requires 1-4 distinct consequence-event references/);
     assert.equal(listQuestInstances(db, campaignId).find((quest) => quest.questId === alternative.questId)?.state, "available");
@@ -226,6 +251,11 @@ test("an unresolved route is preserved unless cited consequences prove it imposs
       objectiveId: null,
       outcomeId: null,
       consequenceEventSequences: [unrelatedSequence],
+      warningMethod: null,
+      warningSignal: null,
+      warningSourceNpcId: null,
+      neglectTrigger: null,
+      neglectComplicationTool: null,
       reason: "An unrelated faction change must not be enough to close this route."
     }), /must directly concern the quest's recorded/);
 
@@ -243,6 +273,11 @@ test("an unresolved route is preserved unless cited consequences prove it imposs
       objectiveId: null,
       outcomeId: null,
       consequenceEventSequences: [consequenceSequence],
+      warningMethod: null,
+      warningSignal: null,
+      warningSourceNpcId: null,
+      neglectTrigger: null,
+      neglectComplicationTool: null,
       reason: "The collapsed passage permanently removes the alternative route."
     }]), "quest-route-invalidation", "accept that the alternate passage is gone");
 
@@ -259,5 +294,157 @@ test("an unresolved route is preserved unless cited consequences prove it imposs
     assert.equal(restored.state, "available");
     assert.equal(restored.failureReason, null);
     assert.deepEqual(restored.failureEvidenceEventSequences, []);
+  } finally { db.close(); }
+});
+
+test("recorded warnings permit only mild evidence-backed neglect complications", async () => {
+  const { content, db, campaignId } = await setup("quest-neglect");
+  try {
+    const quest = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    const warningSignal = quest.warningSignals[0]!;
+    const npcId = content.characters[0]!.id;
+
+    await runPlayerAction(db, content, directorFor([{
+      type: "manage_quest",
+      questId: quest.questId,
+      action: "record_warning",
+      objectiveId: null,
+      outcomeId: null,
+      consequenceEventSequences: [],
+      warningMethod: "established_npc_message",
+      warningSignal,
+      warningSourceNpcId: npcId,
+      neglectTrigger: null,
+      neglectComplicationTool: null,
+      reason: "An established witness clearly warns the player that the plaza danger is worsening."
+    }]), "quest-neglect", "accept the witness's warning");
+    const firstWarningSequence = Number(listEvents(db, campaignId).findLast((event) => event.eventType === "quest_warning_recorded")!.sequence);
+
+    const firstComplicationReason = "The player deliberately chooses another priority after the warning, allowing one minor obstruction to develop.";
+    await runPlayerAction(db, content, directorFor([
+      {
+        type: "manage_quest",
+        questId: quest.questId,
+        action: "apply_neglect_complication",
+        objectiveId: null,
+        outcomeId: null,
+        consequenceEventSequences: [firstWarningSequence],
+        warningMethod: null,
+        warningSignal: null,
+        warningSourceNpcId: null,
+        neglectTrigger: "ignored_warning_after_deliberate_choice",
+        neglectComplicationTool: "record_location_consequence",
+        reason: firstComplicationReason
+      },
+      {
+        type: "record_location_consequence",
+        locationId: quest.locationIds[0]!,
+        consequence: "Debris now slows one approach through the plaza without closing it.",
+        reason: firstComplicationReason
+      }
+    ]), "quest-neglect", "choose to help elsewhere despite the warning");
+    let changed = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
+    assert.equal(changed.state, "available");
+    assert.equal(changed.neglectHistory.length, 1);
+
+    assert.throws(() => validateQuestManagement(db, campaignId, {
+      type: "manage_quest",
+      questId: quest.questId,
+      action: "apply_neglect_complication",
+      objectiveId: null,
+      outcomeId: null,
+      consequenceEventSequences: [firstWarningSequence],
+      warningMethod: null,
+      warningSignal: null,
+      warningSourceNpcId: null,
+      neglectTrigger: "ignored_warning_after_deliberate_choice",
+      neglectComplicationTool: "record_location_consequence",
+      reason: "Reusing one warning cannot repeatedly punish the player."
+    }), /requires new warning or world-event evidence/);
+
+    await runPlayerAction(db, content, directorFor([{
+      type: "manage_quest",
+      questId: quest.questId,
+      action: "record_warning",
+      objectiveId: null,
+      outcomeId: null,
+      consequenceEventSequences: [],
+      warningMethod: "obvious_environmental_warning",
+      warningSignal,
+      warningSourceNpcId: null,
+      neglectTrigger: null,
+      neglectComplicationTool: null,
+      reason: "A visible surge and falling masonry clearly renew the warning."
+    }]), "quest-neglect", "acknowledge the obvious environmental warning");
+    const secondWarningSequence = Number(listEvents(db, campaignId).findLast((event) => event.eventType === "quest_warning_recorded")!.sequence);
+
+    const secondComplicationReason = "A second deliberate delay after a new warning causes one additional mild obstruction.";
+    await runPlayerAction(db, content, directorFor([
+      {
+        type: "manage_quest",
+        questId: quest.questId,
+        action: "apply_neglect_complication",
+        objectiveId: null,
+        outcomeId: null,
+        consequenceEventSequences: [secondWarningSequence],
+        warningMethod: null,
+        warningSignal: null,
+        warningSourceNpcId: null,
+        neglectTrigger: "ignored_warning_after_deliberate_choice",
+        neglectComplicationTool: "record_location_consequence",
+        reason: secondComplicationReason
+      },
+      {
+        type: "record_location_consequence",
+        locationId: quest.locationIds[0]!,
+        consequence: "Crowds make the same approach slower, but the route remains recoverable.",
+        reason: secondComplicationReason
+      }
+    ]), "quest-neglect", "choose another priority after the renewed warning");
+    changed = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
+    assert.equal(changed.state, "available");
+    assert.equal(changed.neglectHistory.length, 2);
+    assert.equal(changed.failureReason, null);
+
+    restorePreviousTurn(db, "quest-neglect");
+    const restored = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
+    assert.equal(restored.neglectHistory.length, 1);
+    assert.equal(restored.state, "available");
+
+    const currentTurn = Number((db.prepare("SELECT turn FROM campaigns WHERE id = ?").get(campaignId) as { turn: number }).turn);
+    appendEvent(db, campaignId, currentTurn, "tool_applied", {
+      type: "record_location_consequence",
+      locationId: quest.locationIds[0]!,
+      consequence: "A fresh surge advances the plaza threat while the player is elsewhere.",
+      reason: "This new world event independently advances the recorded threat."
+    });
+    const worldEventSequence = Number(listEvents(db, campaignId).at(-1)!.sequence);
+    const worldComplicationReason = "The advancing surge creates one more mild obstacle without closing the quest.";
+    await runPlayerAction(db, content, directorFor([
+      {
+        type: "manage_quest",
+        questId: quest.questId,
+        action: "apply_neglect_complication",
+        objectiveId: null,
+        outcomeId: null,
+        consequenceEventSequences: [worldEventSequence],
+        warningMethod: null,
+        warningSignal: null,
+        warningSourceNpcId: null,
+        neglectTrigger: "recorded_world_event_advances_threat",
+        neglectComplicationTool: "record_location_consequence",
+        reason: worldComplicationReason
+      },
+      {
+        type: "record_location_consequence",
+        locationId: quest.locationIds[0]!,
+        consequence: "Unstable debris narrows an approach but leaves several responses possible.",
+        reason: worldComplicationReason
+      }
+    ]), "quest-neglect", "continue elsewhere while the recorded threat advances");
+    const worldChanged = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
+    assert.equal(worldChanged.neglectHistory.length, 2);
+    assert.equal(worldChanged.state, "available");
+    assert.equal(worldChanged.failureReason, null);
   } finally { db.close(); }
 });

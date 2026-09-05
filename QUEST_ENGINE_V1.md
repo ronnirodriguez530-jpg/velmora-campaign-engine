@@ -106,7 +106,7 @@ Questlines may link and require one another as a spiderweb. A player is not limi
 
 ## Failure and neglect rule
 
-Inactivity alone never worsens a quest. A quest may react to neglect only after a recorded warning followed by the player's deliberate choice of another priority, or when a recorded world event advances the threat. The quest stores these allowed triggers and caps ordinary neglect effects at a proportional complication; warning-delivery and trigger-application events remain to be implemented.
+Inactivity alone never worsens a quest. A warning is recorded only when the player directly witnesses or is clearly told it, receives it from an established NPC, or encounters an obvious environmental warning. Neglect requires that received warning followed by a deliberate choice of another priority, or a recorded world event advancing the threat. Each neglect trigger must cite fresh evidence and pair atomically with exactly one bounded faction, NPC, location, or story-thread complication. Repeated neglect remains mild without verified exceptional stakes and cannot automatically create permanent failure.
 
 Ordinary generated quests begin recoverable and require at least one recorded route forward. Permanent failure is reserved for a warned deadline, irreversible choice, or major world event. Permanent-failure execution remains withheld until those exceptional stakes can be verified from durable engine records.
 

@@ -77,7 +77,7 @@ These parts exist so the engine can run, branch, and be tested. They may be repl
 ## Deferred content
 
 - Named quests and their actual milestones.
-- Final opening-quest content, modular quest-generation rules and content, neglect-trigger execution, quest classification, and quest-based advancement cadence.
+- Final opening-quest content, modular quest-generation rules and content, quest classification, and quest-based advancement cadence.
 - Final mechanics, statistics, and campaign placement for the curated powers, creatures, relics, and magic-tech content.
 - Final truth candidates and final outcomes.
 - Exact faction relationships and detailed faction leadership.

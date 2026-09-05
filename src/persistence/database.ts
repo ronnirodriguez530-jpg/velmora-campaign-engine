@@ -742,6 +742,8 @@ function questFromRow(row: Record<string, unknown>): QuestInstance {
       allowedTriggers: ["ignored_warning_after_deliberate_choice", "recorded_world_event_advances_threat"],
       maximumEffect: "proportional_complication"
     },
+    warningHistory: stored.warningHistory ?? [],
+    neglectHistory: stored.neglectHistory ?? [],
     isTurningPoint: Number(row.isTurningPoint) === 1,
     recoveryOfQuestId: stored.recoveryOfQuestId ?? null,
     recoveryPathUsed: stored.recoveryPathUsed ?? null,

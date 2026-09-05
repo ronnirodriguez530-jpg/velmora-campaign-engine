@@ -211,6 +211,7 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
   if (!["recoverable", "warned_deadline", "irreversible_choice", "major_world_event"].includes(input.failureMode)) throw new Error("Unknown quest failure mode");
   if (input.state !== "locked" && input.state !== "available") throw new Error("A new quest must begin locked or available");
   if (input.failureReason !== null || input.failureEvidenceEventSequences.length !== 0) throw new Error("A new quest cannot begin with recorded failure evidence");
+  if (input.warningHistory.length !== 0 || input.neglectHistory.length !== 0) throw new Error("A new quest cannot begin with warning or neglect history");
   const sourceThread = listStoryThreads(db, campaignId).find((thread) => thread.threadId === input.sourceThreadId);
   if (!sourceThread) throw new Error(`Unknown quest source thread ${input.sourceThreadId}`);
   const unresolvedOnSourceThread = listQuestInstances(db, campaignId)
@@ -457,6 +458,8 @@ export function validateQuestManagement(
   const requiresObjective = request.action === "complete_objective" || request.action === "fail_objective";
   const requiresOutcome = request.action === "complete";
   const requiresConsequenceEvidence = request.action === "fail_from_consequence";
+  const recordsWarning = request.action === "record_warning";
+  const appliesNeglect = request.action === "apply_neglect_complication";
   requireText(request.reason, "Quest-management reason", 3, 400);
   if (requiresObjective !== (request.objectiveId !== null)) {
     throw new Error("This quest action has an invalid objective selection");
@@ -464,8 +467,15 @@ export function validateQuestManagement(
   if (requiresOutcome !== (request.outcomeId !== null)) {
     throw new Error("This quest action has an invalid outcome selection");
   }
-  if (!Array.isArray(request.consequenceEventSequences) || (!requiresConsequenceEvidence && request.consequenceEventSequences.length !== 0)) {
-    throw new Error("Only consequence-based route failure may cite consequence evidence");
+  if (!Array.isArray(request.consequenceEventSequences) || (!requiresConsequenceEvidence && !appliesNeglect && request.consequenceEventSequences.length !== 0)) {
+    throw new Error("Only consequence-based route failure or quest neglect may cite evidence");
+  }
+  if (recordsWarning !== (request.warningMethod !== null && request.warningSignal !== null)) {
+    throw new Error("Warning records require a method and an exact warning signal");
+  }
+  if (!recordsWarning && request.warningSourceNpcId !== null) throw new Error("Only a warning record may identify a warning source NPC");
+  if (appliesNeglect !== (request.neglectTrigger !== null && request.neglectComplicationTool !== null)) {
+    throw new Error("Quest neglect requires an approved trigger and one bounded complication tool");
   }
 
   if (request.action === "make_available") {
@@ -496,6 +506,37 @@ export function validateQuestManagement(
   } else if (request.action === "fail_from_consequence") {
     if (quest.state === "completed" || quest.state === "failed") throw new Error("Only an unresolved quest can be invalidated by consequences");
     validateConsequenceEvidence(db, campaignId, request.consequenceEventSequences, quest.createdTurn, "Route invalidation", quest);
+  } else if (request.action === "record_warning") {
+    if (quest.visibility !== "player" || quest.state === "locked" || quest.state === "completed" || quest.state === "failed") throw new Error("Only an unresolved player-known quest may record a received warning");
+    if (!quest.warningSignals.includes(request.warningSignal!)) throw new Error("A warning record must use an exact warning signal stored on the quest");
+    if (request.warningMethod === "established_npc_message") {
+      const establishedNpc = request.warningSourceNpcId && (
+        db.prepare("SELECT 1 FROM npc_records WHERE campaign_id = ? AND npc_id = ? AND lifecycle_state = 'current'").get(campaignId, request.warningSourceNpcId)
+        || db.prepare("SELECT 1 FROM character_state WHERE campaign_id = ? AND character_id = ?").get(campaignId, request.warningSourceNpcId)
+      );
+      if (!establishedNpc) {
+        throw new Error("An NPC warning message requires an established current NPC");
+      }
+    } else if (request.warningSourceNpcId !== null) {
+      throw new Error("Only an established-NPC message may identify a warning source NPC");
+    }
+  } else if (request.action === "apply_neglect_complication") {
+    if (quest.visibility !== "player" || quest.state === "locked" || quest.state === "completed" || quest.state === "failed") throw new Error("Only an unresolved player-known quest may receive a neglect complication");
+    if (!quest.neglectPolicy.allowedTriggers.includes(request.neglectTrigger!)) throw new Error("This quest does not permit the requested neglect trigger");
+    if (request.consequenceEventSequences.some((sequence) => quest.neglectHistory.some((record) => record.evidenceEventSequences.includes(sequence)))) {
+      throw new Error("Each neglect complication requires new warning or world-event evidence");
+    }
+    if (request.neglectTrigger === "ignored_warning_after_deliberate_choice") {
+      if (request.consequenceEventSequences.length !== 1) throw new Error("Ignored-warning neglect requires exactly one recorded warning event");
+      const warning = db.prepare("SELECT turn, event_type AS eventType, payload_json AS payloadJson FROM event_log WHERE campaign_id = ? AND sequence = ?")
+        .get(campaignId, request.consequenceEventSequences[0]) as { turn: number; eventType: string; payloadJson: string } | undefined;
+      const payload = warning ? JSON.parse(warning.payloadJson) as { questId?: string } : {};
+      if (!warning || warning.eventType !== "quest_warning_recorded" || warning.turn < quest.createdTurn || payload.questId !== quest.questId) {
+        throw new Error("Ignored-warning neglect must cite a received warning for this quest");
+      }
+    } else {
+      validateConsequenceEvidence(db, campaignId, request.consequenceEventSequences, quest.createdTurn, "Quest neglect", quest);
+    }
   }
   return quest;
 }
@@ -541,7 +582,7 @@ export function applyQuestManagement(
     updated = { ...quest, state: "failed", failureReason: request.reason, failureEvidenceEventSequences: [], updatedTurn: turn };
     eventType = "quest_failed_recoverably";
     payload = { ...payload, recoveryPaths: quest.recoveryPaths };
-  } else {
+  } else if (request.action === "fail_from_consequence") {
     updated = {
       ...quest,
       state: "failed",
@@ -551,6 +592,34 @@ export function applyQuestManagement(
     };
     eventType = "quest_failed_from_consequence";
     payload = { ...payload, reason: request.reason, consequenceEventSequences: request.consequenceEventSequences };
+  } else if (request.action === "record_warning") {
+    updated = {
+      ...quest,
+      warningHistory: [...quest.warningHistory, {
+        turn,
+        method: request.warningMethod!,
+        signal: request.warningSignal!,
+        sourceNpcId: request.warningSourceNpcId,
+        reason: request.reason
+      }],
+      updatedTurn: turn
+    };
+    eventType = "quest_warning_recorded";
+    payload = { ...payload, method: request.warningMethod, signal: request.warningSignal, sourceNpcId: request.warningSourceNpcId, reason: request.reason };
+  } else {
+    updated = {
+      ...quest,
+      neglectHistory: [...quest.neglectHistory, {
+        turn,
+        trigger: request.neglectTrigger!,
+        evidenceEventSequences: request.consequenceEventSequences,
+        complicationTool: request.neglectComplicationTool!,
+        reason: request.reason
+      }],
+      updatedTurn: turn
+    };
+    eventType = "quest_neglect_complication";
+    payload = { ...payload, trigger: request.neglectTrigger, evidenceEventSequences: request.consequenceEventSequences, complicationTool: request.neglectComplicationTool, reason: request.reason };
   }
 
   persistQuestInstance(db, updated);

@@ -51,6 +51,8 @@ function openingQuest(overrides: Partial<CreateQuestInput> = {}): CreateQuestInp
       allowedTriggers: ["ignored_warning_after_deliberate_choice", "recorded_world_event_advances_threat"],
       maximumEffect: "proportional_complication"
     },
+    warningHistory: [],
+    neglectHistory: [],
     recoveryOfQuestId: null,
     recoveryPathUsed: null,
     recoveryEvidenceEventSequences: [],

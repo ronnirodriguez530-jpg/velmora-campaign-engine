@@ -407,6 +407,22 @@ export type QuestNeglectPolicy = {
   maximumEffect: "proportional_complication";
 };
 
+export type QuestWarningReceipt = {
+  turn: number;
+  method: "directly_witnessed_or_clearly_told" | "established_npc_message" | "obvious_environmental_warning";
+  signal: string;
+  sourceNpcId: string | null;
+  reason: string;
+};
+
+export type QuestNeglectRecord = {
+  turn: number;
+  trigger: "ignored_warning_after_deliberate_choice" | "recorded_world_event_advances_threat";
+  evidenceEventSequences: number[];
+  complicationTool: "change_faction_condition" | "change_npc_reputation" | "record_location_consequence" | "manage_npc_turn" | "manage_story_thread";
+  reason: string;
+};
+
 export type QuestInstance = {
   campaignId: string;
   questId: string;
@@ -434,6 +450,8 @@ export type QuestInstance = {
   relationships: QuestRelationship[];
   routeProfile: QuestRouteProfile;
   neglectPolicy: QuestNeglectPolicy;
+  warningHistory: QuestWarningReceipt[];
+  neglectHistory: QuestNeglectRecord[];
   recoveryOfQuestId: string | null;
   recoveryPathUsed: string | null;
   recoveryEvidenceEventSequences: number[];
@@ -739,10 +757,15 @@ export type GenerateRecoveryQuestRequest = {
 export type ManageQuestRequest = {
   type: "manage_quest";
   questId: string;
-  action: "make_available" | "activate" | "complete_objective" | "fail_objective" | "complete" | "fail_recoverably" | "fail_from_consequence";
+  action: "make_available" | "activate" | "complete_objective" | "fail_objective" | "complete" | "fail_recoverably" | "fail_from_consequence" | "record_warning" | "apply_neglect_complication";
   objectiveId: string | null;
   outcomeId: string | null;
   consequenceEventSequences: number[];
+  warningMethod: "directly_witnessed_or_clearly_told" | "established_npc_message" | "obvious_environmental_warning" | null;
+  warningSignal: string | null;
+  warningSourceNpcId: string | null;
+  neglectTrigger: "ignored_warning_after_deliberate_choice" | "recorded_world_event_advances_threat" | null;
+  neglectComplicationTool: "change_faction_condition" | "change_npc_reputation" | "record_location_consequence" | "manage_npc_turn" | "manage_story_thread" | null;
   reason: string;
 };
 

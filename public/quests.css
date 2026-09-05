@@ -60,7 +60,9 @@
 .quest-stakes,
 .quest-recovery,
 .quest-outcome,
-.quest-failure {
+.quest-failure,
+.quest-warning,
+.quest-complication {
   color: #c8bdcf;
   line-height: 1.55;
 }
@@ -95,6 +97,8 @@
 .quest-recovery { padding: 12px; border-radius: 8px; background: #2a2113; color: #eed7a3; }
 .quest-outcome { padding: 12px; border-radius: 8px; background: #14271e; color: #bde7cc; }
 .quest-failure { padding: 12px; border-radius: 8px; background: #30191b; color: #f1b9bd; }
+.quest-warning { padding: 12px; border-radius: 8px; background: #312b16; color: #f4dea0; }
+.quest-complication { padding: 12px; border-radius: 8px; background: #2b211c; color: #e9c6b3; }
 
 @media (max-width: 620px) {
   .quest-card header { display: block; }

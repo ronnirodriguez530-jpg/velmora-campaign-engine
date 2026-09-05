@@ -60,6 +60,12 @@ async function requestValidPlan(
       if (questUpdates.length > 4) throw new Error("A turn may manage at most four quests");
       const questIds = questUpdates.map((request) => request.questId);
       if (new Set(questIds).size !== questIds.length) throw new Error("A quest may be managed at most once per turn");
+      const neglectUpdates = questUpdates.filter((request) => request.action === "apply_neglect_complication");
+      if (neglectUpdates.length > 1) throw new Error("A turn may apply at most one ordinary neglect complication");
+      for (const neglect of neglectUpdates) {
+        const matchingComplications = plan.toolRequests.filter((request) => request.type === neglect.neglectComplicationTool && "reason" in request && request.reason === neglect.reason);
+        if (matchingComplications.length !== 1) throw new Error("Quest neglect must pair with exactly one bounded complication tool using the same reason");
+      }
       for (const request of plan.toolRequests) validateToolRequest(db, content, context.campaignId, request);
       return plan;
     } catch (error) {
