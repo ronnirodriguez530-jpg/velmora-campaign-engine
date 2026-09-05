@@ -49,6 +49,8 @@ function openingQuest(overrides: Partial<CreateQuestInput> = {}): CreateQuestInp
     recoveryOfQuestId: null,
     recoveryPathUsed: null,
     recoveryEvidenceEventSequences: [],
+    failureReason: null,
+    failureEvidenceEventSequences: [],
     truthEvidenceIds: [],
     isTurningPoint: false,
     ...overrides

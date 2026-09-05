@@ -34,7 +34,7 @@ The seeded quest composer turns an active story thread into a validated test str
 - Follow-ups declare explicit prerequisite, parallel, optional-branch, or consequence relationships; no previous quest becomes a prerequisite automatically
 - Every generated quest defaults to recoverable failure, meaningful neglect triggers, and exactly two outcomes
 
-The composer currently proves that generated quest structures can be stored and validated. Flexible objective flow, explicit follow-up relationships, the hard two-unresolved-quest cap, and consequence-backed recovery are approved. The four formulas, meaningful primary/alternative distinction, route-invalidation evidence, generic recovery default, and authored placeholder text require user review before this becomes the approved campaign-flow generator.
+The composer currently proves that generated quest structures can be stored and validated. Flexible objective flow, explicit follow-up relationships, the hard two-unresolved-quest cap, consequence-backed recovery, evidence-backed route invalidation, and recoverable ordinary failure are approved. The four formulas, meaningful primary/alternative distinction, generic neglect trigger, and authored placeholder text require user review before this becomes the approved campaign-flow generator.
 
 ## Provisional checkpoint 3A
 
@@ -71,6 +71,10 @@ Recoverably failed quests can produce up to two simultaneously pursuable altered
 
 Recovery therefore preserves forward motion without erasing consequences or letting the Campaign Master use failure to invent a different main plot.
 
+## Approved route invalidation
+
+An unresolved route remains open when another route completes. It may be marked failed only when 1-4 cited durable world-consequence events recorded since that route began make its premise impossible. The failed route remains in the journal with its reason and evidence references; it is never deleted or silently closed. This transition and its history are rollback-safe.
+
 ## Provisional opening behavior in checkpoint 5
 
 The browser now exposes the player-visible quest ledger as a functional journal:
@@ -104,7 +108,7 @@ Questlines may link and require one another as a spiderweb. A player is not limi
 
 Inactivity alone never worsens a quest. A quest may react to neglect only through one of its recorded meaningful triggers.
 
-Recoverable failure requires at least one recorded route forward. Permanent failure is reserved for a warned deadline, irreversible choice, or major world event. Checkpoint 1 deliberately withholds permanent-failure execution until those causes can be verified from durable engine records.
+Ordinary generated quests begin recoverable and require at least one recorded route forward. Permanent failure is reserved for a warned deadline, irreversible choice, or major world event. Permanent-failure execution remains withheld until those exceptional stakes can be verified from durable engine records.
 
 ## Authority boundaries
 

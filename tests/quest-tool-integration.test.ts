@@ -9,7 +9,7 @@ import { MockDirector } from "../src/director/mock-director.ts";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { buildDirectorPlanningContext } from "../src/application/context-builder.ts";
 import { generateQuestFromThread } from "../src/application/quest-generator.ts";
-import { activateQuest, failQuestRecoverably, updateQuestObjective } from "../src/application/quest-system.ts";
+import { activateQuest, failQuestRecoverably, updateQuestObjective, validateQuestManagement } from "../src/application/quest-system.ts";
 import { runPlayerAction } from "../src/application/turn-orchestrator.ts";
 import { appendEvent, createCampaign, getFactionCondition, listEvents, listQuestInstances, openDatabase, persistQuestInstance, restorePreviousTurn } from "../src/persistence/database.ts";
 
@@ -65,6 +65,7 @@ test("Campaign Master can generate, activate, and advance an engine-owned quest"
       action: "activate",
       objectiveId: null,
       outcomeId: null,
+      consequenceEventSequences: [],
       reason: "The player accepted the available objective."
     }]), "quest-tool-generate", "commit to the generated quest");
     const active = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
@@ -77,6 +78,7 @@ test("Campaign Master can generate, activate, and advance an engine-owned quest"
       action: "complete_objective",
       objectiveId: active.objectives[0]!.objectiveId,
       outcomeId: null,
+      consequenceEventSequences: [],
       reason: "The player's completed action satisfied the current objective."
     }]), "quest-tool-generate", "complete the first objective");
     const advanced = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
@@ -97,6 +99,7 @@ test("quest completion and its validated world consequence commit in one turn", 
         action: "complete",
         objectiveId: null,
         outcomeId: quest.outcomes[0]!.outcomeId,
+        consequenceEventSequences: [],
         reason: "The player completed every objective and committed to the recorded direct outcome."
       },
       {
@@ -125,6 +128,7 @@ test("an invalid combined consequence plan leaves both quest and world state unc
         action: "complete",
         objectiveId: null,
         outcomeId: quest.outcomes[0]!.outcomeId,
+        consequenceEventSequences: [],
         reason: "The quest portion is valid but must not commit alone."
       },
       {
@@ -186,5 +190,74 @@ test("Campaign Master can keep two distinct recovery routes pursuable and rollba
     const restored = listQuestInstances(db, campaignId);
     assert.equal(restored.some((quest) => quest.recoveryOfQuestId === original.questId), false);
     assert.equal(restored.find((quest) => quest.questId === original.questId)?.state, "failed");
+  } finally { db.close(); }
+});
+
+test("an unresolved route is preserved unless cited consequences prove it impossible", async () => {
+  const { content, db, campaignId } = await setup("quest-route-invalidation");
+  try {
+    const primary = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    const alternative = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE", [{ questId: primary.questId, type: "parallel" }]);
+    assert.equal(primary.failureMode, "recoverable");
+    assert.equal(alternative.failureMode, "recoverable");
+
+    assert.throws(() => validateQuestManagement(db, campaignId, {
+      type: "manage_quest",
+      questId: alternative.questId,
+      action: "fail_from_consequence",
+      objectiveId: null,
+      outcomeId: null,
+      consequenceEventSequences: [],
+      reason: "No recorded consequence supports closing this route."
+    }), /requires 1-4 distinct consequence-event references/);
+    assert.equal(listQuestInstances(db, campaignId).find((quest) => quest.questId === alternative.questId)?.state, "available");
+
+    appendEvent(db, campaignId, 0, "tool_applied", {
+      type: "change_faction_condition",
+      factionId: "FAC-006",
+      delta: 1,
+      reason: "This is durable but unrelated to the opening route."
+    });
+    const unrelatedSequence = Number(listEvents(db, campaignId).at(-1)!.sequence);
+    assert.throws(() => validateQuestManagement(db, campaignId, {
+      type: "manage_quest",
+      questId: alternative.questId,
+      action: "fail_from_consequence",
+      objectiveId: null,
+      outcomeId: null,
+      consequenceEventSequences: [unrelatedSequence],
+      reason: "An unrelated faction change must not be enough to close this route."
+    }), /must directly concern the quest's recorded/);
+
+    appendEvent(db, campaignId, 0, "tool_applied", {
+      type: "record_location_consequence",
+      locationId: "LOC-COUNCIL-CROWN",
+      consequence: "The only passage supporting the alternative route collapses permanently.",
+      reason: "This recorded world change makes that route impossible."
+    });
+    const consequenceSequence = Number(listEvents(db, campaignId).at(-1)!.sequence);
+    await runPlayerAction(db, content, directorFor([{
+      type: "manage_quest",
+      questId: alternative.questId,
+      action: "fail_from_consequence",
+      objectiveId: null,
+      outcomeId: null,
+      consequenceEventSequences: [consequenceSequence],
+      reason: "The collapsed passage permanently removes the alternative route."
+    }]), "quest-route-invalidation", "accept that the alternate passage is gone");
+
+    const quests = listQuestInstances(db, campaignId);
+    const preservedPrimary = quests.find((quest) => quest.questId === primary.questId)!;
+    const failedAlternative = quests.find((quest) => quest.questId === alternative.questId)!;
+    assert.equal(preservedPrimary.state, "available");
+    assert.equal(failedAlternative.state, "failed");
+    assert.equal(failedAlternative.failureReason, "The collapsed passage permanently removes the alternative route.");
+    assert.deepEqual(failedAlternative.failureEvidenceEventSequences, [consequenceSequence]);
+
+    restorePreviousTurn(db, "quest-route-invalidation");
+    const restored = listQuestInstances(db, campaignId).find((quest) => quest.questId === alternative.questId)!;
+    assert.equal(restored.state, "available");
+    assert.equal(restored.failureReason, null);
+    assert.deepEqual(restored.failureEvidenceEventSequences, []);
   } finally { db.close(); }
 });

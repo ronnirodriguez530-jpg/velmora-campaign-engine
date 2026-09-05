@@ -82,6 +82,9 @@ function renderQuests(quests = []) {
       const selected = quest.outcomes.find((outcome) => outcome.outcomeId === quest.selectedOutcomeId);
       if (selected) { const outcome = document.createElement("p"); outcome.className = "quest-outcome"; outcome.textContent = `Outcome: ${selected.summary}`; node.append(outcome); }
     }
+    if (quest.state === "failed" && quest.failureReason) {
+      const failure = document.createElement("p"); failure.className = "quest-failure"; failure.textContent = `Failed: ${quest.failureReason}`; node.append(failure);
+    }
     return node;
   }));
 }

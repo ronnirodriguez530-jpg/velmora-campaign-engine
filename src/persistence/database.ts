@@ -736,7 +736,9 @@ function questFromRow(row: Record<string, unknown>): QuestInstance {
     isTurningPoint: Number(row.isTurningPoint) === 1,
     recoveryOfQuestId: stored.recoveryOfQuestId ?? null,
     recoveryPathUsed: stored.recoveryPathUsed ?? null,
-    recoveryEvidenceEventSequences: stored.recoveryEvidenceEventSequences ?? []
+    recoveryEvidenceEventSequences: stored.recoveryEvidenceEventSequences ?? [],
+    failureReason: stored.failureReason ?? null,
+    failureEvidenceEventSequences: stored.failureEvidenceEventSequences ?? []
   };
 }
 

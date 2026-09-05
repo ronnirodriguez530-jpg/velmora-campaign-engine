@@ -63,7 +63,7 @@ This file prevents engine scaffolding, tests, and generated output from silently
 - The provisional 15% Tear-arrival check and 70/23/7 rarity weights.
 - The four generic scene templates whose IDs begin with `TPL-SCAFFOLD`.
 - The four generic quest formulas in `src/application/quest-generator.ts`.
-- Generic neglect triggers and unverified route invalidation.
+- Generic neglect triggers.
 - Turning-point completion as the current automatic advancement trigger.
 - Simulation profiles and abstract milestones.
 
@@ -78,7 +78,7 @@ These parts exist so the engine can run, branch, and be tested. They may be repl
 ## Deferred content
 
 - Named quests and their actual milestones.
-- Final opening-quest content, modular quest-generation rules and content, meaningful primary/alternative route distinction, route-invalidation evidence, quest classification, and quest-based advancement cadence.
+- Final opening-quest content, modular quest-generation rules and content, meaningful primary/alternative route distinction, quest classification, and quest-based advancement cadence.
 - Final mechanics, statistics, and campaign placement for the curated powers, creatures, relics, and magic-tech content.
 - Final truth candidates and final outcomes.
 - Exact faction relationships and detailed faction leadership.

@@ -424,6 +424,8 @@ export type QuestInstance = {
   recoveryOfQuestId: string | null;
   recoveryPathUsed: string | null;
   recoveryEvidenceEventSequences: number[];
+  failureReason: string | null;
+  failureEvidenceEventSequences: number[];
   truthEvidenceIds: string[];
   isTurningPoint: boolean;
   selectedOutcomeId: string | null;
@@ -724,9 +726,10 @@ export type GenerateRecoveryQuestRequest = {
 export type ManageQuestRequest = {
   type: "manage_quest";
   questId: string;
-  action: "make_available" | "activate" | "complete_objective" | "fail_objective" | "complete" | "fail_recoverably";
+  action: "make_available" | "activate" | "complete_objective" | "fail_objective" | "complete" | "fail_recoverably" | "fail_from_consequence";
   objectiveId: string | null;
   outcomeId: string | null;
+  consequenceEventSequences: number[];
   reason: string;
 };
 

@@ -134,6 +134,8 @@ export function composeQuestFromThread(
     recoveryOfQuestId: null,
     recoveryPathUsed: null,
     recoveryEvidenceEventSequences: [],
+    failureReason: null,
+    failureEvidenceEventSequences: [],
     truthEvidenceIds: [],
     isTurningPoint: false
   };
@@ -220,7 +222,9 @@ export function composeRecoveryQuest(
     ],
     recoveryOfQuestId: failedQuest.questId,
     recoveryPathUsed: recoveryPath,
-    recoveryEvidenceEventSequences: consequenceEventSequences
+    recoveryEvidenceEventSequences: consequenceEventSequences,
+    failureReason: null,
+    failureEvidenceEventSequences: []
   };
 }
 

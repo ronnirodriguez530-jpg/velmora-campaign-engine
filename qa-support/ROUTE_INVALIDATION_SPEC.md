@@ -1,12 +1,12 @@
 # Route Invalidation Support Spec
 
-Status: support-layer design for implementation review. Non-canon and non-runtime until promoted.
+Status: approved runtime contract. The core transition is implemented; remaining stress cases below track deeper validation coverage.
 
 ## Problem
 
-Velmora now supports two simultaneous unresolved quests on one story thread and preserves parallel/optional routes by default. The missing resilience case is when a durable world consequence makes one unresolved route's premise impossible.
+Velmora supports two simultaneous unresolved quests on one story thread, preserves parallel/optional routes by default, and records when a durable world consequence makes one route's premise impossible.
 
-The engine currently has no distinct quest-management action for this condition. Using ordinary recoverable failure would blur two different causes:
+The engine uses a distinct quest-management action for this condition. Using ordinary recoverable failure would blur two different causes:
 
 - the player failed or neglected a route;
 - the world changed so the route no longer exists as a viable possibility.
@@ -21,23 +21,23 @@ The journal should preserve the route as failed history when consequences truly 
 4. Ordinary generated quests begin recoverable unless verified stakes justify permanence.
 5. Route invalidation must therefore be evidence-backed rather than discretionary.
 
-## Proposed management action
+## Implemented management action
 
 Add a distinct `manage_quest` action:
 
-`invalidate_route`
+`fail_from_consequence`
 
 Required fields:
 
 - `questId`: unresolved quest being invalidated.
-- `invalidationEvidenceEventSequences`: 1-4 durable event-log sequence IDs.
+- `consequenceEventSequences`: 1-4 durable event-log sequence IDs.
 - `reason`: concise causal explanation of why the cited consequences make the quest premise impossible.
 
 This is not a new quest state. The resulting journal state is still `failed` so history remains simple and player-readable.
 
 ## Validation contract
 
-`invalidate_route` may succeed only when all conditions below are true.
+`fail_from_consequence` may succeed only when all conditions below are true.
 
 ### Quest state
 
@@ -100,7 +100,7 @@ On success:
 1. Set quest `state` to `failed`.
 2. Preserve objectives exactly as historical state; do not pretend unfinished objectives were attempted.
 3. Preserve the quest in the journal.
-4. Append a dedicated event such as `quest_route_invalidated` containing:
+4. Append the dedicated `quest_failed_from_consequence` event containing:
    - `questId`
    - `evidenceEventSequences`
    - `reason`
@@ -126,7 +126,7 @@ The Campaign Master should reason in this order:
 3. Is there durable evidence that makes the route impossible?
    - No -> preserve it.
 4. Is there sufficient causal evidence?
-   - Yes -> request `invalidate_route` with evidence.
+   - Yes -> request `fail_from_consequence` with evidence.
 
 Default behavior is preservation, not cleanup.
 
@@ -136,13 +136,13 @@ Default behavior is preservation, not cleanup.
 
 Create two parallel unresolved routes. Complete one. Assert the other remains unresolved.
 
-Expected: PASS without invalidation.
+Expected: PASS. Covered by the quest-tool integration suite.
 
 ### RI-02 Evidence-free invalidation rejected
 
-Attempt `invalidate_route` with zero evidence.
+Attempt `fail_from_consequence` with zero evidence.
 
-Expected: validation error; quest unchanged.
+Expected: PASS. Covered by the quest-tool integration suite.
 
 ### RI-03 Non-durable evidence rejected
 
@@ -154,13 +154,13 @@ Expected: validation error; quest unchanged.
 
 Cite a durable faction/reputation event unrelated to the route premise.
 
-Expected: validation must not permit arbitrary cleanup. If causal semantics cannot yet be machine-verified, classify this as requiring Director justification plus later semantic validation rather than silently treating any durable event as sufficient.
+Expected: PASS for direct entity/thread relevance plus a required Director justification. Deeper semantic evaluation remains part of sustained AI playtesting.
 
 ### RI-05 Premise-destroying location consequence
 
 Record a location consequence that makes the route's required target impossible, then invalidate.
 
-Expected: target quest becomes `failed`; parallel route remains untouched; dedicated invalidation event is recorded.
+Expected: PASS. Covered by the quest-tool integration suite, including rollback.
 
 ### RI-06 NPC premise invalidation
 

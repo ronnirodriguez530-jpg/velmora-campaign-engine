@@ -3,6 +3,7 @@ import type { CampaignStage, ManageQuestRequest, QuestInstance, QuestObjectiveSt
 import { appendEvent, listQuestInstances, listStoryThreads, persistQuestInstance } from "../persistence/database.ts";
 
 const STAGE_ORDER: Record<CampaignStage, number> = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 };
+const DURABLE_CONSEQUENCE_TOOLS = new Set(["change_faction_condition", "change_npc_reputation", "advance_faction_path", "record_location_consequence", "manage_npc_turn", "manage_story_thread", "create_story_thread"]);
 
 export type CreateQuestInput = Omit<QuestInstance, "campaignId" | "createdTurn" | "updatedTurn" | "selectedOutcomeId">;
 
@@ -87,6 +88,41 @@ function getQuest(db: DatabaseSync, campaignId: string, questId: string): QuestI
   return quest;
 }
 
+function validateConsequenceEvidence(
+  db: DatabaseSync,
+  campaignId: string,
+  sequences: number[],
+  minimumTurn: number,
+  label: string,
+  targetQuest?: QuestInstance
+): void {
+  if (sequences.length < 1 || sequences.length > 4 || new Set(sequences).size !== sequences.length) {
+    throw new Error(`${label} requires 1-4 distinct consequence-event references`);
+  }
+  for (const sequence of sequences) {
+    const evidence = db.prepare("SELECT turn, event_type AS eventType, payload_json AS payloadJson FROM event_log WHERE campaign_id = ? AND sequence = ?")
+      .get(campaignId, sequence) as { turn: number; eventType: string; payloadJson: string } | undefined;
+    if (!evidence || evidence.eventType !== "tool_applied" || evidence.turn < minimumTurn) {
+      throw new Error(`${label} evidence must be a recorded consequence from the relevant turn or later`);
+    }
+    const payload = JSON.parse(evidence.payloadJson) as { type?: string };
+    if (!payload.type || !DURABLE_CONSEQUENCE_TOOLS.has(payload.type)) {
+      throw new Error(`${label} evidence must reference a durable world consequence`);
+    }
+    if (targetQuest) {
+      const linkedNpcIds = new Set([...targetQuest.npcIds, ...(targetQuest.issuerId ? [targetQuest.issuerId] : [])]);
+      const related =
+        (typeof (payload as { locationId?: unknown }).locationId === "string" && targetQuest.locationIds.includes((payload as { locationId: string }).locationId)) ||
+        (typeof (payload as { factionId?: unknown }).factionId === "string" && targetQuest.factionIds.includes((payload as { factionId: string }).factionId)) ||
+        (typeof (payload as { characterId?: unknown }).characterId === "string" && linkedNpcIds.has((payload as { characterId: string }).characterId)) ||
+        (typeof (payload as { npcId?: unknown }).npcId === "string" && linkedNpcIds.has((payload as { npcId: string }).npcId)) ||
+        (typeof (payload as { threadId?: unknown }).threadId === "string" && (payload as { threadId: string }).threadId === targetQuest.sourceThreadId) ||
+        (typeof (payload as { basisId?: unknown }).basisId === "string" && (payload as { basisId: string }).basisId === targetQuest.sourceThreadId);
+      if (!related) throw new Error(`${label} evidence must directly concern the quest's recorded people, faction, location, or story thread`);
+    }
+  }
+}
+
 function commitQuestUpdate(db: DatabaseSync, quest: QuestInstance, eventType: string, payload: unknown): QuestInstance {
   db.exec("BEGIN IMMEDIATE");
   try {
@@ -163,6 +199,7 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
   if (!Object.hasOwn(STAGE_ORDER, input.minimumStage) || !Object.hasOwn(STAGE_ORDER, input.maximumStage)) throw new Error("Unknown quest campaign stage");
   if (!["recoverable", "warned_deadline", "irreversible_choice", "major_world_event"].includes(input.failureMode)) throw new Error("Unknown quest failure mode");
   if (input.state !== "locked" && input.state !== "available") throw new Error("A new quest must begin locked or available");
+  if (input.failureReason !== null || input.failureEvidenceEventSequences.length !== 0) throw new Error("A new quest cannot begin with recorded failure evidence");
   const sourceThread = listStoryThreads(db, campaignId).find((thread) => thread.threadId === input.sourceThreadId);
   if (!sourceThread) throw new Error(`Unknown quest source thread ${input.sourceThreadId}`);
   const unresolvedOnSourceThread = listQuestInstances(db, campaignId)
@@ -200,24 +237,14 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
     if (existingRecoveries.some((quest) => quest.recoveryPathUsed === input.recoveryPathUsed)) {
       throw new Error("This recovery path already has an altered quest");
     }
-    const failureEvents = db.prepare("SELECT sequence, turn, payload_json AS payloadJson FROM event_log WHERE campaign_id = ? AND event_type = 'quest_failed_recoverably' ORDER BY sequence")
+    const failureEvents = db.prepare("SELECT sequence, turn, payload_json AS payloadJson FROM event_log WHERE campaign_id = ? AND event_type IN ('quest_failed_recoverably', 'quest_failed_from_consequence') ORDER BY sequence")
       .all(campaignId) as Array<{ sequence: number; turn: number; payloadJson: string }>;
     const failureEvent = failureEvents.find((event) => {
       const payload = JSON.parse(event.payloadJson) as { questId?: string };
       return payload.questId === failedSource.questId;
     });
     if (!failureEvent) throw new Error("A recovery quest requires a recorded failure event");
-    if (input.recoveryEvidenceEventSequences.length < 1 || input.recoveryEvidenceEventSequences.length > 4 || new Set(input.recoveryEvidenceEventSequences).size !== input.recoveryEvidenceEventSequences.length) {
-      throw new Error("A recovery quest requires 1-4 distinct consequence-event references");
-    }
-    const allowedConsequenceTools = new Set(["change_faction_condition", "change_npc_reputation", "advance_faction_path", "record_location_consequence", "manage_npc_turn", "manage_story_thread", "create_story_thread"]);
-    for (const sequence of input.recoveryEvidenceEventSequences) {
-      const evidence = db.prepare("SELECT turn, event_type AS eventType, payload_json AS payloadJson FROM event_log WHERE campaign_id = ? AND sequence = ?")
-        .get(campaignId, sequence) as { turn: number; eventType: string; payloadJson: string } | undefined;
-      if (!evidence || evidence.eventType !== "tool_applied" || evidence.turn < failureEvent.turn) throw new Error("Recovery evidence must be a recorded consequence from the failure turn or later");
-      const payload = JSON.parse(evidence.payloadJson) as { type?: string };
-      if (!payload.type || !allowedConsequenceTools.has(payload.type)) throw new Error("Recovery evidence must reference a durable world consequence");
-    }
+    validateConsequenceEvidence(db, campaignId, input.recoveryEvidenceEventSequences, failureEvent.turn, "Recovery");
   } else if (input.recoveryEvidenceEventSequences.length !== 0) {
     throw new Error("Only an altered recovery quest may cite recovery evidence");
   }
@@ -378,7 +405,13 @@ export function failQuestRecoverably(db: DatabaseSync, campaignId: string, quest
     throw new Error("Permanent quest failure requires future verified deadline, choice, or world-event authority");
   }
   const turn = getCampaignState(db, campaignId).turn;
-  const updated: QuestInstance = { ...quest, state: "failed", updatedTurn: turn };
+  const updated: QuestInstance = {
+    ...quest,
+    state: "failed",
+    failureReason: "The attempted route failed, but its recorded recovery paths remain possible.",
+    failureEvidenceEventSequences: [],
+    updatedTurn: turn
+  };
   return commitQuestUpdate(db, updated, "quest_failed_recoverably", { questId, recoveryPaths: quest.recoveryPaths });
 }
 
@@ -391,11 +424,16 @@ export function validateQuestManagement(
   const campaign = getCampaignState(db, campaignId);
   const requiresObjective = request.action === "complete_objective" || request.action === "fail_objective";
   const requiresOutcome = request.action === "complete";
+  const requiresConsequenceEvidence = request.action === "fail_from_consequence";
+  requireText(request.reason, "Quest-management reason", 3, 400);
   if (requiresObjective !== (request.objectiveId !== null)) {
     throw new Error("This quest action has an invalid objective selection");
   }
   if (requiresOutcome !== (request.outcomeId !== null)) {
     throw new Error("This quest action has an invalid outcome selection");
+  }
+  if (!Array.isArray(request.consequenceEventSequences) || (!requiresConsequenceEvidence && request.consequenceEventSequences.length !== 0)) {
+    throw new Error("Only consequence-based route failure may cite consequence evidence");
   }
 
   if (request.action === "make_available") {
@@ -423,6 +461,9 @@ export function validateQuestManagement(
     if (quest.failureMode !== "recoverable" || quest.recoveryPaths.length === 0) {
       throw new Error("Permanent quest failure requires verified deadline, choice, or world-event authority");
     }
+  } else if (request.action === "fail_from_consequence") {
+    if (quest.state === "completed" || quest.state === "failed") throw new Error("Only an unresolved quest can be invalidated by consequences");
+    validateConsequenceEvidence(db, campaignId, request.consequenceEventSequences, quest.createdTurn, "Route invalidation", quest);
   }
   return quest;
 }
@@ -464,10 +505,20 @@ export function applyQuestManagement(
     updated = { ...quest, objectives, state: "completed", selectedOutcomeId: request.outcomeId, updatedTurn: turn };
     eventType = "quest_completed";
     payload = { ...payload, outcomeId: request.outcomeId };
-  } else {
-    updated = { ...quest, state: "failed", updatedTurn: turn };
+  } else if (request.action === "fail_recoverably") {
+    updated = { ...quest, state: "failed", failureReason: request.reason, failureEvidenceEventSequences: [], updatedTurn: turn };
     eventType = "quest_failed_recoverably";
     payload = { ...payload, recoveryPaths: quest.recoveryPaths };
+  } else {
+    updated = {
+      ...quest,
+      state: "failed",
+      failureReason: request.reason,
+      failureEvidenceEventSequences: request.consequenceEventSequences,
+      updatedTurn: turn
+    };
+    eventType = "quest_failed_from_consequence";
+    payload = { ...payload, reason: request.reason, consequenceEventSequences: request.consequenceEventSequences };
   }
 
   persistQuestInstance(db, updated);
