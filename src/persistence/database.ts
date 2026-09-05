@@ -721,6 +721,7 @@ function questFromRow(row: Record<string, unknown>): QuestInstance {
   const objectives = stored.objectives.map((objective, index, all) => ({
     ...objective,
     required: objective.required ?? true,
+    isMajorObjective: objective.isMajorObjective ?? false,
     dependsOnObjectiveIds: objective.dependsOnObjectiveIds ?? (index === 0 ? [] : [all[index - 1]!.objectiveId]),
     branchGroupId: objective.branchGroupId ?? null
   }));

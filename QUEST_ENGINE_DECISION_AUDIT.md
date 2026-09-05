@@ -43,10 +43,13 @@ This audit separates protected user-approved direction, implementation-only mach
 
 1. **Module rules and content:** The approved modular direction still needs rules for which ingredients may be created, combined, and validated. The current four formulas and generic text remain scaffolding.
 2. **Recovery content:** Evidence, timing, maximum, distinct paths, simultaneous pursuit, and thread-cap interaction are approved. Module rules must still prove that generated altered routes are meaningfully different and caused by the cited consequences.
-3. **Quest classifications:** Thread kinds automatically map to main, faction, side, personal, dynamic, and fragment quest types.
-4. **Progression trigger:** A completed turning-point quest currently awards one advancement opportunity; the major-objective rule is unfinished.
-5. **Per-turn limits:** The Campaign Master may currently generate at most two quests and manage at most four in one committed turn.
-6. **Generic authored text:** Generated objective wording, stakes, outcomes, consequence seeds, and opening quest text are implementation-written scaffolding rather than approved content pools.
+3. **Generic authored text:** Generated objective wording, stakes, outcomes, consequence seeds, and opening quest text are implementation-written scaffolding rather than approved content pools.
+
+## Approved in review batch 3
+
+- **Fixed classification:** A quest permanently inherits its type from its source thread: main, faction, side, personal, dynamic, or fragment. Later changes in importance create linked consequences or follow-ups rather than reclassifying historical quests.
+- **Paced advancement:** One designated major objective or full completion of a verified turning point may award one advancement opportunity. The first quest from a high-urgency thread may contain one required major objective; later quests on that thread do not receive one automatically. A quest can award at most once.
+- **Per-turn quest limits:** One ordinary quest may be generated per turn. Up to two new quests are permitted only when both are altered recovery routes. Ordinary and recovery generation cannot be mixed, and no more than three quest updates may occur in one turn.
 
 ## Review order
 
@@ -54,10 +57,9 @@ Review decisions in dependency order:
 
 1. Define module rules and content boundaries.
 2. Review thread concurrency, follow-up linking, failure, and recovery.
-3. Review quest classification, progression rewards, and Campaign Master limits.
-4. Replace provisional text and formulas with approved generative rules and content boundaries.
-5. Re-run sustained quest simulations before combat work begins.
+3. Replace provisional text and formulas with approved generative rules and content boundaries.
+4. Re-run sustained quest simulations before combat work begins.
 
 ## Implementation boundary
 
-Until review is complete, the current quest composer proves storage and validation only. It is not the approved final campaign-flow generator. Later systems may rely on its data contracts, flexible objective graph, and safety boundaries, but not on its provisional story formulas, module text, thread concurrency, follow-up linkage, recovery cadence, or reward cadence.
+Until review is complete, the current quest composer proves storage and validation only. It is not the approved final campaign-flow generator. Later systems may rely on its data contracts, flexible objective graph, safety boundaries, concurrency, follow-up linkage, recovery cadence, fixed classification, and reward cadence, but not on its provisional story formulas or module text.

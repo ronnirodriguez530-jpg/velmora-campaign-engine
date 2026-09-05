@@ -58,25 +58,43 @@ export function awardProgressionMilestone(
   return { milestone, progression: getPlayerProgression(db, campaignId) };
 }
 
-export function awardCompletedTurningPointMilestone(
+export function awardQuestAdvancementOpportunity(
   db: DatabaseSync,
   campaignId: string,
-  questId: string
+  questId: string,
+  majorObjectiveId: string | null = null
 ): { milestone: ProgressionMilestone; progression: PlayerProgression } {
   const quest = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === questId);
   if (!quest) throw new Error(`Unknown quest milestone source ${questId}`);
-  if (quest.state !== "completed" || !quest.selectedOutcomeId) {
-    throw new Error("A quest milestone requires a completed quest with a recorded outcome");
-  }
-  if (!quest.isTurningPoint) {
-    throw new Error("Only a verified turning-point quest can award quest progression automatically");
+  let summary: string;
+  if (majorObjectiveId !== null) {
+    const objective = quest.objectives.find((candidate) => candidate.objectiveId === majorObjectiveId);
+    if (!objective || !objective.isMajorObjective) throw new Error("Quest advancement requires its designated major objective");
+    if (objective.state !== "completed") throw new Error("A major objective must be completed before it awards advancement");
+    summary = `Completed the major objective: ${objective.summary}`;
+  } else {
+    if (quest.state !== "completed" || !quest.selectedOutcomeId) {
+      throw new Error("A turning-point milestone requires a completed quest with a recorded outcome");
+    }
+    if (!quest.isTurningPoint) {
+      throw new Error("Quest advancement requires a designated major objective or verified turning point");
+    }
+    summary = `Completed the turning point: ${quest.title}.`;
   }
   return awardProgressionMilestone(db, campaignId, {
     milestoneId: `MS-${quest.questId}`,
     basisType: "quest",
     basisId: quest.questId,
-    summary: `Completed the turning point: ${quest.title}.`
+    summary
   });
+}
+
+export function awardCompletedTurningPointMilestone(
+  db: DatabaseSync,
+  campaignId: string,
+  questId: string
+): { milestone: ProgressionMilestone; progression: PlayerProgression } {
+  return awardQuestAdvancementOpportunity(db, campaignId, questId);
 }
 
 export function applyCharacterAdvancement(

@@ -379,6 +379,7 @@ export type QuestObjective = {
   summary: string;
   state: QuestObjectiveState;
   required: boolean;
+  isMajorObjective: boolean;
   dependsOnObjectiveIds: string[];
   branchGroupId: string | null;
 };

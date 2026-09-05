@@ -1,9 +1,9 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { CreateQuestInput } from "./quest-system.ts";
-import type { QuestRelationship, QuestType, StoryThread, VelmoraContent } from "../domain/types.ts";
+import type { QuestRelationship, StoryThread, VelmoraContent } from "../domain/types.ts";
 import { listQuestInstances, listStoryThreads } from "../persistence/database.ts";
 import { seededChoice } from "./seeded-random.ts";
-import { applyQuestCreation, createQuestInstance, validateQuestCreation } from "./quest-system.ts";
+import { applyQuestCreation, createQuestInstance, QUEST_TYPE_BY_THREAD_KIND, validateQuestCreation } from "./quest-system.ts";
 
 type QuestPattern = {
   key: string;
@@ -59,15 +59,6 @@ const QUEST_PATTERNS: QuestPattern[] = [
   }
 ];
 
-function questTypeForThread(thread: StoryThread): QuestType {
-  if (thread.kind === "main") return "main";
-  if (thread.kind === "faction") return "faction";
-  if (thread.kind === "personal") return "personal";
-  if (thread.kind === "dynamic") return "dynamic";
-  if (thread.kind === "mystery") return "fragment";
-  return "side";
-}
-
 function bounded(value: string, maximum: number): string {
   if (value.length <= maximum) return value;
   return `${value.slice(0, maximum - 1).trimEnd()}…`;
@@ -112,6 +103,7 @@ export function composeQuestFromThread(
   }
   const locationIds = thread.locationIds.length > 0 ? thread.locationIds : [campaign.currentLocationId];
   const sequence = existing.length + 1;
+  const hasPacedMajorObjective = thread.urgency >= 2 && existing.length === 0;
   const candidatePatterns = unresolved.length === 1
     ? QUEST_PATTERNS.filter((candidate) => isMeaningfullyDistinct(unresolved[0]!, candidate, locationIds, thread.npcIds))
     : QUEST_PATTERNS;
@@ -124,7 +116,7 @@ export function composeQuestFromThread(
   const recoveryPaths = thread.recoveryPaths.length > 0
     ? thread.recoveryPaths.slice(0, 4)
     : [`A changed condition tied to ${thread.title} must create another route forward.`];
-  const questType = questTypeForThread(thread);
+  const questType = QUEST_TYPE_BY_THREAD_KIND[thread.kind];
   if (questType === "faction" && thread.factionIds.length === 0) {
     throw new Error("A faction story thread requires a faction before quest composition");
   }
@@ -145,8 +137,8 @@ export function composeQuestFromThread(
     factionIds,
     npcIds: thread.npcIds,
     objectives: [
-      { objectiveId: `OBJ-${baseId}-${String(sequence).padStart(2, "0")}-A`, summary: bounded(pattern.firstObjective(thread.title), 240), state: "pending", required: true, dependsOnObjectiveIds: [], branchGroupId: null },
-      { objectiveId: `OBJ-${baseId}-${String(sequence).padStart(2, "0")}-B`, summary: bounded(pattern.secondObjective(thread.title), 240), state: "pending", required: true, dependsOnObjectiveIds: [`OBJ-${baseId}-${String(sequence).padStart(2, "0")}-A`], branchGroupId: null }
+      { objectiveId: `OBJ-${baseId}-${String(sequence).padStart(2, "0")}-A`, summary: bounded(pattern.firstObjective(thread.title), 240), state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: [], branchGroupId: null },
+      { objectiveId: `OBJ-${baseId}-${String(sequence).padStart(2, "0")}-B`, summary: bounded(pattern.secondObjective(thread.title), 240), state: "pending", required: true, isMajorObjective: hasPacedMajorObjective, dependsOnObjectiveIds: [`OBJ-${baseId}-${String(sequence).padStart(2, "0")}-A`], branchGroupId: null }
     ],
     stakes: bounded(`If no one meaningfully responds, the pressure represented by ${thread.title} may change the people, factions, or locations already involved.`, 300),
     outcomes: [

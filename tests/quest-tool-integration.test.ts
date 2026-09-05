@@ -448,3 +448,47 @@ test("recorded warnings permit only mild evidence-backed neglect complications",
     assert.equal(worldChanged.failureReason, null);
   } finally { db.close(); }
 });
+
+test("one turn permits one ordinary quest or two recoveries and at most three quest updates", async () => {
+  const { content, db } = await setup("quest-turn-bounds");
+  const managementRequest = (questId: string): ToolRequest => ({
+    type: "manage_quest",
+    questId,
+    action: "activate",
+    objectiveId: null,
+    outcomeId: null,
+    consequenceEventSequences: [],
+    warningMethod: null,
+    warningSignal: null,
+    warningSourceNpcId: null,
+    neglectTrigger: null,
+    neglectComplicationTool: null,
+    reason: "Test the approved per-turn quest update boundary."
+  });
+  try {
+    await assert.rejects(
+      () => runPlayerAction(db, content, directorFor([
+        { type: "generate_quest", sourceThreadId: "THREAD-OPENING-PRESSURE", relationships: [], reason: "First ordinary quest." },
+        { type: "generate_quest", sourceThreadId: "THREAD-FACTION-PRESSURE", relationships: [], reason: "Second ordinary quest." }
+      ]), "quest-turn-bounds", "try to create two ordinary quests"),
+      /at most one new quest/
+    );
+    await assert.rejects(
+      () => runPlayerAction(db, content, directorFor([
+        { type: "generate_quest", sourceThreadId: "THREAD-OPENING-PRESSURE", relationships: [], reason: "Ordinary route." },
+        { type: "generate_recovery_quest", failedQuestId: "QUEST-MISSING", recoveryPath: "Missing path", consequenceEventSequences: [1], reason: "Recovery route." }
+      ]), "quest-turn-bounds", "try to mix ordinary and recovery generation"),
+      /cannot mix ordinary and recovery quest generation/
+    );
+    await assert.rejects(
+      () => runPlayerAction(db, content, directorFor([
+        managementRequest("QUEST-A"),
+        managementRequest("QUEST-B"),
+        managementRequest("QUEST-C"),
+        managementRequest("QUEST-D")
+      ]), "quest-turn-bounds", "try to update four quests"),
+      /at most three quests/
+    );
+    assert.equal(listQuestInstances(db, (db.prepare("SELECT id FROM campaigns WHERE name = ?").get("quest-turn-bounds") as { id: string }).id).length, 0);
+  } finally { db.close(); }
+});

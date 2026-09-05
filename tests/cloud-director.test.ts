@@ -217,7 +217,7 @@ test("cloud Campaign Master presents a grounded story scene", async () => {
   assert.equal(presentation.suggestedActions.length, 2);
 });
 
-test("cloud Director can request engine-owned quest generation and recovery", async () => {
+test("cloud Director keeps ordinary and recovery quest generation in separate turns", async () => {
   const fakeFetch = async () => new Response(JSON.stringify({
     output: [{
       type: "function_call",
@@ -234,11 +234,7 @@ test("cloud Director can request engine-owned quest generation and recovery", as
         npcUpdates: [],
         storyThreadUpdates: [],
         storyThreadCreations: [],
-        questGenerations: [{
-          sourceThreadId: "THREAD-OPENING-PRESSURE",
-          relationships: [],
-          reason: "The active visible crisis needs a playable quest structure."
-        }],
+        questGenerations: [],
         questRecoveries: [{
           failedQuestId: "QUEST-OPENING-PRESSURE-01",
           recoveryPath: "A survivor can reveal an altered route.",
@@ -252,7 +248,6 @@ test("cloud Director can request engine-owned quest generation and recovery", as
     }]
   }), { status: 200, headers: { "content-type": "application/json" } });
   const plan = await new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch }).planTurn(context, "respond to the crisis");
-  assert.equal(plan.toolRequests.length, 2);
-  assert.equal(plan.toolRequests[0]?.type, "generate_quest");
-  assert.equal(plan.toolRequests[1]?.type, "generate_recovery_quest");
+  assert.equal(plan.toolRequests.length, 1);
+  assert.equal(plan.toolRequests[0]?.type, "generate_recovery_quest");
 });

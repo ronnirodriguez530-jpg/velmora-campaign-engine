@@ -53,11 +53,13 @@ test("a thread permits one primary and one alternative unresolved quest, then en
   const { content, db, campaignId } = await setup("quest-sequence", "quest-sequence-seed");
   try {
     const first = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    assert.equal(first.objectives.filter((objective) => objective.isMajorObjective).length, 1);
     assert.throws(
       () => generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE"),
       /must explicitly link to the existing route/
     );
     const alternative = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE", [{ questId: first.questId, type: "optional_branch" }]);
+    assert.equal(alternative.objectives.some((objective) => objective.isMajorObjective), false);
     assert.notEqual(alternative.questId, first.questId);
     assert.equal(
       (alternative.routeProfile.approachKey !== first.routeProfile.approachKey && alternative.routeProfile.tradeoffKey !== first.routeProfile.tradeoffKey)

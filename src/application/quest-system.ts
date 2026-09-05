@@ -1,9 +1,18 @@
 import type { DatabaseSync } from "node:sqlite";
-import type { CampaignStage, ManageQuestRequest, QuestInstance, QuestObjectiveState, StoryThread, VelmoraContent } from "../domain/types.ts";
+import type { CampaignStage, ManageQuestRequest, QuestInstance, QuestObjectiveState, QuestType, StoryThread, StoryThreadKind, VelmoraContent } from "../domain/types.ts";
 import { appendEvent, listQuestInstances, listStoryThreads, persistQuestInstance } from "../persistence/database.ts";
 
 const STAGE_ORDER: Record<CampaignStage, number> = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 };
 const DURABLE_CONSEQUENCE_TOOLS = new Set(["change_faction_condition", "change_npc_reputation", "advance_faction_path", "record_location_consequence", "manage_npc_turn", "manage_story_thread", "create_story_thread"]);
+
+export const QUEST_TYPE_BY_THREAD_KIND: Record<StoryThreadKind, QuestType> = {
+  main: "main",
+  faction: "faction",
+  side: "side",
+  personal: "personal",
+  mystery: "fragment",
+  dynamic: "dynamic"
+};
 
 export type CreateQuestInput = Omit<QuestInstance, "campaignId" | "createdTurn" | "updatedTurn" | "selectedOutcomeId">;
 
@@ -234,7 +243,9 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
     }
   }
   if (input.visibility !== sourceThread.visibility) throw new Error("A quest must inherit its source thread visibility");
-  if (input.questType === "main" && sourceThread.kind !== "main") throw new Error("A main quest must originate from an existing main story thread");
+  if (input.questType !== QUEST_TYPE_BY_THREAD_KIND[sourceThread.kind]) {
+    throw new Error(`A quest must keep the fixed origin type of its ${sourceThread.kind} story thread`);
+  }
   if (input.questType === "faction" && input.factionIds.length === 0) throw new Error("A faction quest requires at least one faction");
   if ((input.recoveryOfQuestId === null) !== (input.recoveryPathUsed === null)) {
     throw new Error("A recovery quest requires both its failed source and exact recovery path");
@@ -282,10 +293,17 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
     throw new Error("A generated quest must be valid for the current campaign stage");
   }
   if (input.objectives.length < 1 || input.objectives.length > 5) throw new Error("A quest requires 1-5 objectives");
+  if (input.objectives.filter((objective) => objective.isMajorObjective).length > 1) {
+    throw new Error("A quest may designate at most one major objective for paced advancement");
+  }
+  if (input.objectives.some((objective) => objective.isMajorObjective && !objective.required)) {
+    throw new Error("A major objective must be required");
+  }
   if (new Set(input.objectives.map((objective) => objective.objectiveId)).size !== input.objectives.length) throw new Error("Quest objective IDs must be unique");
   for (const objective of input.objectives) {
     if (!stableId(objective.objectiveId, "OBJ")) throw new Error("Quest objective IDs must be stable OBJ identifiers");
     requireText(objective.summary, "Quest objective", 3, 240);
+    if (typeof objective.isMajorObjective !== "boolean") throw new Error("Quest objectives must declare whether they are major");
     if (objective.state !== "pending") throw new Error("New quest objectives must begin pending");
   }
   validateObjectiveGraph(input.objectives);

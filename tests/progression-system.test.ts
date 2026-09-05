@@ -6,7 +6,7 @@ import { join, resolve } from "node:path";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { buildPerspectiveContext } from "../src/application/context-builder.ts";
 import { createPlayerCharacter, type PlayerCharacterInput } from "../src/application/player-character.ts";
-import { applyCharacterAdvancement, awardCompletedTurningPointMilestone, awardProgressionMilestone } from "../src/application/progression-system.ts";
+import { applyCharacterAdvancement, awardCompletedTurningPointMilestone, awardProgressionMilestone, awardQuestAdvancementOpportunity } from "../src/application/progression-system.ts";
 import { generateQuestFromThread } from "../src/application/quest-generator.ts";
 import { activateQuest, completeQuest, createQuestInstance, updateQuestObjective } from "../src/application/quest-system.ts";
 import { captureSnapshot, createCampaign, getPlayerCharacter, getPlayerProgression, insertCheckpoint, listCharacterAdvancements, listProgressionMilestones, openDatabase, restorePreviousTurn } from "../src/persistence/database.ts";
@@ -115,15 +115,29 @@ test("one-turn rollback restores progression ledger and character improvements",
   } finally { db.close(); }
 });
 
-test("automatic quest progression requires a completed verified turning point", async () => {
+test("quest progression accepts one paced major objective or a completed turning point", async () => {
   const { content, db, campaignId } = await setup("progression-turning-point");
   try {
     const ordinary = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    const majorObjective = ordinary.objectives.find((objective) => objective.isMajorObjective);
+    assert.ok(majorObjective, "The first urgent quest should receive one engine-paced major objective");
     assert.throws(
       () => awardCompletedTurningPointMilestone(db, campaignId, ordinary.questId),
       /completed quest with a recorded outcome/
     );
+    activateQuest(db, campaignId, ordinary.questId);
+    for (const objective of ordinary.objectives) {
+      updateQuestObjective(db, campaignId, ordinary.questId, objective.objectiveId, "completed");
+    }
+    const majorAward = awardQuestAdvancementOpportunity(db, campaignId, ordinary.questId, majorObjective.objectiveId);
+    assert.equal(majorAward.progression.availableAdvancements, 1);
+    assert.throws(
+      () => awardQuestAdvancementOpportunity(db, campaignId, ordinary.questId, majorObjective.objectiveId),
+      /already been awarded/
+    );
     db.prepare("DELETE FROM quest_instances WHERE campaign_id = ? AND quest_id = ?").run(campaignId, ordinary.questId);
+    db.prepare("DELETE FROM progression_milestones WHERE campaign_id = ?").run(campaignId);
+    db.prepare("UPDATE player_progression SET earned_advancements = 0, spent_advancements = 0 WHERE campaign_id = ?").run(campaignId);
 
     const turningPoint = createQuestInstance(db, content, campaignId, {
       ...ordinary,

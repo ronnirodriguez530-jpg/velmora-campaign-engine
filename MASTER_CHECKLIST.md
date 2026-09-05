@@ -193,7 +193,7 @@ Implemented item scope: eight bounded definitions prove every first-release item
 - [ ] Ability and equipment progression connections
 - [ ] Later skill-tree module kept separate until prerequisites exist
 
-Implemented progression scope: each unique validated major milestone awards one advancement opportunity. The Quest Engine can verify completed turning-point sources; major-objective designation remains unfinished. See `PROGRESSION_SYSTEM_V1.md`.
+Implemented progression scope: each unique validated major milestone awards one advancement opportunity. The Quest Engine verifies one engine-designated major objective or a fully completed turning point and prevents duplicate rewards from the same quest. The first quest from a high-urgency thread may receive one major objective; ordinary follow-ups do not receive one automatically. See `PROGRESSION_SYSTEM_V1.md`.
 
 ### 12. Quest Engine — Partial
 
@@ -212,18 +212,19 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] Approved neglect contract permits only ignored recorded warnings after a deliberate choice or recorded threat-advancing events, with proportional complications as the normal ceiling
 - [x] Durable player-received warning history and fresh-evidence neglect events, each paired atomically with one bounded complication
 - [x] Exactly two major outcomes for normal quests and three only for urgency-backed turning points
-- [x] Main, faction, side, personal, dynamic, and fragment classification
+- [x] Fixed origin classification: main, faction, side, personal, dynamic, and fragment types permanently inherit from source-thread kind
 - [x] Player and Director perspective filtering with bounded retrieval
 - [x] Complete quest-ledger snapshot, rollback, and legacy snapshot compatibility
 - [ ] Approved seeded main, faction, side, personal, dynamic, and fragment quest generation from active story threads; current composer is provisional scaffolding pending `QUEST_ENGINE_DECISION_AUDIT.md`
 - [x] Campaign Master quest tools and atomic outcome/consequence application
-- [ ] Approved turning-point/major-objective reward cadence and altered recovery-quest generation; current mechanics are provisional pending review
-- [ ] Major-objective milestone designation and rewards
+- [x] Approved turning-point/major-objective reward cadence and altered recovery-quest generation
+- [x] One engine-designated major objective on the first quest from a high-urgency thread, or full turning-point completion, may award one advancement per quest
+- [x] Per-turn quest limits: one ordinary generation, up to two recovery generations as a recovery-only exception, and at most three quest updates
 - [x] Functional Quest page and actionable notifications
 
-Implemented quest engineering: the durable contract, lifecycle, flexible objective graph, hard two-unresolved-quest-per-thread cap, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, evidence-backed route invalidation, recoverable ordinary failure, durable received warnings, mild evidence-backed neglect, player-visible browser journal, persistence, privacy, and rollback work. The first quest is correctly withheld until the future d6-and-attack opening flow. The current composer formulas, modular content, quest classification, and progression trigger remain provisional pending `QUEST_ENGINE_DECISION_AUDIT.md`. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+Implemented quest engineering: the durable contract, lifecycle, flexible objective graph, hard two-unresolved-quest-per-thread cap, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, evidence-backed route invalidation, recoverable ordinary failure, durable received warnings, mild evidence-backed neglect, fixed origin classification, paced quest advancement, player-visible browser journal, persistence, privacy, and rollback work. The first quest is correctly withheld until the future d6-and-attack opening flow. The current composer formulas and modular content remain provisional pending `QUEST_ENGINE_DECISION_AUDIT.md`. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
-Provisional progression bridge: the engine can validate a completed turning-point quest with a recorded outcome and prevent duplicate awards. The reward trigger and major-objective cadence require approval before they become final campaign rules.
+Approved progression bridge: the engine can validate one designated major objective or a completed turning point and prevent duplicate awards from the same quest.
 
 ### 13. Faction Engine — Partial scaffold
 
@@ -259,7 +260,7 @@ Provisional progression bridge: the engine can validate a completed turning-poin
 - [ ] Scene narration connected to quests, characters, factions, and consequences
 - [x] Player-known and Director-only story-thread retrieval separated so hidden planning truth is not sent to scene narration
 - [x] Hidden campaign blueprint retrieval included only in Director planning context
-- [x] Campaign Master thread-control requests are bounded to four per turn and committed atomically with rollback support
+- [x] Campaign Master thread-control requests are bounded to four per turn; quest requests are separately bounded to one ordinary generation, two recovery-only generations, and three updates; all commit atomically with rollback support
 - [ ] Proper use of rolls, combat, abilities, items, and player freedom
 - [ ] Rules and campaign reference retrieval
 - [ ] Approved story-craft reference library for quests, mysteries, factions, consequences, pacing, and recovery
@@ -305,7 +306,7 @@ Provisional progression bridge: the engine can validate a completed turning-poin
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 92 of 92 tests
+- [x] Current automated suite passes 93 of 93 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -404,7 +405,7 @@ Provisional progression bridge: the engine can validate a completed turning-poin
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the engineering foundation of step 6. The strict quest contract, persistence, flexible objective graph, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, durable warning and mild neglect execution, evidence-backed route invalidation, context retrieval, save compatibility, rollback, and player Quest journal work. Opening timing is approved and automatic pre-opening quest creation has been removed. The current quest formulas, modular content, quest classification, and quest reward trigger remain provisional and must be reviewed through `QUEST_ENGINE_DECISION_AUDIT.md` before step 6 is complete. Combat, sustained live-play validation, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the engineering foundation of step 6. The strict quest contract, persistence, flexible objective graph, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, durable warning and mild neglect execution, evidence-backed route invalidation, fixed origin classification, paced quest advancement, context retrieval, save compatibility, rollback, and player Quest journal work. Opening timing is approved and automatic pre-opening quest creation has been removed. The current quest formulas and modular content remain provisional and must be reviewed through `QUEST_ENGINE_DECISION_AUDIT.md` before step 6 is complete. Combat, sustained live-play validation, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

@@ -36,9 +36,9 @@ The seeded quest composer turns an active story thread into a validated test str
 
 The composer now stores and validates route profiles. A second unresolved route must explicitly link to the first and differ through approach and tradeoff, allies or location, or moral or resource cost. It is never generated merely to fill capacity. The four formulas and authored placeholder text still require review before this becomes the approved campaign-flow generator.
 
-## Provisional checkpoint 3A
+## Approved checkpoint 3A
 
-Completed turning-point quests can technically award one advancement opportunity through a verified quest record. The validation and duplicate protection work, but turning-point completion as the reward trigger was not explicitly approved and remains provisional with the unfinished major-objective rule.
+Quest advancement is paced through verified quest state. The first quest generated from a high-urgency thread may contain exactly one required major objective; completing it can award one advancement opportunity. A verified turning point can award after full completion and a recorded outcome. The quest ID is the unique reward source, so one quest cannot award twice through both routes.
 
 ## Working checkpoint 3B
 
@@ -51,7 +51,7 @@ The live Campaign Master can now request bounded quest operations through the va
 - Complete a quest with exactly one recorded outcome
 - Fail a recoverable quest only when it already contains a recovery path
 
-A turn may generate at most two quests and manage at most four, with each source thread or quest used only once per turn. Quest completion and its requested faction, NPC, location, or story-thread consequences share the existing atomic world-turn transaction. If any requested change fails validation or execution, none of the quest or consequence changes commit.
+A turn may generate one ordinary quest. Up to two new quests are allowed only when both are altered recovery routes; ordinary and recovery generation cannot be mixed in one turn. A turn may manage at most three quests, with each source thread or quest used only once. Quest completion and its requested faction, NPC, location, or story-thread consequences share the existing atomic world-turn transaction. If any requested change fails validation or execution, none of the quest or consequence changes commit.
 
 ## Working checkpoint 4
 
@@ -113,14 +113,14 @@ Ordinary generated quests begin recoverable and require at least one recorded ro
 ## Authority boundaries
 
 - A generated quest cannot invent a main plot; a main quest must descend from an existing main story thread.
+- Every quest permanently inherits its classification from its source-thread kind; later story importance cannot reclassify it.
 - A quest cannot exceed its source thread's visibility or campaign-stage range.
 - Locked player quests remain outside player context until their prerequisites are satisfied and they become available.
 - Director-only quests remain outside player narration.
 - Quest consequence seeds remain proposals; the Campaign Master must express justified durable effects through validated tools in the same atomic turn.
-- Only completed preapproved turning points can currently award quest progression automatically.
+- One designated major objective or a fully completed verified turning point can award progression, at most once per quest.
 
 ## Still required
 
 - User review of the decisions recorded in `QUEST_ENGINE_DECISION_AUDIT.md`
-- Major-objective milestone designation and awards
 - Live play validation of quest changes and recovery across sustained multi-scene sessions

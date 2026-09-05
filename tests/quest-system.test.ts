@@ -31,8 +31,8 @@ function openingQuest(overrides: Partial<CreateQuestInput> = {}): CreateQuestInp
     factionIds: [],
     npcIds: [],
     objectives: [
-      { objectiveId: "OBJ-READ-THE-CRISIS", summary: "Determine the immediate danger in the plaza.", state: "pending", required: true, dependsOnObjectiveIds: [], branchGroupId: null },
-      { objectiveId: "OBJ-CHOOSE-A-RESPONSE", summary: "Commit to a response that protects someone or something at risk.", state: "pending", required: true, dependsOnObjectiveIds: ["OBJ-READ-THE-CRISIS"], branchGroupId: null }
+      { objectiveId: "OBJ-READ-THE-CRISIS", summary: "Determine the immediate danger in the plaza.", state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: [], branchGroupId: null },
+      { objectiveId: "OBJ-CHOOSE-A-RESPONSE", summary: "Commit to a response that protects someone or something at risk.", state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: ["OBJ-READ-THE-CRISIS"], branchGroupId: null }
     ],
     stakes: "Lives, evidence, and the player's first relationships may change.",
     outcomes: [
@@ -105,8 +105,9 @@ test("rejects invented main plots, excess outcomes, and missing recovery routes"
   try {
     assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
       questId: "QUEST-BAD-MAIN",
-      sourceThreadId: "THREAD-FACTION-PRESSURE"
-    })), /inherit its source thread visibility|main quest must originate/);
+      sourceThreadId: "THREAD-FACTION-PRESSURE",
+      visibility: "director"
+    })), /fixed origin type/);
     assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
       questId: "QUEST-TOO-MANY-OUTCOMES",
       outcomes: [...openingQuest().outcomes, { outcomeId: "OUT-THIRD", summary: "An unapproved third outcome.", consequenceSeeds: ["Too many branches."] }]
@@ -118,20 +119,20 @@ test("rejects invented main plots, excess outcomes, and missing recovery routes"
     assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
       questId: "QUEST-CYCLIC-OBJECTIVES",
       objectives: [
-        { objectiveId: "OBJ-CYCLE-A", summary: "First side of an invalid cycle.", state: "pending", required: true, dependsOnObjectiveIds: ["OBJ-CYCLE-B"], branchGroupId: null },
-        { objectiveId: "OBJ-CYCLE-B", summary: "Second side of an invalid cycle.", state: "pending", required: true, dependsOnObjectiveIds: ["OBJ-CYCLE-A"], branchGroupId: null }
+        { objectiveId: "OBJ-CYCLE-A", summary: "First side of an invalid cycle.", state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: ["OBJ-CYCLE-B"], branchGroupId: null },
+        { objectiveId: "OBJ-CYCLE-B", summary: "Second side of an invalid cycle.", state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: ["OBJ-CYCLE-A"], branchGroupId: null }
       ]
     })), /cannot form a cycle/);
     assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
       questId: "QUEST-LONE-BRANCH",
       objectives: [
-        { objectiveId: "OBJ-LONE-BRANCH", summary: "An invalid branch without an alternative.", state: "pending", required: true, dependsOnObjectiveIds: [], branchGroupId: "BRANCH-LONE-ROUTE" }
+        { objectiveId: "OBJ-LONE-BRANCH", summary: "An invalid branch without an alternative.", state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: [], branchGroupId: "BRANCH-LONE-ROUTE" }
       ]
     })), /requires at least two alternatives/);
     assert.throws(() => createQuestInstance(db, content, campaignId, openingQuest({
       questId: "QUEST-NO-REQUIRED-OBJECTIVE",
       objectives: [
-        { objectiveId: "OBJ-OPTIONAL-ONLY", summary: "An optional objective cannot carry the entire quest.", state: "pending", required: false, dependsOnObjectiveIds: [], branchGroupId: null }
+        { objectiveId: "OBJ-OPTIONAL-ONLY", summary: "An optional objective cannot carry the entire quest.", state: "pending", required: false, isMajorObjective: false, dependsOnObjectiveIds: [], branchGroupId: null }
       ]
     })), /at least one required objective/);
   } finally { db.close(); }
@@ -168,10 +169,10 @@ test("supports parallel, optional, and branching objectives without forcing one 
     createQuestInstance(db, content, campaignId, openingQuest({
       questId: "QUEST-FLEXIBLE-OBJECTIVES",
       objectives: [
-        { objectiveId: "OBJ-FLEX-FOUNDATION", summary: "Establish the pressure shaping the immediate choice.", state: "pending", required: true, dependsOnObjectiveIds: [], branchGroupId: null },
-        { objectiveId: "OBJ-FLEX-OPTIONAL", summary: "Pursue an optional advantage before committing.", state: "pending", required: false, dependsOnObjectiveIds: [], branchGroupId: null },
-        { objectiveId: "OBJ-FLEX-DIRECT", summary: "Take the direct branch through the pressure.", state: "pending", required: true, dependsOnObjectiveIds: ["OBJ-FLEX-FOUNDATION"], branchGroupId: "BRANCH-FLEX-ROUTE" },
-        { objectiveId: "OBJ-FLEX-INDIRECT", summary: "Take the indirect branch through the pressure.", state: "pending", required: true, dependsOnObjectiveIds: ["OBJ-FLEX-FOUNDATION"], branchGroupId: "BRANCH-FLEX-ROUTE" }
+        { objectiveId: "OBJ-FLEX-FOUNDATION", summary: "Establish the pressure shaping the immediate choice.", state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: [], branchGroupId: null },
+        { objectiveId: "OBJ-FLEX-OPTIONAL", summary: "Pursue an optional advantage before committing.", state: "pending", required: false, isMajorObjective: false, dependsOnObjectiveIds: [], branchGroupId: null },
+        { objectiveId: "OBJ-FLEX-DIRECT", summary: "Take the direct branch through the pressure.", state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: ["OBJ-FLEX-FOUNDATION"], branchGroupId: "BRANCH-FLEX-ROUTE" },
+        { objectiveId: "OBJ-FLEX-INDIRECT", summary: "Take the indirect branch through the pressure.", state: "pending", required: true, isMajorObjective: false, dependsOnObjectiveIds: ["OBJ-FLEX-FOUNDATION"], branchGroupId: "BRANCH-FLEX-ROUTE" }
       ]
     }));
     const active = activateQuest(db, campaignId, "QUEST-FLEXIBLE-OBJECTIVES");

@@ -49,15 +49,18 @@ async function requestValidPlan(
       const allNewIds = [...replacementIds, ...createdIds];
       if (new Set(allNewIds).size !== allNewIds.length) throw new Error("All new story thread IDs must be unique within a turn");
       const questGenerations = plan.toolRequests.filter((request) => request.type === "generate_quest");
-      if (questGenerations.length > 2) throw new Error("A turn may generate at most two quests");
+      if (questGenerations.length > 1) throw new Error("A turn may normally generate at most one new quest");
       const questSourceIds = questGenerations.map((request) => request.sourceThreadId);
       if (new Set(questSourceIds).size !== questSourceIds.length) throw new Error("A story thread may generate at most one quest per turn");
       const recoveryGenerations = plan.toolRequests.filter((request) => request.type === "generate_recovery_quest");
       if (recoveryGenerations.length > 2) throw new Error("A turn may generate at most two altered recovery quests");
+      if (questGenerations.length > 0 && recoveryGenerations.length > 0) {
+        throw new Error("A turn cannot mix ordinary and recovery quest generation; the two-quest exception is recovery-only");
+      }
       const recoveryKeys = recoveryGenerations.map((request) => `${request.failedQuestId}\u0000${request.recoveryPath}`);
       if (new Set(recoveryKeys).size !== recoveryKeys.length) throw new Error("Altered recovery routes must use distinct failed-quest paths within a turn");
       const questUpdates = plan.toolRequests.filter((request) => request.type === "manage_quest");
-      if (questUpdates.length > 4) throw new Error("A turn may manage at most four quests");
+      if (questUpdates.length > 3) throw new Error("A turn may manage at most three quests");
       const questIds = questUpdates.map((request) => request.questId);
       if (new Set(questIds).size !== questIds.length) throw new Error("A quest may be managed at most once per turn");
       const neglectUpdates = questUpdates.filter((request) => request.action === "apply_neglect_complication");
