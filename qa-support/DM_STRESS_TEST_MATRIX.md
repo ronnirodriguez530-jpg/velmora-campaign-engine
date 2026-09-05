@@ -26,12 +26,12 @@ For any unexpected but valid player action, the DM should be able to:
 | NPC-01 | Player befriends a hostile NPC unexpectedly | Relationship state can move outside authored expectation | UNTESTED | |
 | NPC-02 | Player attacks a friendly or important NPC | NPC/world response persists and downstream systems adapt | UNTESTED | |
 | NPC-03 | Player returns to an improvised NPC after many sessions | Same identity, history, relationship, and relevant memories persist | UNTESTED | |
-| NPC-04 | NPC learns something through another NPC rather than directly from player | Knowledge can propagate through the world | UNTESTED | |
+| NPC-04 | NPC learns something through another NPC rather than directly from player | Knowledge can propagate through the world with source provenance | BLOCKED | Knowledge schema already supports `told` and `sourceNpcId`, but no first-class NPC-to-NPC transfer action exists. See WORLD_CONSEQUENCE_PROPAGATION_SPEC.md. |
 | NPC-05 | Player asks an improvised NPC about obscure personal details | DM can extend the character coherently without rewriting prior facts | UNTESTED | |
-| WRLD-01 | Player spreads a false rumor in a crowded market | Audience, credibility, rumor spread, faction effects, and later reactions are modeled | UNTESTED | |
+| WRLD-01 | Player spreads a false rumor in a crowded market | Audience, credibility, rumor spread, faction effects, and later reactions are modeled | BLOCKED | Current world facts cannot safely represent a false circulating claim. A claim/report layer is specified before rumor propagation. |
 | WRLD-02 | Player damages or destroys a location | Physical/world state persists and future scenes reflect it | UNTESTED | |
 | WRLD-03 | Player creates a new social institution/business/group | DM can instantiate and persist it without special scripting | UNTESTED | |
-| WRLD-04 | Player causes a cross-faction incident | Multiple factions can update beliefs/goals independently | UNTESTED | |
+| WRLD-04 | Player causes a cross-faction incident | Multiple factions can update beliefs/goals independently | BLOCKED | Faction condition/path state exists, but there is not yet a persistent faction-intelligence ledger. |
 | WRLD-05 | Player asks about an undefined but mundane world detail | DM safely improvises local detail and preserves it thereafter | UNTESTED | |
 | SYS-01 | Model/API response is malformed or missing | Engine degrades gracefully and campaign does not die | UNTESTED | |
 | SYS-02 | A subsystem returns contradictory state | Validation/recovery prevents corruption and play can continue | UNTESTED | |
@@ -54,10 +54,12 @@ For any unexpected but valid player action, the DM should be able to:
 - **Dead-end/railroad**: DM cannot continue unless player returns to expected route.
 - **Degraded fallback**: system continues, but only through generic/no-op output.
 
-## First audit target
+## Current audit target
 
 `WORLD CONSEQUENCE PROPAGATION`
 
 Player action -> local witnesses/effects -> knowledge/belief updates -> faction/NPC propagation -> delayed reaction -> new situation.
+
+Current foundation: individual NPC knowledge/memory/relationships and durable event state already exist. Missing runtime layer: claims/reports, validated witnesses/reveals, NPC-to-NPC transfer, faction intelligence, and bounded delayed propagation/reaction.
 
 This is a key separator between a responsive narrator and a living persistent DM.
