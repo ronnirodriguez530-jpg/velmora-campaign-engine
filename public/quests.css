@@ -96,6 +96,11 @@
   font-size: .82rem;
 }
 
+.direction-card { max-width: 38rem; }
+.direction-choice { display: grid; gap: .55rem; margin: 1.25rem 0; padding: 1rem; border: 1px solid var(--line); border-radius: .8rem; background: rgba(255,255,255,.035); }
+.direction-choice span { color: var(--muted); line-height: 1.5; }
+.direction-buttons { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .75rem; margin-top: 1.25rem; }
+
 .quest-objectives li {
   padding: 9px 12px;
   color: #e4dce9;

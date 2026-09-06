@@ -618,6 +618,22 @@ function migrate(db: DatabaseSync): void {
     `);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(23, ?)").run(new Date().toISOString());
   }
+  const migrationTwentyFour = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 24").get() as { present: number } | undefined;
+  if (!migrationTwentyFour) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS pending_quest_direction_confirmations (
+        campaign_id TEXT PRIMARY KEY,
+        confirmation_id TEXT NOT NULL UNIQUE,
+        quest_id TEXT NOT NULL,
+        direction_id TEXT NOT NULL,
+        player_input TEXT NOT NULL,
+        explanation TEXT NOT NULL,
+        created_turn INTEGER NOT NULL,
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(24, ?)").run(new Date().toISOString());
+  }
 }
 
 const STAGE_ORDER = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 } as const;

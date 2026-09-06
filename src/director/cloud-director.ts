@@ -7,6 +7,7 @@ import type {
   DirectorPreview,
   DirectorTurnPlan,
   PerspectiveContext,
+  QuestDirectionInterpretation,
   ScenePackage,
   StoryPresentation,
   ToolRequest
@@ -131,6 +132,24 @@ const ASSESS_ACTION_TOOL = {
       reason: { type: "string" }
     },
     required: ["resolution", "category", "ability", "skill", "difficulty", "mode", "stakes", "reason"],
+    additionalProperties: false
+  }
+} as const;
+
+const INTERPRET_QUEST_DIRECTION_TOOL = {
+  type: "function",
+  name: "interpret_quest_direction",
+  description: "Identify whether a natural player action commits to one recorded quest direction. This proposes an interpretation only; the player must confirm it.",
+  strict: true,
+  parameters: {
+    type: "object",
+    properties: {
+      matched: { type: "boolean" },
+      questId: { anyOf: [{ type: "string" }, { type: "null" }] },
+      directionId: { anyOf: [{ type: "string" }, { type: "null" }] },
+      explanation: { type: "string" }
+    },
+    required: ["matched", "questId", "directionId", "explanation"],
     additionalProperties: false
   }
 } as const;
@@ -452,6 +471,10 @@ Call for a check only when the outcome is both uncertain and meaningful. Do not 
 For a check, choose one category and the single relevant ability. Skill checks must use their standard linked ability. Saving throws are reactive resistance, not voluntary attempts. Choose Easy 8, Standard 12, Hard 16, or Extreme 20 from the established world circumstances; never scale difficulty to oppose the character. Use advantage or disadvantage only when supplied circumstances clearly justify it; otherwise use normal. State the visible stakes without revealing the DC or hidden information.
 For automatic actions, return null for category, ability, skill, difficulty, and mode, and an empty stakes string. Call assess_player_action exactly once.`;
 
+const QUEST_DIRECTION_INTERPRETATION_RULES = `You are checking whether one natural player action commits to a direction on one available, uncommitted, player-visible quest.
+Use only the supplied playerQuests. A match requires a clear intent to begin or pursue one recorded direction; merely asking about it, observing the scene, or taking an unrelated action is not commitment. Never invent a quest or direction and never choose for the player.
+If exactly one direction clearly matches, return matched true with its exact questId and directionId plus a concise player-facing explanation of the interpretation. If the action is ambiguous, could fit multiple directions, or matches none, return matched false with null IDs and briefly explain that no commitment was inferred. Call interpret_quest_direction exactly once.`;
+
 const SCENE_RULES = `You are the D&D-style Campaign Master and Story Brain for Velmora. Present only the validated current scene and player-visible context supplied by the engine.
 The supplied playerCharacter is the player's fixed character. Use its recorded identity and abilities for grounding, but never narrate that character's unchosen thoughts, dialogue, decisions, history, or actions.
 Write an evocative but focused opening in 2-4 short paragraphs. Establish what the character perceives, what is happening now, and why a response matters. If visibleOpeningPressure is present, make that crisis the immediate playable situation without exposing any hidden blueprint material. You may create temporary sensory detail and dialogue, but may not invent permanent lore, powers, mechanics, hidden truths, new factions, or off-screen knowledge.
@@ -589,6 +612,31 @@ export class CloudDirector implements CampaignDirector {
       stakes: value.stakes,
       reason: value.reason
     };
+  }
+
+  async interpretQuestDirection(context: DirectorPlanningContext, playerInput: string): Promise<QuestDirectionInterpretation | null> {
+    const response = await this.#fetch(this.#endpoint, {
+      method: "POST",
+      signal: AbortSignal.timeout(this.#timeoutMs),
+      headers: { "content-type": "application/json", authorization: `Bearer ${this.#apiKey}` },
+      body: JSON.stringify({
+        model: this.#model,
+        instructions: QUEST_DIRECTION_INTERPRETATION_RULES,
+        input: JSON.stringify({ playerQuests: context.playerQuests, playerInput }),
+        tools: [INTERPRET_QUEST_DIRECTION_TOOL],
+        tool_choice: { type: "function", name: "interpret_quest_direction" }
+      })
+    });
+    if (!response.ok) throw new Error(`Campaign Master quest-direction request failed (${response.status}): ${(await response.text()).slice(0, 300)}`);
+    const payload = await response.json() as { output?: Array<{ type?: string; name?: string; arguments?: string }> };
+    const call = payload.output?.find((item) => item.type === "function_call" && item.name === "interpret_quest_direction");
+    if (!call?.arguments) throw new Error("Campaign Master did not interpret the quest direction");
+    const value = JSON.parse(call.arguments) as Record<string, unknown>;
+    if (value.matched === false && value.questId === null && value.directionId === null) return null;
+    if (value.matched !== true || typeof value.questId !== "string" || typeof value.directionId !== "string" || typeof value.explanation !== "string") {
+      throw new Error("Campaign Master returned an invalid quest-direction interpretation");
+    }
+    return { questId: value.questId, directionId: value.directionId, explanation: value.explanation };
   }
 
   async planTurn(context: DirectorPlanningContext, playerInput: string, validationFeedback: string[] = [], actionResolution?: ActionResolution): Promise<DirectorTurnPlan> {

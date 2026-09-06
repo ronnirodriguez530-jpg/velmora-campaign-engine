@@ -9,7 +9,7 @@ const skills = [
   ["performance", "Performance", "Charisma"], ["persuasion", "Persuasion", "Charisma"], ["religion", "Religion", "Intelligence"],
   ["sleight_of_hand", "Sleight of Hand", "Dexterity"], ["stealth", "Stealth", "Dexterity"], ["survival", "Survival", "Wisdom"]
 ];
-let campaignName = "", cloudAvailable = false, directorMode = "cloud", currentPayload = null, pendingCheck = null;
+let campaignName = "", cloudAvailable = false, directorMode = "cloud", currentPayload = null, pendingCheck = null, pendingDirectionConfirmation = null;
 
 async function api(path, options = {}) {
   const response = await fetch(path, { headers: { "content-type": "application/json" }, ...options });
@@ -41,6 +41,16 @@ function showRoll(check) {
   $("#roll-stakes").textContent = check.stakes;
   $("#roll-result").classList.add("hidden"); $("#roll-message").textContent = ""; $("#roll-button").textContent = "Roll";
   $("#roll-overlay").classList.remove("hidden"); $("#roll-button").focus();
+}
+function showDirectionConfirmation(confirmation) {
+  pendingDirectionConfirmation = confirmation;
+  $("#direction-title").textContent = confirmation.questTitle;
+  $("#direction-explanation").textContent = confirmation.explanation;
+  $("#direction-summary").textContent = confirmation.directionSummary;
+  $("#direction-tradeoff").textContent = `Likely tradeoff: ${confirmation.likelyTradeoff}`;
+  $("#direction-message").textContent = "";
+  $("#direction-overlay").classList.remove("hidden");
+  $("#accept-direction").focus();
 }
 function renderCharacter(character) {
   $("#character-create").classList.toggle("hidden", Boolean(character)); $("#character-sheet").classList.toggle("hidden", !character);
@@ -125,6 +135,7 @@ function render(payload) {
   renderQuests(quests);
   badge("quests", actionable.quests || 0); badge("factions", actionable.factions || 0); badge("locations", actionable.locations || 0); badge("inventory", actionable.inventory || 0);
   renderCharacter(playerCharacter); showPage(playerCharacter ? "story" : "character");
+  if (payload.pendingDirectionConfirmation) showDirectionConfirmation(payload.pendingDirectionConfirmation);
   if (payload.pendingCheck) showRoll(payload.pendingCheck);
 }
 function buildCharacterForm() {
@@ -149,9 +160,22 @@ $("#action-form").onsubmit = async (event) => {
   event.preventDefault(); if (!currentPayload?.playerCharacter) { showPage("character"); $("#character-message").textContent = "Create your character before beginning story play."; return; }
   const input = $("#action-input").value.trim(); if (!input) return; if (directorMode !== "cloud") { showPage("settings"); $("#key-message").textContent = "Story actions require the Live Campaign Master. Diagnostics does not write the campaign."; return; }
   busy(true); $("#result").textContent = "The Campaign Master is resolving the world…";
-  try { const payload = await api(`/api/campaigns/${encodeURIComponent(campaignName)}/actions`, { method: "POST", body: JSON.stringify({ input, director: "cloud" }) }); if (payload.pendingCheck) { currentPayload = { ...currentPayload, ...payload }; showRoll(payload.pendingCheck); } else { render(payload); $("#result").textContent = payload.result.summary; $("#action-input").value = ""; } }
+  try { const payload = await api(`/api/campaigns/${encodeURIComponent(campaignName)}/actions`, { method: "POST", body: JSON.stringify({ input, director: "cloud" }) }); if (payload.pendingDirectionConfirmation) { currentPayload = { ...currentPayload, ...payload }; showDirectionConfirmation(payload.pendingDirectionConfirmation); } else if (payload.pendingCheck) { currentPayload = { ...currentPayload, ...payload }; showRoll(payload.pendingCheck); } else { render(payload); $("#result").textContent = payload.result.summary; $("#action-input").value = ""; } }
   catch (error) { $("#result").textContent = error.message; } finally { busy(false); }
 };
+async function answerDirectionConfirmation(accepted) {
+  if (!pendingDirectionConfirmation) return;
+  busy(true); $("#direction-message").textContent = accepted ? "Committing this direction…" : "Keeping the quest uncommitted…";
+  try {
+    const payload = await api(`/api/campaigns/${encodeURIComponent(campaignName)}/directions`, { method: "POST", body: JSON.stringify({ confirmationId: pendingDirectionConfirmation.confirmationId, accepted, director: directorMode }) });
+    pendingDirectionConfirmation = null; $("#direction-overlay").classList.add("hidden");
+    if (payload.directionRejected) { render(payload); $("#result").textContent = "No direction was committed. Rephrase or take a different action."; return; }
+    if (payload.pendingCheck) { currentPayload = { ...currentPayload, ...payload }; showRoll(payload.pendingCheck); return; }
+    render(payload); $("#result").textContent = payload.result.summary; $("#action-input").value = "";
+  } catch (error) { $("#direction-message").textContent = error.message; } finally { busy(false); }
+}
+$("#accept-direction").onclick = () => answerDirectionConfirmation(true);
+$("#reject-direction").onclick = () => answerDirectionConfirmation(false);
 $("#roll-button").onclick = async () => {
   if (!pendingCheck) { $("#roll-overlay").classList.add("hidden"); return; }
   busy(true); $("#roll-message").textContent = "Rolling…";

@@ -17,6 +17,9 @@ test("browser API creates, plays, persists, acts, and rolls back", async () => {
     const pageHtml = await page.text();
     assert.match(pageHtml, /<title>Velmora<\/title>/);
     assert.match(pageHtml, /id="quest-list"/);
+    assert.match(pageHtml, /id="direction-overlay"/);
+    assert.match(pageHtml, /id="accept-direction"/);
+    assert.match(pageHtml, /id="reject-direction"/);
     assert.match(pageHtml, /href="\/quests\.css"/);
     assert.match(page.headers.get("cache-control") ?? "", /no-store/);
 

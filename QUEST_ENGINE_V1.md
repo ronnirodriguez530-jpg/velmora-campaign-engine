@@ -110,7 +110,7 @@ New quest records now separate the offered problem from uncommitted execution de
 - The Director planning context retains bounded full quest details so later validation can complete the quest correctly.
 - Completed player quests expose only the selected outcome rather than alternate endings.
 
-The first half of checkpoint 7B is implemented behind the player interface. `commitQuestDirection` accepts exactly one recorded direction while the quest is available and uncommitted, activates the quest, aligns its durable route profile with that direction, and replaces provisional scaffolding with responsive objectives and hidden outcomes. Invalid or repeated commitments leave the quest unchanged. Natural-action interpretation, persisted player confirmation, and browser controls remain unfinished and must sit in front of this operation before the flow is player-ready.
+Checkpoint 7B is complete. Before dice assessment or world mutation, the Campaign Master compares a natural player action with the recorded directions on available, uncommitted quests. It proposes a match only when the intent clearly selects one direction. That interpretation is persisted and shown in a browser confirmation dialog with the direction and likely tradeoff. Rejecting it leaves the quest untouched and lets the player rephrase. Accepting it commits the route exactly once, materializes its responsive objectives and hidden outcomes, and resumes the original action through the ordinary dice/turn pipeline. Pending confirmations survive refreshes and block conflicting actions or rollback until resolved.
 
 ## Branching rule
 

@@ -1,5 +1,5 @@
 import type { CampaignDirector } from "./director.ts";
-import type { ActionAssessment, ActionResolution, DirectorContext, DirectorPlanningContext, DirectorPreview, DirectorTurnPlan, PerspectiveContext, ScenePackage, StoryPresentation, ToolRequest } from "../domain/types.ts";
+import type { ActionAssessment, ActionResolution, DirectorContext, DirectorPlanningContext, DirectorPreview, DirectorTurnPlan, PerspectiveContext, QuestDirectionInterpretation, ScenePackage, StoryPresentation, ToolRequest } from "../domain/types.ts";
 
 export class MockDirector implements CampaignDirector {
   readonly source = "diagnostic" as const;
@@ -36,6 +36,15 @@ export class MockDirector implements CampaignDirector {
       };
     }
     return { resolution: "automatic", reason: "The diagnostic action does not require a roll." };
+  }
+
+  async interpretQuestDirection(context: DirectorPlanningContext, playerInput: string): Promise<QuestDirectionInterpretation | null> {
+    const normalized = playerInput.toLowerCase();
+    for (const quest of context.playerQuests.filter((candidate) => candidate.state === "available" && candidate.selectedDirectionId === null)) {
+      const direction = quest.possibleDirections.find((candidate) => normalized.includes(candidate.directionId.toLowerCase()) || normalized.includes(candidate.summary.toLowerCase().split(" ").slice(0, 3).join(" ")));
+      if (direction) return { questId: quest.questId, directionId: direction.directionId, explanation: `The action matches the recorded direction: ${direction.summary}` };
+    }
+    return null;
   }
 
   async planTurn(context: DirectorPlanningContext, playerInput: string, _validationFeedback?: string[], actionResolution?: ActionResolution): Promise<DirectorTurnPlan> {

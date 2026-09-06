@@ -75,6 +75,29 @@ test("cloud Director requests a bounded hidden-DC action check", async () => {
   assert.equal(tool.strict, true);
 });
 
+test("cloud Director proposes one recorded quest direction without committing it", async () => {
+  let sentBody: Record<string, unknown> | undefined;
+  const fakeFetch = async (_input: string | URL | Request, init?: RequestInit) => {
+    sentBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    return new Response(JSON.stringify({ output: [{
+      type: "function_call",
+      name: "interpret_quest_direction",
+      arguments: JSON.stringify({
+        matched: true,
+        questId: "QUEST-OPENING-PRESSURE-01",
+        directionId: "DIR-OPENING-PRESSURE-01-A",
+        explanation: "This sounds like a commitment to protect those currently exposed."
+      })
+    }] }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+  const interpretation = await new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch }).interpretQuestDirection(context, "I move to protect the injured");
+  assert.equal(interpretation?.questId, "QUEST-OPENING-PRESSURE-01");
+  assert.equal(interpretation?.directionId, "DIR-OPENING-PRESSURE-01-A");
+  const tool = (sentBody?.tools as Array<Record<string, unknown>>)[0];
+  assert.equal(tool.name, "interpret_quest_direction");
+  assert.equal(tool.strict, true);
+});
+
 test("cloud Director submits a strict bounded plan without executing it", async () => {
   let sentBody: Record<string, unknown> | undefined;
   const fakeFetch = async (_input: string | URL | Request, init?: RequestInit) => {

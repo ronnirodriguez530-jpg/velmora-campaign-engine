@@ -5,8 +5,9 @@ import { fileURLToPath } from "node:url";
 import { dirname, extname, join, resolve } from "node:path";
 import { loadVelmoraContent } from "../application/campaign-loader.ts";
 import { buildPerspectiveContext } from "../application/context-builder.ts";
-import { beginPlayableAction, finishPlayableAction } from "../application/gameplay-session.ts";
+import { beginPlayableAction, finishPlayableAction, respondToQuestDirectionConfirmation } from "../application/gameplay-session.ts";
 import { getPendingActionCheck } from "../application/dice-resolution.ts";
+import { getPendingQuestDirectionConfirmation } from "../application/quest-direction-confirmation.ts";
 import { openPresentedStoryMoment } from "../application/story-session.ts";
 import { createPlayerCharacter, type PlayerCharacterInput } from "../application/player-character.ts";
 import { checkForUpdate, installLatestUpdate } from "../application/update-manager.ts";
@@ -68,6 +69,7 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
       context,
       playerCharacter: context.playerCharacter,
       pendingCheck: getPendingActionCheck(db, context.campaignId),
+      pendingDirectionConfirmation: getPendingQuestDirectionConfirmation(db, context.campaignId),
       storyHistory,
       factions: content.factions.map((faction) => ({
         id: faction.id,
@@ -136,7 +138,7 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         return;
       }
 
-      const match = url.pathname.match(/^\/api\/campaigns\/([^/]+)(?:\/(play|actions|rolls|rollback|log|character))?$/u);
+      const match = url.pathname.match(/^\/api\/campaigns\/([^/]+)(?:\/(play|actions|directions|rolls|rollback|log|character))?$/u);
       if (match) {
         const name = decodeURIComponent(match[1]);
         const operation = match[2];
@@ -180,11 +182,36 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
           const requestedDirector = body.director === "local" ? "local" : "cloud";
           const director = selectDirector(requestedDirector);
           const begun = await beginPlayableAction(db, content, director, name, input);
+          if (begun.status === "direction_confirmation_required") {
+            sendJson(response, 200, { pendingDirectionConfirmation: begun.pendingDirectionConfirmation, campaign: getCampaign(db, name), ...playerView(name) });
+            return;
+          }
           if (begun.status === "roll_required") {
             sendJson(response, 200, { pendingCheck: begun.pendingCheck, campaign: getCampaign(db, name), ...playerView(name) });
             return;
           }
           sendJson(response, 200, { result: begun.result, campaign: getCampaign(db, name), moment: await openPresentedStoryMoment(db, content, director, name), ...playerView(name) });
+          return;
+        }
+        if (method === "POST" && operation === "directions") {
+          if (!getPlayerCharacter(db, campaign.id)) throw new Error("Create your player character before beginning story play");
+          const body = await readJson(request);
+          const confirmationId = typeof body.confirmationId === "string" ? body.confirmationId : "";
+          if (!confirmationId) throw new Error("A pending direction confirmation ID is required");
+          if (typeof body.accepted !== "boolean") throw new Error("Direction confirmation requires an accept or reject choice");
+          const requestedDirector = body.director === "local" ? "local" : "cloud";
+          const director = selectDirector(requestedDirector);
+          const resolved = await respondToQuestDirectionConfirmation(db, content, director, name, confirmationId, body.accepted);
+          if (resolved.status === "direction_rejected") {
+            sendJson(response, 200, { directionRejected: true, rejected: resolved.rejected, campaign: getCampaign(db, name), ...playerView(name) });
+            return;
+          }
+          if (resolved.status === "direction_confirmation_required") throw new Error("A confirmed direction cannot immediately request another direction confirmation");
+          if (resolved.status === "roll_required") {
+            sendJson(response, 200, { pendingCheck: resolved.pendingCheck, campaign: getCampaign(db, name), ...playerView(name) });
+            return;
+          }
+          sendJson(response, 200, { result: resolved.result, campaign: getCampaign(db, name), moment: await openPresentedStoryMoment(db, content, director, name), ...playerView(name) });
           return;
         }
         if (method === "POST" && operation === "rolls") {
@@ -200,6 +227,7 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         }
         if (method === "POST" && operation === "rollback") {
           if (getPendingActionCheck(db, campaign.id)) throw new Error("Resolve the pending action check before rolling back");
+          if (getPendingQuestDirectionConfirmation(db, campaign.id)) throw new Error("Resolve the pending quest direction before rolling back");
           const restored = restorePreviousTurn(db, name);
           const director = selectDirector(url.searchParams.get("director"));
           sendJson(response, 200, { campaign: restored, moment: await openPresentedStoryMoment(db, content, director, name), ...playerView(name) });

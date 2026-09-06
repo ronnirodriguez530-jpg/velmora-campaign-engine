@@ -202,6 +202,20 @@ export type PendingActionCheckView = {
   stakes: string;
 };
 
+export type QuestDirectionInterpretation = {
+  questId: string;
+  directionId: string;
+  explanation: string;
+};
+
+export type PendingQuestDirectionConfirmationView = QuestDirectionInterpretation & {
+  confirmationId: string;
+  playerInput: string;
+  questTitle: string;
+  directionSummary: string;
+  likelyTradeoff: string;
+};
+
 export type PlayerCharacter = {
   campaignId: string;
   characterId: "PC-001";
