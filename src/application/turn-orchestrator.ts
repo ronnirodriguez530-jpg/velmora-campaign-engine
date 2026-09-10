@@ -59,11 +59,13 @@ async function requestValidPlan(
       }
       const recoveryKeys = recoveryGenerations.map((request) => `${request.failedQuestId}\u0000${request.recoveryPath}`);
       if (new Set(recoveryKeys).size !== recoveryKeys.length) throw new Error("Altered recovery routes must use distinct failed-quest paths within a turn");
-      const questUpdates = plan.toolRequests.filter((request) => request.type === "manage_quest");
-      if (questUpdates.length > 3) throw new Error("A turn may manage at most three quests");
+      const questManagementUpdates = plan.toolRequests.filter((request) => request.type === "manage_quest");
+      const directionRevisions = plan.toolRequests.filter((request) => request.type === "revise_quest_directions");
+      const questUpdates = [...questManagementUpdates, ...directionRevisions];
+      if (questUpdates.length > 3) throw new Error("A turn may manage at most three quests, including direction revisions");
       const questIds = questUpdates.map((request) => request.questId);
       if (new Set(questIds).size !== questIds.length) throw new Error("A quest may be managed at most once per turn");
-      const neglectUpdates = questUpdates.filter((request) => request.action === "apply_neglect_complication");
+      const neglectUpdates = questManagementUpdates.filter((request) => request.action === "apply_neglect_complication");
       if (neglectUpdates.length > 1) throw new Error("A turn may apply at most one ordinary neglect complication");
       for (const neglect of neglectUpdates) {
         const matchingComplications = plan.toolRequests.filter((request) => request.type === neglect.neglectComplicationTool && "reason" in request && request.reason === neglect.reason);

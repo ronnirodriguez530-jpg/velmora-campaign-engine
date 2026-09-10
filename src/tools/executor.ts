@@ -9,6 +9,7 @@ import { applyNpcTurnUpdate } from "../npc/npc-turn-manager.ts";
 import { applyStoryThreadCreation, applyStoryThreadUpdate } from "../application/story-thread-manager.ts";
 import { applyGeneratedQuest, applyRecoveryQuest } from "../application/quest-generator.ts";
 import { applyQuestManagement } from "../application/quest-system.ts";
+import { applyQuestDirectionRevision } from "../application/quest-direction-maintenance.ts";
 
 export async function executeToolRequest(db: DatabaseSync, content: VelmoraContent, campaignId: string, turn: number, request: ToolRequest): Promise<void> {
   if (request.type === "change_faction_condition") {
@@ -51,6 +52,8 @@ export async function executeToolRequest(db: DatabaseSync, content: VelmoraConte
     applyGeneratedQuest(db, content, campaignId, request.sourceThreadId, turn, request.relationships);
   } else if (request.type === "generate_recovery_quest") {
     applyRecoveryQuest(db, content, campaignId, request.failedQuestId, request.recoveryPath, request.consequenceEventSequences, turn);
+  } else if (request.type === "revise_quest_directions") {
+    applyQuestDirectionRevision(db, campaignId, turn, request);
   } else if (request.type === "manage_quest") {
     applyQuestManagement(db, campaignId, turn, request);
   }

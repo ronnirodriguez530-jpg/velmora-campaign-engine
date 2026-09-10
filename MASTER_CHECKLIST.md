@@ -225,6 +225,8 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] A validated direction commitment materializes responsive objectives and hidden outcomes exactly once
 - [x] Natural-action direction interpretation and explicit player confirmation interface
 - [x] Refresh-safe accept/reject flow resumes the original action only after acceptance
+- [x] Evidence-backed removal of impossible unchosen directions with at most one engine-validated replacement
+- [x] No forced replacement when credible unused directions are exhausted; the last route requires explicit quest failure
 - [x] Functional Quest page and actionable notifications
 
 Implemented quest engineering: the durable contract, lifecycle, flexible objective graph, hard two-unresolved-quest-per-thread cap, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, evidence-backed route invalidation, recoverable ordinary failure, durable received warnings, mild evidence-backed neglect, fixed origin classification, paced quest advancement, player-visible browser journal, persistence, privacy, and rollback work. The first quest is correctly withheld until the future d6-and-attack opening flow. The current composer formulas and modular content remain provisional pending `QUEST_ENGINE_DECISION_AUDIT.md`. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
@@ -311,7 +313,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 100 of 100 tests
+- [x] Current automated suite passes 105 of 105 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations

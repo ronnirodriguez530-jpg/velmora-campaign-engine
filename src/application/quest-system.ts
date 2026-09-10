@@ -97,7 +97,7 @@ function getQuest(db: DatabaseSync, campaignId: string, questId: string): QuestI
   return quest;
 }
 
-function validateConsequenceEvidence(
+export function validateConsequenceEvidence(
   db: DatabaseSync,
   campaignId: string,
   sequences: number[],

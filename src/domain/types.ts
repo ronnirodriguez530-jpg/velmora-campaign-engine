@@ -792,6 +792,14 @@ export type GenerateRecoveryQuestRequest = {
   reason: string;
 };
 
+export type ReviseQuestDirectionsRequest = {
+  type: "revise_quest_directions";
+  questId: string;
+  invalidatedDirectionId: string;
+  consequenceEventSequences: number[];
+  reason: string;
+};
+
 export type ManageQuestRequest = {
   type: "manage_quest";
   questId: string;
@@ -807,7 +815,7 @@ export type ManageQuestRequest = {
   reason: string;
 };
 
-export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest | ManageStoryThreadRequest | CreateStoryThreadRequest | GenerateQuestRequest | GenerateRecoveryQuestRequest | ManageQuestRequest;
+export type ToolRequest = ChangeFactionConditionRequest | ChangeNpcReputationRequest | MovePlayerRequest | AdvanceFactionPathRequest | RecordLocationConsequenceRequest | RequestMinorNpcRequest | ManageNpcTurnRequest | ManageStoryThreadRequest | CreateStoryThreadRequest | GenerateQuestRequest | GenerateRecoveryQuestRequest | ReviseQuestDirectionsRequest | ManageQuestRequest;
 
 export type DirectorTurnPlan = {
   summary: string;

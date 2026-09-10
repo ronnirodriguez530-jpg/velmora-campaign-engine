@@ -5,6 +5,7 @@ import { validateNpcTurnUpdate } from "../npc/npc-turn-manager.ts";
 import { validateStoryThreadCreation, validateStoryThreadUpdate } from "../application/story-thread-manager.ts";
 import { validateGeneratedQuest, validateRecoveryQuest } from "../application/quest-generator.ts";
 import { validateQuestManagement } from "../application/quest-system.ts";
+import { validateQuestDirectionRevision } from "../application/quest-direction-maintenance.ts";
 
 export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, campaignId: string, request: ToolRequest): void {
   if (request.reason.trim().length < 3) throw new Error("Tool request requires a meaningful reason");
@@ -87,6 +88,11 @@ export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, c
 
   if (request.type === "generate_recovery_quest") {
     validateRecoveryQuest(db, content, campaignId, request.failedQuestId, request.recoveryPath, request.consequenceEventSequences);
+    return;
+  }
+
+  if (request.type === "revise_quest_directions") {
+    validateQuestDirectionRevision(db, campaignId, request);
     return;
   }
 

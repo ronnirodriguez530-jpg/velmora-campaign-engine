@@ -74,6 +74,38 @@ const QUEST_PATTERNS: QuestPattern[] = [
   }
 ];
 
+export function composeReplacementQuestDirection(
+  db: DatabaseSync,
+  campaignId: string,
+  quest: ReturnType<typeof listQuestInstances>[number],
+  consequenceEventSequences: number[],
+  previouslyInvalidatedApproachKeys: string[] = []
+): QuestDirection | null {
+  const campaign = db.prepare("SELECT seed FROM campaigns WHERE id = ?").get(campaignId) as { seed: string } | undefined;
+  if (!campaign) throw new Error(`Missing campaign state ${campaignId}`);
+  const thread = listStoryThreads(db, campaignId).find((candidate) => candidate.threadId === quest.sourceThreadId);
+  if (!thread) throw new Error(`Unknown quest source thread ${quest.sourceThreadId}`);
+  const usedApproaches = new Set([...quest.possibleDirections.map((direction) => direction.approachKey), ...previouslyInvalidatedApproachKeys]);
+  const ranked = QUEST_PATTERNS
+    .map((module) => ({ module, score: module.causalScore(thread) }))
+    .filter(({ module, score }) => score > 0 && !usedApproaches.has(module.approachKey))
+    .sort((left, right) => right.score - left.score);
+  if (ranked.length === 0) return null;
+  const bestScore = ranked[0]!.score;
+  const tied = ranked.filter((entry) => entry.score === bestScore);
+  const selected = seededSample(`${campaign.seed}|direction-replacement|${quest.questId}|${consequenceEventSequences.join("-")}`, tied, 1)[0]!.module;
+  const suffix = consequenceEventSequences.at(-1) ?? quest.updatedTurn;
+  const baseId = quest.questId.replace(/^QUEST-/, "").slice(0, 60);
+  return {
+    directionId: `DIR-${baseId}-R${suffix}`,
+    summary: selected.directionSummary,
+    likelyTradeoff: selected.likelyTradeoff,
+    approachKey: selected.approachKey,
+    tradeoffKey: selected.tradeoffKey,
+    costKey: selected.costKey
+  };
+}
+
 function chooseCausalDirections(seed: string, thread: StoryThread, baseId: string, sequence: number, modules: QuestPattern[]): Array<{ module: QuestPattern; direction: QuestDirection }> {
   const ranked = modules
     .map((module) => ({ module, score: module.causalScore(thread) }))
