@@ -81,7 +81,7 @@ test("creates a validated player quest from an existing main story thread", asyn
   } finally { db.close(); }
 });
 
-test("committing a direction materializes its objectives and outcomes exactly once", async () => {
+test("committing a direction materializes one immediate objective and bounded outcome directions", async () => {
   const { content, db, campaignId } = await setup("quest-direction-commit");
   try {
     const created = createQuestInstance(db, content, campaignId, openingQuest());
@@ -93,7 +93,7 @@ test("committing a direction materializes its objectives and outcomes exactly on
     assert.match(committed.objectives[0]?.summary ?? "", /Investigate the failed Surge/);
     assert.match(committed.outcomes[0]?.consequenceSeeds[0] ?? "", /evidence-first/);
     const playerView = buildPerspectiveContext(db, content, "quest-direction-commit").playerQuests[0]!;
-    assert.equal(playerView.objectives.length, 2);
+    assert.equal(playerView.objectives.length, 1);
     assert.equal(playerView.outcomes.length, 0, "Exact outcomes remain hidden until one is completed");
     assert.throws(() => commitQuestDirection(db, campaignId, created.questId, "DIR-OPENING-DIRECT"), /Only an available quest|already has a committed direction/);
   } finally { db.close(); }

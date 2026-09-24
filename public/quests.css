@@ -4,6 +4,16 @@
   margin-top: 28px;
 }
 
+.journal-section { margin-top: 32px; }
+.journal-section > h2 { margin-bottom: 12px; color: #d9c7e7; font: 700 1.15rem Georgia, serif; }
+.compact-quest-list { margin-top: 0; gap: 10px; }
+.compact-quest-list .quest-card { padding: 16px 18px; }
+.compact-quest-list .quest-goal,
+.compact-quest-list .quest-summary { margin: 8px 0 0; }
+.journal-events { display: grid; gap: 10px; }
+.journal-events .info-card { padding: 14px 18px; }
+.journal-events .info-card h2 { font-size: .78rem; text-transform: uppercase; letter-spacing: .07em; }
+
 .quest-card {
   padding: 22px;
   border: 1px solid #554363;

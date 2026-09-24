@@ -1,6 +1,6 @@
 # Velmora Quest Engine Decision Audit
 
-This audit separates protected user-approved direction, implementation-only machinery, and campaign-shaping choices that were implemented without explicit approval. The unapproved choices remain provisional scaffolding until reviewed. They are not canon and may not be used as dependencies for later creative systems.
+This audit records protected user-approved direction and separates it from implementation-only machinery. Quest-generation decisions through review batch 5 are approved; generated campaign details remain campaign state rather than setting canon.
 
 ## Approved direction
 
@@ -19,13 +19,13 @@ This audit separates protected user-approved direction, implementation-only mach
 - SQLite persistence, event history, save compatibility, atomic transactions, and rollback.
 - Player-known and Director-only filtering.
 - Validation of referenced threads, locations, factions, NPCs, facts, prerequisites, stages, and visibility.
-- A browser journal that displays only persistent player-known quests and genuine quest state.
+- A compact browser journal derived from persistent player-known quest and event state.
 - Runtime rejection of malformed or unauthorized quest changes.
 
 ## Approved in review batch 1
 
 - **Opening quest timing:** The first formal quest is created only after the player-clicked d6 start and the First Speaker's attack, using both the selected spawn and hidden opening crisis. Automatic quest creation at browser campaign creation has been removed.
-- **Quest construction:** The approved generator direction recombines modular objectives, pressures, complications, and outcomes rather than selecting one fixed beginning-to-end formula. The old four formulas remain provisional until their replacement module rules and content are reviewed.
+- **Quest construction:** The generator recombines modular objectives, pressures, complications, and outcome boundaries rather than selecting one fixed beginning-to-end formula.
 - **Objective flow:** Quest objectives may be sequential, parallel, branching, or optional when appropriate. The engine now stores dependencies, required status, branch groups, and skipped alternatives; it rejects cycles and malformed branches.
 
 ## Approved in review batch 2
@@ -38,12 +38,6 @@ This audit separates protected user-approved direction, implementation-only mach
 - **Route invalidation:** Completing one route never silently removes another. When recorded durable world consequences make an unresolved route impossible, the Campaign Master must cite 1-4 exact consequence events and mark the route failed. The journal preserves the route, failure reason, and evidence references; rollback restores its earlier state.
 - **Default failure:** Ordinary generated quests begin recoverable. Permanent failure remains reserved for verified, previously established warned deadlines, irreversible choices, or major world events; the engine cannot currently execute it without that future authority layer.
 - **Meaningful neglect:** Simple elapsed turns never count. A received warning is recorded only when directly witnessed or clearly told, delivered by an established NPC, or made obvious by the environment. Neglect then requires either that warning followed by the player's deliberate choice of another priority or a recorded world event advancing the threat. Each trigger requires fresh evidence and applies exactly one bounded complication. Repeated neglect remains mild without separately verified exceptional stakes.
-
-## Remaining provisional choices requiring review
-
-1. **Module rules and content:** The approved modular direction still needs rules for which ingredients may be created, combined, and validated. The current four formulas and generic text remain scaffolding.
-2. **Recovery content:** Evidence, timing, maximum, distinct paths, simultaneous pursuit, and thread-cap interaction are approved. Module rules must still prove that generated altered routes are meaningfully different and caused by the cited consequences.
-3. **Generic authored text:** Generated objective wording, stakes, outcomes, consequence seeds, and opening quest text are implementation-written scaffolding rather than approved content pools.
 
 ## Approved in review batch 3
 
@@ -59,15 +53,24 @@ This audit separates protected user-approved direction, implementation-only mach
 - **Natural commitment:** The player commits through an ordinary free-text action. The engine must confirm the direction it interpreted before materializing concrete objectives.
 - **Direction bounds and invalidation:** A quest normally offers two credible directions and may offer three only when justified. If an unchosen direction becomes impossible, it is removed and replaced only when current world evidence supports another credible route.
 
-## Review order
+## Approved in review batch 5
 
-Review decisions in dependency order:
+- **Tagged reusable ingredients:** Quest construction selects from tagged objective, pressure, complication, and outcome-boundary modules. Ingredients may be reused when causally appropriate; the engine may generate quest-specific details inside protected canon and existing mechanics.
+- **Objective families:** Adaptive objectives use discover, influence, secure, or change. A committed direction creates only the immediate objective. Later objectives are added only when new information, world changes, or the player's approach creates genuine new work.
+- **Pressure and complication families:** Pressures use opposition, instability, scarcity, or conflict and must trace to an NPC, faction, creature or Tear, location, or recorded consequence. Complications use new information, changed access, a third party, or a bounded cost; they must be causal and proportional and cannot erase earned progress or pad a quest.
+- **Adaptive length:** A quest may resolve quickly, grow when play justifies it, or continue as a linked quest. One quest may contain at most five objectives; reaching the cap requires resolution or a linked continuation rather than padding.
+- **Open exact ending:** Direction commitment does not fix the exact ending. Completion records the result actually produced across the original problem, people or factions, the location or wider world, and player reward or cost as applicable.
+- **Unexpected solutions:** A creative solution that genuinely resolves the underlying problem completes or transforms the quest. The engine cannot force the player through a presumed checklist.
+- **Encounter mix:** Quests may combine social, investigation, exploration, and combat. A credible noncombat path normally remains possible; mandatory combat requires established circumstances that genuinely justify it.
+- **Generated supporting details:** The Campaign Master may create minor NPCs and ordinary sublocations within existing boundaries. They persist only when the engine records meaningful interaction.
+- **Compact journal:** The engine keeps the complete per-turn event record, while the player journal remains a reminder: brief active main quests, brief other active quests, and only the latest five meaningful player-known events. Unaccepted offers remain in story presentation and do not clutter the journal.
 
-1. Define module rules and content boundaries.
-2. Review thread concurrency, follow-up linking, failure, and recovery.
-3. Replace provisional text and formulas with approved generative rules and content boundaries.
-4. Re-run sustained quest simulations before combat work begins.
+## Remaining validation
+
+- Run sustained quest simulations across multiple threads, failures, recovery routes, and unexpected solutions before combat work begins.
+- Validate generated wording and pacing through real-provider play; adjust modules without changing these approved boundaries.
+- Design the final d6-start-and-attack opening flow before authoring its first generated quest.
 
 ## Implementation boundary
 
-The staged-presentation, commitment, and direction-maintenance checkpoints now enforce causal ranking, the player/Director privacy boundary, natural-action interpretation, refresh-safe explicit confirmation, responsive materialization, and evidence-backed invalidation. Rejecting an interpretation preserves the uncommitted quest; accepting it commits exactly one recorded direction and resumes the original action. A later world consequence can remove one unchosen direction only with directly related durable evidence. The engine adds at most one unused causally valid replacement, never cycles an invalidated approach back, and leaves fewer choices when no credible replacement exists. Later systems may rely on these data contracts, flexible objective graph, safety boundaries, concurrency, follow-up linkage, recovery cadence, fixed classification, reward cadence, staged visibility, and commitment transaction. The generic module wording remains provisional pending content-boundary review and sustained live play.
+The staged-presentation, commitment, adaptive-objective, exact-resolution, and direction-maintenance checkpoints enforce causal ranking, the player/Director privacy boundary, natural-action interpretation, refresh-safe explicit confirmation, responsive materialization, unexpected-solution recognition, and evidence-backed invalidation. Later systems may rely on these data contracts and approved module families. Generated wording remains subject to sustained live-play tuning, but the content and authority boundaries above are fixed.

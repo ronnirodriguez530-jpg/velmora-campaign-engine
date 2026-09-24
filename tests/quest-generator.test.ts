@@ -68,7 +68,7 @@ test("player quest context exposes directions and tradeoffs without exact object
     assert.equal(playerQuest.outcomes.length, 0);
     assert.equal("recoveryEvidenceEventSequences" in playerQuest, false);
     assert.equal("failureEvidenceEventSequences" in playerQuest, false);
-    assert.equal(planningQuest.objectives.length, 2);
+    assert.equal(planningQuest.objectives.length, 1, "A generated quest fixes only its immediate objective; later work adapts to play");
     assert.equal(planningQuest.outcomes.length, 2);
   } finally { db.close(); }
 });

@@ -769,7 +769,9 @@ function questFromRow(row: Record<string, unknown>): QuestInstance {
     recoveryPathUsed: stored.recoveryPathUsed ?? null,
     recoveryEvidenceEventSequences: stored.recoveryEvidenceEventSequences ?? [],
     failureReason: stored.failureReason ?? null,
-    failureEvidenceEventSequences: stored.failureEvidenceEventSequences ?? []
+    failureEvidenceEventSequences: stored.failureEvidenceEventSequences ?? [],
+    resolutionSummary: stored.resolutionSummary ?? null,
+    resolutionAreas: stored.resolutionAreas ?? []
   };
 }
 

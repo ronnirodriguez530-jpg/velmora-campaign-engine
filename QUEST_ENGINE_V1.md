@@ -21,12 +21,14 @@ The first quest checkpoint provides:
 - Creation, activation, objective updates, completion, and recoverable failure
 - Atomic quest updates, event history, bounded context retrieval, save compatibility, and rollback
 
-## Provisional checkpoint 2
+## Approved modular composer
 
-The seeded quest composer turns an active story thread into a validated test structure. Its persistence and validation are working, but its campaign-shaping formulas remain provisional:
+The seeded quest composer turns an active story thread into a validated structure:
 
 - The same campaign seed, source thread, and sequence always reproduce the same structure
-- Different seeds select among reusable investigate, protect, negotiate, and recovery patterns
+- Causal state selects from tagged discover, influence, secure, and change objective modules; the seed breaks valid ties
+- Opposition, instability, scarcity, and conflict pressures must have a traceable cause
+- New-information, changed-access, third-party, and bounded-cost complications must be causal and proportional
 - Main, faction, side, personal, dynamic, and fragment types derive from the source thread
 - Player-visible threads create available quests; hidden threads create locked Director-only quests
 - Current locations, involved factions and NPCs, stage gates, and recovery paths carry forward
@@ -34,7 +36,7 @@ The seeded quest composer turns an active story thread into a validated test str
 - Follow-ups declare explicit prerequisite, parallel, optional-branch, or consequence relationships; no previous quest becomes a prerequisite automatically
 - Every generated quest defaults to recoverable failure, meaningful neglect triggers, and exactly two outcomes
 
-The composer now stores and validates route profiles. A second unresolved route must explicitly link to the first and differ through approach and tradeoff, allies or location, or moral or resource cost. It is never generated merely to fill capacity. The four formulas and authored placeholder text still require review before this becomes the approved campaign-flow generator.
+The composer stores and validates route profiles. A second unresolved route must explicitly link to the first and differ through approach and tradeoff, allies or location, or moral or resource cost. It is never generated merely to fill capacity. Generated details remain bounded campaign state, not new setting canon or mechanics.
 
 ## Approved checkpoint 3A
 
@@ -47,8 +49,10 @@ The live Campaign Master can now request bounded quest operations through the va
 - Generate an engine-owned quest from an active supplied story thread
 - Make a locked quest available after its prerequisites and stage gate are satisfied
 - Activate an available quest
+- Add one adaptive objective when play creates genuine new work
 - Complete or fail one currently active objective
-- Complete a quest with exactly one recorded outcome
+- Complete a quest with an exact causal resolution assembled from what actually changed
+- Recognize an unexpected solution that resolves the underlying problem without forcing unfinished presumed steps
 - Fail a recoverable quest only when it already contains a recovery path
 
 A turn may generate one ordinary quest. Up to two new quests are allowed only when both are altered recovery routes; ordinary and recovery generation cannot be mixed in one turn. A turn may manage at most three quests, with each source thread or quest used only once. Quest completion and its requested faction, NPC, location, or story-thread consequences share the existing atomic world-turn transaction. If any requested change fails validation or execution, none of the quest or consequence changes commit.
@@ -75,18 +79,20 @@ Recovery therefore preserves forward motion without erasing consequences or lett
 
 An unresolved route remains open when another route completes. It may be marked failed only when 1-4 cited durable world-consequence events recorded since that route began make its premise impossible. The failed route remains in the journal with its reason and evidence references; it is never deleted or silently closed. This transition and its history are rollback-safe.
 
-## Provisional opening behavior in checkpoint 5
+## Compact journal and opening boundary
 
 The browser now exposes the player-visible quest ledger as a functional journal:
 
 - New campaigns do not receive a formal opening quest until the approved player-clicked d6 start and First Speaker attack have occurred
 - The future opening composer must use both the selected spawn and hidden opening crisis
-- Available, active, changed, completed, and failed quests render with their real persistent state
-- Quest cards show type, campaign stage, summary, ordered objectives, stakes, recovery provenance, and selected outcome when present
-- The navigation badge counts genuinely actionable available, active, and changed quests
+- The journal shows brief active main quests and brief other active quests
+- The journal shows only the latest five meaningful player-known events
+- Unaccepted quest offers remain in story presentation rather than occupying the journal
+- The navigation badge counts active and changed quests
 - Hidden Director-only and locked quests remain excluded through the player-context boundary
+- The complete per-turn record remains in durable event history and the History view
 
-The journal itself is working engineering. It correctly remains empty before the formal opening quest exists.
+The journal is intentionally a reminder rather than a second campaign database. It correctly remains empty before the formal opening quest exists.
 
 ## Approved review checkpoint 6
 
@@ -96,7 +102,7 @@ Review batch 1 establishes these permanent directions:
 - Quest construction recombines modular objectives, pressures, complications, and outcomes rather than selecting a fixed whole-quest formula.
 - Objectives may be sequential, parallel, branching, or optional when appropriate.
 
-The objective graph is implemented. Each objective records whether it is required, which objectives it depends on, and whether it belongs to a mutually exclusive branch group. Activating a quest exposes every ready objective, completing a branch skips unused alternatives, optional objectives do not block completion, and malformed or cyclic structures are rejected. The modular content rules remain under review.
+The objective graph is implemented. Each objective records whether it is required, which objectives it depends on, and whether it belongs to a mutually exclusive branch group. A committed direction begins with one immediate objective. New objectives appear only when play justifies them, and a quest must resolve or continue through a linked quest instead of exceeding five objectives. Completing a branch skips unused alternatives, optional objectives do not block completion, and malformed or cyclic structures are rejected.
 
 ## Working staged-presentation checkpoint 7A
 
@@ -120,6 +126,8 @@ Normal quests have exactly two major outcomes. Only a marked turning-point quest
 
 Questlines may link and require one another as a spiderweb. A player is not limited to one main questline.
 
+The two or three stored outcome entries are structural boundaries, not prewritten endings. The exact completion is recorded from actual play across the problem, people or factions, location or world, and player reward or cost as applicable. Quests may mix social, investigation, exploration, and combat; a noncombat route normally remains credible unless established circumstances truly require combat.
+
 ## Failure and neglect rule
 
 Inactivity alone never worsens a quest. A warning is recorded only when the player directly witnesses or is clearly told it, receives it from an established NPC, or encounters an obvious environmental warning. Neglect requires that received warning followed by a deliberate choice of another priority, or a recorded world event advancing the threat. Each neglect trigger must cite fresh evidence and pair atomically with exactly one bounded faction, NPC, location, or story-thread complication. Repeated neglect remains mild without verified exceptional stakes and cannot automatically create permanent failure.
@@ -138,5 +146,6 @@ Ordinary generated quests begin recoverable and require at least one recorded ro
 
 ## Still required
 
-- User review of the decisions recorded in `QUEST_ENGINE_DECISION_AUDIT.md`
 - Live play validation of quest changes and recovery across sustained multi-scene sessions
+- Multi-thread simulation of adaptive objectives, recovery, unexpected solutions, and compact journal behavior
+- Final d6-start-and-attack implementation that creates the opening quest at the approved moment

@@ -1,5 +1,5 @@
 {
-  "version": "0.4.1",
+  "version": "0.4.2",
   "channel": "main",
-  "notes": "Connect the NPC Turn Manager for bounded memories, relationships, public knowledge, status, movement, involvement, and rollback."
+  "notes": "Add the approved adaptive Quest Engine modules, causal resolutions, unexpected-solution support, and compact active-quest journal."
 }

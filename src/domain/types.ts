@@ -388,6 +388,8 @@ export type QuestState = "locked" | "available" | "active" | "changed" | "comple
 export type QuestVisibility = "player" | "director";
 export type QuestObjectiveState = "pending" | "active" | "completed" | "failed" | "skipped";
 export type QuestFailureMode = "recoverable" | "warned_deadline" | "irreversible_choice" | "major_world_event";
+export type QuestObjectiveFamily = "discover" | "influence" | "secure" | "change";
+export type QuestResolutionArea = "problem" | "people_or_factions" | "location_or_world" | "player_reward_or_cost";
 
 export type QuestObjective = {
   objectiveId: string;
@@ -488,6 +490,8 @@ export type QuestInstance = {
   truthEvidenceIds: string[];
   isTurningPoint: boolean;
   selectedOutcomeId: string | null;
+  resolutionSummary: string | null;
+  resolutionAreas: QuestResolutionArea[];
   createdTurn: number;
   updatedTurn: number;
 };
@@ -803,9 +807,14 @@ export type ReviseQuestDirectionsRequest = {
 export type ManageQuestRequest = {
   type: "manage_quest";
   questId: string;
-  action: "make_available" | "activate" | "complete_objective" | "fail_objective" | "complete" | "fail_recoverably" | "fail_from_consequence" | "record_warning" | "apply_neglect_complication";
+  action: "make_available" | "activate" | "add_objective" | "complete_objective" | "fail_objective" | "complete" | "complete_unexpectedly" | "fail_recoverably" | "fail_from_consequence" | "record_warning" | "apply_neglect_complication";
   objectiveId: string | null;
+  newObjectiveSummary?: string | null;
+  newObjectiveFamily?: QuestObjectiveFamily | null;
+  newObjectiveIsMajor?: boolean | null;
   outcomeId: string | null;
+  resolutionSummary?: string | null;
+  resolutionAreas?: QuestResolutionArea[];
   consequenceEventSequences: number[];
   warningMethod: "directly_witnessed_or_clearly_told" | "established_npc_message" | "obvious_environmental_warning" | null;
   warningSignal: string | null;

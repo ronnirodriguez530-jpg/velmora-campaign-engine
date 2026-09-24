@@ -3,7 +3,21 @@ import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { createVelmoraWebServer } from "../src/web/server.ts";
+import { buildJournalEvents, createVelmoraWebServer } from "../src/web/server.ts";
+
+test("journal keeps only the latest five meaningful player-known events", () => {
+  const quest = { questId: "QUEST-KNOWN", title: "Hold the Crown", resolutionSummary: null, failureReason: null, objectives: [{ objectiveId: "OBJ-ONE", summary: "Reach the sealed gate" }] };
+  const events = [
+    { turn: 1, eventType: "quest_created", payloadJson: JSON.stringify({ questId: quest.questId }) },
+    ...Array.from({ length: 6 }, (_, index) => ({ turn: index + 1, eventType: "quest_warning_recorded", payloadJson: JSON.stringify({ questId: quest.questId, signal: `warning ${index + 1}` }) })),
+    { turn: 7, eventType: "quest_warning_recorded", payloadJson: JSON.stringify({ questId: "QUEST-HIDDEN", signal: "hidden warning" }) }
+  ];
+  const journal = buildJournalEvents(events, [quest]);
+  assert.equal(journal.length, 5);
+  assert.match(journal[0]!.summary, /warning 2/);
+  assert.match(journal[4]!.summary, /warning 6/);
+  assert.equal(journal.some((entry) => /hidden/.test(entry.summary)), false);
+});
 
 test("browser API creates, plays, persists, acts, and rolls back", async () => {
   const server = await createVelmoraWebServer({ dataDir: mkdtempSync(join(tmpdir(), "velmora-web-test-")) });
@@ -17,6 +31,8 @@ test("browser API creates, plays, persists, acts, and rolls back", async () => {
     const pageHtml = await page.text();
     assert.match(pageHtml, /<title>Velmora<\/title>/);
     assert.match(pageHtml, /id="quest-list"/);
+    assert.match(pageHtml, /id="main-quest-list"/);
+    assert.match(pageHtml, /id="journal-event-list"/);
     assert.match(pageHtml, /id="direction-overlay"/);
     assert.match(pageHtml, /id="accept-direction"/);
     assert.match(pageHtml, /id="reject-direction"/);
@@ -32,10 +48,12 @@ test("browser API creates, plays, persists, acts, and rolls back", async () => {
     const createdBody = await created.json() as {
       quests: Array<{ sourceThreadId: string; state: string }>;
       actionable: { quests: number };
+      journal: { mainQuests: unknown[]; otherQuests: unknown[]; recentEvents: unknown[] };
       context: { playerQuests: Array<{ questId: string }> };
     };
     assert.equal(createdBody.quests.length, 0);
     assert.equal(createdBody.actionable.quests, 0);
+    assert.deepEqual(createdBody.journal, { mainQuests: [], otherQuests: [], recentEvents: [] });
     assert.equal(createdBody.context.playerQuests.length, 0);
 
     const blockedAction = await fetch(`${base}/api/campaigns/browser-proof/actions`, {

@@ -34,6 +34,33 @@ function sendJson(response: ServerResponse, status: number, value: unknown): voi
   response.end(JSON.stringify(value));
 }
 
+export function buildJournalEvents(events: Array<Record<string, unknown>>, quests: Array<{ questId: string; title: string; resolutionSummary?: string | null; failureReason?: string | null; objectives: Array<{ objectiveId: string; summary: string }> }>) {
+  const questsById = new Map(quests.map((quest) => [quest.questId, quest]));
+  const entries: Array<{ turn: number; summary: string }> = [];
+  for (const event of events) {
+    const eventType = String(event.eventType ?? "");
+    const payload = JSON.parse(String(event.payloadJson ?? "{}")) as Record<string, unknown>;
+    const quest = typeof payload.questId === "string" ? questsById.get(payload.questId) : undefined;
+    let summary: string | null = null;
+    if (quest) {
+      if (eventType === "quest_direction_committed") summary = `${quest.title}: you committed to a direction.`;
+      if (eventType === "quest_objective_added") summary = `${quest.title}: ${String(payload.summary ?? "the situation created a new objective")}.`;
+      if (eventType === "quest_objective_updated") {
+        const objective = quest.objectives.find((item) => item.objectiveId === payload.objectiveId);
+        summary = `${quest.title}: ${objective?.summary ?? "an objective"} was ${payload.state === "completed" ? "completed" : "lost"}.`;
+      }
+      if (eventType === "quest_completed") summary = `${quest.title}: ${quest.resolutionSummary ?? String(payload.resolutionSummary ?? "completed")}.`;
+      if (eventType === "quest_failed_recoverably" || eventType === "quest_failed_from_consequence") summary = `${quest.title}: ${quest.failureReason ?? String(payload.reason ?? "this route failed")}.`;
+      if (eventType === "quest_warning_recorded") summary = `${quest.title}: warning—${String(payload.signal ?? "the situation may worsen")}.`;
+      if (eventType === "quest_neglect_complication") summary = `${quest.title}: ${String(payload.reason ?? "a mild complication developed")}.`;
+    }
+    if (eventType === "stage_advanced") summary = `The campaign entered the ${String(payload.stage ?? payload.toStage ?? "next")} stage.`;
+    if (eventType === "tear_arrival") summary = "A new Tear arrival changed the situation in Velmora.";
+    if (summary) entries.push({ turn: Number(event.turn ?? 0), summary });
+  }
+  return entries.slice(-5);
+}
+
 async function readJson(request: IncomingMessage): Promise<Record<string, unknown>> {
   let body = "";
   for await (const chunk of request) {
@@ -61,10 +88,16 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
   const playerView = (name: string) => {
     const context = buildPerspectiveContext(db, content, name);
     const events = listEvents(db, context.campaignId);
-    const storyHistory = events.filter((event) => event.eventType === "world_turn_committed").slice(-12).map((event) => {
+    const storyHistory = events.filter((event) => event.eventType === "world_turn_committed").map((event) => {
       const payload = JSON.parse(String(event.payloadJson ?? "{}")) as { playerInput?: string; directorSummary?: string };
       return { turn: event.turn, action: payload.playerInput ?? "", narration: payload.directorSummary ?? "" };
     });
+    const activeQuests = context.playerQuests.filter((quest) => quest.state === "active" || quest.state === "changed");
+    const journal = {
+      mainQuests: activeQuests.filter((quest) => quest.questType === "main"),
+      otherQuests: activeQuests.filter((quest) => quest.questType !== "main"),
+      recentEvents: buildJournalEvents(events, context.playerQuests)
+    };
     return {
       context,
       playerCharacter: context.playerCharacter,
@@ -80,9 +113,10 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         progress: context.factionPathProgress.find((item) => item.factionId === faction.id)?.progress ?? 0
       })),
       locations: [context.currentLocation, ...context.connectedLocations],
-      quests: context.playerQuests,
+      quests: activeQuests,
+      journal,
       actionable: {
-        quests: context.playerQuests.filter((quest) => quest.state === "available" || quest.state === "active" || quest.state === "changed").length,
+        quests: activeQuests.length,
         factions: context.factionPathProgress.filter((item) => item.progress > 0).length,
         locations: context.persistentConsequences.length + context.recentTearArrivals.length,
         inventory: 0

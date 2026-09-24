@@ -93,7 +93,28 @@ test("Campaign Master can generate, activate, and advance an engine-owned quest"
     }]), "quest-tool-generate", "complete the first objective");
     const advanced = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
     assert.equal(advanced.objectives[0]?.state, "completed");
-    assert.equal(advanced.objectives[1]?.state, "active");
+    assert.equal(advanced.objectives.length, 1, "The engine must not pad the quest with a prewritten second step");
+
+    await runPlayerAction(db, content, directorFor([{
+      type: "manage_quest",
+      questId: quest.questId,
+      action: "add_objective",
+      objectiveId: null,
+      newObjectiveSummary: "Secure the newly discovered witness before the opposition reaches them.",
+      newObjectiveFamily: "secure",
+      newObjectiveIsMajor: false,
+      outcomeId: null,
+      consequenceEventSequences: [],
+      warningMethod: null,
+      warningSignal: null,
+      warningSourceNpcId: null,
+      neglectTrigger: null,
+      neglectComplicationTool: null,
+      reason: "Completing the investigation revealed a witness who now needs protection."
+    }]), "quest-tool-generate", "protect the witness we just discovered");
+    const adapted = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
+    assert.equal(adapted.objectives.length, 2);
+    assert.equal(adapted.objectives[1]?.state, "active");
   } finally { db.close(); }
 });
 
@@ -109,6 +130,8 @@ test("quest completion and its validated world consequence commit in one turn", 
         action: "complete",
         objectiveId: null,
         outcomeId: quest.outcomes[0]!.outcomeId,
+        resolutionSummary: "The player stabilized the opening crisis and earned the League's cautious support.",
+        resolutionAreas: ["problem", "people_or_factions"],
         consequenceEventSequences: [],
         warningMethod: null,
         warningSignal: null,
@@ -127,7 +150,36 @@ test("quest completion and its validated world consequence commit in one turn", 
     const completed = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
     assert.equal(completed.state, "completed");
     assert.equal(completed.selectedOutcomeId, quest.outcomes[0]!.outcomeId);
+    assert.match(completed.resolutionSummary ?? "", /stabilized the opening crisis/);
     assert.equal(getFactionCondition(db, campaignId, "FAC-001"), before + 1);
+  } finally { db.close(); }
+});
+
+test("an unexpected solution completes the underlying problem without forcing unfinished objectives", async () => {
+  const { content, db, campaignId } = await setup("quest-tool-unexpected");
+  try {
+    const quest = generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE");
+    activateQuest(db, campaignId, quest.questId);
+    await runPlayerAction(db, content, directorFor([{
+      type: "manage_quest",
+      questId: quest.questId,
+      action: "complete_unexpectedly",
+      objectiveId: null,
+      outcomeId: quest.outcomes[0]!.outcomeId,
+      resolutionSummary: "The player redirected the unstable surge into an empty ward, resolving the danger without following the expected route.",
+      resolutionAreas: ["problem", "location_or_world"],
+      consequenceEventSequences: [],
+      warningMethod: null,
+      warningSignal: null,
+      warningSourceNpcId: null,
+      neglectTrigger: null,
+      neglectComplicationTool: null,
+      reason: "The improvised solution actually resolved the quest's underlying problem."
+    }]), "quest-tool-unexpected", "redirect the surge away from everyone");
+    const completed = listQuestInstances(db, campaignId).find((candidate) => candidate.questId === quest.questId)!;
+    assert.equal(completed.state, "completed");
+    assert.equal(completed.objectives.every((objective) => objective.state === "skipped"), true);
+    assert.deepEqual(completed.resolutionAreas, ["problem", "location_or_world"]);
   } finally { db.close(); }
 });
 
@@ -143,6 +195,8 @@ test("an invalid combined consequence plan leaves both quest and world state unc
         action: "complete",
         objectiveId: null,
         outcomeId: quest.outcomes[0]!.outcomeId,
+        resolutionSummary: "The opening crisis was resolved through the chosen route.",
+        resolutionAreas: ["problem"],
         consequenceEventSequences: [],
         warningMethod: null,
         warningSignal: null,

@@ -14,7 +14,7 @@ export const QUEST_TYPE_BY_THREAD_KIND: Record<StoryThreadKind, QuestType> = {
   dynamic: "dynamic"
 };
 
-export type CreateQuestInput = Omit<QuestInstance, "campaignId" | "createdTurn" | "updatedTurn" | "selectedOutcomeId">;
+export type CreateQuestInput = Omit<QuestInstance, "campaignId" | "createdTurn" | "updatedTurn" | "selectedOutcomeId" | "resolutionSummary" | "resolutionAreas">;
 
 function requireText(value: string, label: string, minimum: number, maximum: number): string {
   const normalized = value.trim();
@@ -376,6 +376,8 @@ export function applyQuestCreation(
     linkedQuestIds: [...new Set(input.linkedQuestIds)],
     truthEvidenceIds: [...new Set(input.truthEvidenceIds)],
     selectedOutcomeId: null,
+    resolutionSummary: null,
+    resolutionAreas: [],
     campaignId,
     createdTurn: turn,
     updatedTurn: turn
@@ -431,7 +433,6 @@ export function activateQuest(db: DatabaseSync, campaignId: string, questId: str
 function materializeDirectionObjectives(quest: QuestInstance, direction: QuestInstance["possibleDirections"][number]): QuestInstance["objectives"] {
   const baseId = quest.questId.replace(/^QUEST-/, "").slice(0, 60);
   const firstId = quest.objectives[0]?.objectiveId ?? `OBJ-${baseId}-COMMIT`;
-  const secondId = quest.objectives[1]?.objectiveId ?? `OBJ-${baseId}-FOLLOW-THROUGH`;
   const carriesMajorObjective = quest.objectives.some((objective) => objective.isMajorObjective);
   return [
     {
@@ -439,17 +440,8 @@ function materializeDirectionObjectives(quest: QuestInstance, direction: QuestIn
       summary: `Begin the chosen approach: ${direction.summary}`,
       state: "active",
       required: true,
-      isMajorObjective: false,
-      dependsOnObjectiveIds: [],
-      branchGroupId: null
-    },
-    {
-      objectiveId: secondId,
-      summary: `Carry that approach far enough to meaningfully change: ${quest.goal}`,
-      state: "pending",
-      required: true,
       isMajorObjective: carriesMajorObjective,
-      dependsOnObjectiveIds: [firstId],
+      dependsOnObjectiveIds: [],
       branchGroupId: null
     }
   ];
@@ -538,15 +530,56 @@ export function updateQuestObjective(
   return commitQuestUpdate(db, updated, "quest_objective_updated", { questId, objectiveId, state });
 }
 
-export function completeQuest(db: DatabaseSync, campaignId: string, questId: string, outcomeId: string): QuestInstance {
+export function addAdaptiveQuestObjective(
+  db: DatabaseSync,
+  campaignId: string,
+  questId: string,
+  summary: string,
+  family: NonNullable<ManageQuestRequest["newObjectiveFamily"]>,
+  isMajorObjective = false
+): QuestInstance {
+  const quest = getQuest(db, campaignId, questId);
+  if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can gain an adaptive objective");
+  if (quest.objectives.length >= 5) throw new Error("A quest with five objectives must resolve or continue through a linked quest");
+  const normalized = requireText(summary, "Adaptive quest objective", 3, 240);
+  if (quest.objectives.some((objective) => objective.summary.toLowerCase() === normalized.toLowerCase())) throw new Error("An adaptive quest objective must add new work");
+  if (isMajorObjective && quest.objectives.some((objective) => objective.isMajorObjective)) throw new Error("A quest may designate at most one major objective");
+  const turn = getCampaignState(db, campaignId).turn;
+  const baseId = quest.questId.replace(/^QUEST-/, "").slice(0, 52);
+  const objectiveId = `OBJ-${baseId}-ADAPT-${turn}-${quest.objectives.length + 1}`;
+  const unresolvedIds = quest.objectives.filter((objective) => objective.required && (objective.state === "active" || objective.state === "pending")).map((objective) => objective.objectiveId);
+  const objective = {
+    objectiveId,
+    summary: normalized,
+    state: unresolvedIds.length === 0 ? "active" as const : "pending" as const,
+    required: true,
+    isMajorObjective,
+    dependsOnObjectiveIds: unresolvedIds,
+    branchGroupId: null
+  };
+  const updated: QuestInstance = { ...quest, objectives: [...quest.objectives, objective], updatedTurn: turn };
+  return commitQuestUpdate(db, updated, "quest_objective_added", { questId, objectiveId, family, summary: normalized });
+}
+
+export function completeQuest(
+  db: DatabaseSync,
+  campaignId: string,
+  questId: string,
+  outcomeId: string,
+  resolutionSummary?: string,
+  resolutionAreas: QuestInstance["resolutionAreas"] = [],
+  unexpected = false
+): QuestInstance {
   const quest = getQuest(db, campaignId, questId);
   if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can be completed");
-  if (!objectiveRequirementsMet(quest.objectives)) throw new Error("Every required quest objective or branch must be completed first");
+  if (!unexpected && !objectiveRequirementsMet(quest.objectives)) throw new Error("Every required quest objective or branch must be completed first");
   if (!quest.outcomes.some((outcome) => outcome.outcomeId === outcomeId)) throw new Error(`Unknown quest outcome ${outcomeId}`);
+  const finalSummary = resolutionSummary ? requireText(resolutionSummary, "Quest resolution", 3, 400) : quest.outcomes.find((outcome) => outcome.outcomeId === outcomeId)!.summary;
+  if (new Set(resolutionAreas).size !== resolutionAreas.length || resolutionAreas.length > 4) throw new Error("Quest resolution areas must be unique and bounded");
   const turn = getCampaignState(db, campaignId).turn;
   const objectives = quest.objectives.map((objective) => objective.state === "pending" || objective.state === "active" ? { ...objective, state: "skipped" as const } : objective);
-  const updated: QuestInstance = { ...quest, objectives, state: "completed", selectedOutcomeId: outcomeId, updatedTurn: turn };
-  return commitQuestUpdate(db, updated, "quest_completed", { questId, outcomeId });
+  const updated: QuestInstance = { ...quest, objectives, state: "completed", selectedOutcomeId: outcomeId, resolutionSummary: finalSummary, resolutionAreas: [...resolutionAreas], updatedTurn: turn };
+  return commitQuestUpdate(db, updated, "quest_completed", { questId, outcomeId, resolutionSummary: finalSummary, resolutionAreas, unexpected });
 }
 
 export function failQuestRecoverably(db: DatabaseSync, campaignId: string, questId: string): QuestInstance {
@@ -574,7 +607,9 @@ export function validateQuestManagement(
   const quest = getQuest(db, campaignId, request.questId);
   const campaign = getCampaignState(db, campaignId);
   const requiresObjective = request.action === "complete_objective" || request.action === "fail_objective";
-  const requiresOutcome = request.action === "complete";
+  const addsObjective = request.action === "add_objective";
+  const completesQuest = request.action === "complete" || request.action === "complete_unexpectedly";
+  const requiresOutcome = completesQuest;
   const requiresConsequenceEvidence = request.action === "fail_from_consequence";
   const recordsWarning = request.action === "record_warning";
   const appliesNeglect = request.action === "apply_neglect_complication";
@@ -584,6 +619,24 @@ export function validateQuestManagement(
   }
   if (requiresOutcome !== (request.outcomeId !== null)) {
     throw new Error("This quest action has an invalid outcome selection");
+  }
+  if (addsObjective) {
+    requireText(request.newObjectiveSummary ?? "", "Adaptive quest objective", 3, 240);
+    if (!request.newObjectiveFamily || !["discover", "influence", "secure", "change"].includes(request.newObjectiveFamily)) {
+      throw new Error("An adaptive quest objective requires an approved objective family");
+    }
+    if (typeof request.newObjectiveIsMajor !== "boolean") throw new Error("An adaptive quest objective must declare whether it is major");
+  } else if (request.newObjectiveSummary != null || request.newObjectiveFamily != null || request.newObjectiveIsMajor != null) {
+    throw new Error("Only an adaptive-objective action may supply new objective details");
+  }
+  if (completesQuest) {
+    requireText(request.resolutionSummary ?? "", "Quest resolution", 3, 400);
+    const allowedAreas = new Set(["problem", "people_or_factions", "location_or_world", "player_reward_or_cost"]);
+    if (!Array.isArray(request.resolutionAreas) || request.resolutionAreas.length < 1 || request.resolutionAreas.length > 4 || new Set(request.resolutionAreas).size !== request.resolutionAreas.length || request.resolutionAreas.some((area) => !allowedAreas.has(area))) {
+      throw new Error("Quest completion requires one to four unique approved resolution areas");
+    }
+  } else if (request.resolutionSummary != null || (request.resolutionAreas?.length ?? 0) > 0) {
+    throw new Error("Only quest completion may supply an exact resolution");
   }
   if (!Array.isArray(request.consequenceEventSequences) || (!requiresConsequenceEvidence && !appliesNeglect && request.consequenceEventSequences.length !== 0)) {
     throw new Error("Only consequence-based route failure or quest neglect may cite evidence");
@@ -607,14 +660,19 @@ export function validateQuestManagement(
     }
   } else if (request.action === "activate") {
     if (quest.state !== "available") throw new Error("Only an available quest can be activated");
+  } else if (addsObjective) {
+    if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can gain an adaptive objective");
+    if (quest.objectives.length >= 5) throw new Error("A quest with five objectives must resolve or continue through a linked quest");
+    if (quest.objectives.some((objective) => objective.summary.toLowerCase() === request.newObjectiveSummary!.trim().toLowerCase())) throw new Error("An adaptive quest objective must add new work");
+    if (request.newObjectiveIsMajor && quest.objectives.some((objective) => objective.isMajorObjective)) throw new Error("A quest may designate at most one major objective");
   } else if (requiresObjective) {
     if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can update objectives");
     const objective = quest.objectives.find((candidate) => candidate.objectiveId === request.objectiveId);
     if (!objective) throw new Error(`Unknown quest objective ${request.objectiveId}`);
     if (objective.state !== "active") throw new Error("Only the active quest objective can be resolved");
-  } else if (request.action === "complete") {
+  } else if (completesQuest) {
     if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can be completed");
-    if (!objectiveRequirementsMet(quest.objectives)) throw new Error("Every required quest objective or branch must be completed first");
+    if (request.action === "complete" && !objectiveRequirementsMet(quest.objectives)) throw new Error("Every required quest objective or branch must be completed first");
     if (!quest.outcomes.some((outcome) => outcome.outcomeId === request.outcomeId)) throw new Error(`Unknown quest outcome ${request.outcomeId}`);
   } else if (request.action === "fail_recoverably") {
     if (quest.state !== "active" && quest.state !== "changed") throw new Error("Only an active or changed quest can fail");
@@ -679,6 +737,23 @@ export function applyQuestManagement(
     if (!objectives.some((objective) => objective.state === "active")) throw new Error("A quest must expose at least one ready objective when activated");
     updated = { ...quest, state: "active", objectives, updatedTurn: turn };
     eventType = "quest_activated";
+  } else if (request.action === "add_objective") {
+    const summary = requireText(request.newObjectiveSummary!, "Adaptive quest objective", 3, 240);
+    const unresolvedIds = quest.objectives.filter((objective) => objective.required && (objective.state === "active" || objective.state === "pending")).map((objective) => objective.objectiveId);
+    const baseId = quest.questId.replace(/^QUEST-/, "").slice(0, 52);
+    const objectiveId = `OBJ-${baseId}-ADAPT-${turn}-${quest.objectives.length + 1}`;
+    const objective = {
+      objectiveId,
+      summary,
+      state: unresolvedIds.length === 0 ? "active" as const : "pending" as const,
+      required: true,
+      isMajorObjective: request.newObjectiveIsMajor!,
+      dependsOnObjectiveIds: unresolvedIds,
+      branchGroupId: null
+    };
+    updated = { ...quest, objectives: [...quest.objectives, objective], updatedTurn: turn };
+    eventType = "quest_objective_added";
+    payload = { ...payload, objectiveId, family: request.newObjectiveFamily, summary };
   } else if (request.action === "complete_objective" || request.action === "fail_objective") {
     const objectiveState = request.action === "complete_objective" ? "completed" as const : "failed" as const;
     const resolvedObjective = quest.objectives.find((objective) => objective.objectiveId === request.objectiveId)!;
@@ -691,11 +766,19 @@ export function applyQuestManagement(
     updated = { ...quest, objectives, state: requiredFailure ? "changed" : quest.state, updatedTurn: turn };
     eventType = "quest_objective_updated";
     payload = { ...payload, objectiveId: request.objectiveId, state: objectiveState };
-  } else if (request.action === "complete") {
+  } else if (request.action === "complete" || request.action === "complete_unexpectedly") {
     const objectives = quest.objectives.map((objective) => objective.state === "pending" || objective.state === "active" ? { ...objective, state: "skipped" as const } : objective);
-    updated = { ...quest, objectives, state: "completed", selectedOutcomeId: request.outcomeId, updatedTurn: turn };
+    updated = {
+      ...quest,
+      objectives,
+      state: "completed",
+      selectedOutcomeId: request.outcomeId,
+      resolutionSummary: request.resolutionSummary!,
+      resolutionAreas: [...request.resolutionAreas!],
+      updatedTurn: turn
+    };
     eventType = "quest_completed";
-    payload = { ...payload, outcomeId: request.outcomeId };
+    payload = { ...payload, outcomeId: request.outcomeId, resolutionSummary: request.resolutionSummary, resolutionAreas: request.resolutionAreas, unexpected: request.action === "complete_unexpectedly" };
   } else if (request.action === "fail_recoverably") {
     updated = { ...quest, state: "failed", failureReason: request.reason, failureEvidenceEventSequences: [], updatedTurn: turn };
     eventType = "quest_failed_recoverably";
