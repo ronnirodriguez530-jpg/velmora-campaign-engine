@@ -9,6 +9,7 @@ import { getOrCreateEncounteredScene } from "../application/placement-engine.ts"
 import { cloudDirectorFromEnvironment } from "../director/cloud-director.ts";
 import { openPlayableMoment, submitPlayableAction } from "../application/gameplay-session.ts";
 import { runSimulations } from "../application/simulation-runner.ts";
+import { runQuestSimulations } from "../application/quest-simulation-runner.ts";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const dataDir = resolve(process.env.VELMORA_DATA_DIR ?? join(projectRoot, "data"));
@@ -24,7 +25,7 @@ async function main(): Promise<void> {
   }
 
   if (command === "help") {
-    console.log("Commands: validate | simulate [paths] [turns] | init <name> | status <name> | mock <name> | context <name> | play <name> | act <name> <action> | cloud-act <name> <action> | rollback <name> | log <name>");
+    console.log("Commands: validate | simulate [paths] [turns] | quest-simulate [paths] | init <name> | status <name> | mock <name> | context <name> | play <name> | act <name> <action> | cloud-act <name> <action> | rollback <name> | log <name>");
     return;
   }
 
@@ -34,6 +35,13 @@ async function main(): Promise<void> {
     if (!Number.isInteger(paths) || paths < 1 || paths > 100) throw new Error("Simulation paths must be an integer from 1 to 100");
     if (!Number.isInteger(turns) || turns < 1 || turns > 100) throw new Error("Simulation turns must be an integer from 1 to 100");
     console.log(JSON.stringify(await runSimulations(content, paths, turns), null, 2));
+    return;
+  }
+
+  if (command === "quest-simulate") {
+    const paths = Number(name === "default" ? 12 : name);
+    if (!Number.isInteger(paths) || paths < 1 || paths > 100) throw new Error("Quest simulation paths must be an integer from 1 to 100");
+    console.log(JSON.stringify(await runQuestSimulations(content, paths), null, 2));
     return;
   }
 

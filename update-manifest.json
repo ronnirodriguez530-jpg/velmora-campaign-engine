@@ -1,5 +1,5 @@
 {
-  "version": "0.4.2",
+  "version": "0.4.3",
   "channel": "main",
-  "notes": "Add the approved adaptive Quest Engine modules, causal resolutions, unexpected-solution support, and compact active-quest journal."
+  "notes": "Add sustained multi-thread Quest Engine stress simulations covering adaptive objectives, unexpected solutions, recovery routes, concurrency caps, and journal bounds."
 }

@@ -12,6 +12,7 @@ Local, headless foundation for the Velmora living-campaign simulation.
 npm run check
 npm test
 npm run simulate
+npm run simulate:quests
 npm run web
 npm start -- init my-campaign
 npm start -- status my-campaign
@@ -66,6 +67,11 @@ without claiming those defaults as canon or inventing quest content.
 `npm run simulate` runs twelve isolated twelve-turn campaign paths, compares
 their final world patterns, reports validation failures, and never writes those
 test runs into the playable campaign database.
+
+`npm run simulate:quests` runs twelve isolated multi-thread quest paths. Each
+path exercises adaptive objectives, unexpected solutions, recoverable failure,
+two altered routes, the two-unresolved-quest cap, and the five-event journal
+limit without writing to the playable campaign database or changing canon.
 
 `npm run web` starts the complete local application at
 `http://127.0.0.1:4173`. The browser interface, engine, and SQLite save remain

@@ -233,7 +233,9 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] No forced replacement when credible unused directions are exhausted; the last route requires explicit quest failure
 - [x] Compact Quest journal: active main quests, other active quests, and the latest five meaningful player-known events
 
-Implemented quest engineering: the durable contract, tagged modular composer, adaptive lifecycle and objective graph, hard two-unresolved-quest-per-thread cap, meaningful alternative validation, bounded Campaign Master controls, exact causal resolutions, unexpected-solution completion, atomic consequences, evidence-backed route invalidation, recoverable ordinary failure, durable received warnings, mild evidence-backed neglect, fixed origin classification, paced quest advancement, compact player journal, persistence, privacy, and rollback work. The first quest is correctly withheld until the future d6-and-attack opening flow. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. Sustained multi-thread simulation remains required before Step 6 is declared complete. See `QUEST_ENGINE_V1.md`.
+Implemented quest engineering: the durable contract, tagged modular composer, adaptive lifecycle and objective graph, hard two-unresolved-quest-per-thread cap, meaningful alternative validation, bounded Campaign Master controls, exact causal resolutions, unexpected-solution completion, atomic consequences, evidence-backed route invalidation, recoverable ordinary failure, durable received warnings, mild evidence-backed neglect, fixed origin classification, paced quest advancement, compact player journal, persistence, privacy, rollback, and deterministic multi-thread stress coverage. The first quest is correctly withheld until the future d6-and-attack opening flow. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+
+- [x] Sustained isolated multi-thread quest simulations cover adaptive objectives, unexpected solutions, failure, two-route recovery, concurrency caps, and compact-journal bounds
 
 Approved progression bridge: the engine can validate one designated major objective or a completed turning point and prevent duplicate awards from the same quest.
 
@@ -317,7 +319,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 107 of 107 tests
+- [x] Current automated suite passes 108 of 108 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -416,7 +418,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and most of the engineering foundation of step 6. The strict quest contract, approved tagged modular composer, adaptive objective flow, exact causal outcomes, unexpected-solution handling, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, warning and neglect execution, evidence-backed route invalidation, progression bridge, persistence, rollback, and compact Quest journal work. Opening timing is approved and automatic pre-opening quest creation has been removed. Step 6 still needs sustained multi-thread simulation and the future d6-start-and-attack opening integration. Combat and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the tested generative Quest Engine foundation in step 6. The strict quest contract, approved tagged modular composer, adaptive objective flow, exact causal outcomes, unexpected-solution handling, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, warning and neglect execution, evidence-backed route invalidation, progression bridge, persistence, rollback, compact Quest journal, and sustained isolated multi-thread stress simulations now work. Opening timing is approved and automatic pre-opening quest creation has been removed. The next dependency is the future d6-start-and-attack opening integration. Combat, real-provider sustained play evaluation, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

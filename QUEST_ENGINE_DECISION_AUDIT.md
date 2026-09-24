@@ -67,7 +67,7 @@ This audit records protected user-approved direction and separates it from imple
 
 ## Remaining validation
 
-- Run sustained quest simulations across multiple threads, failures, recovery routes, and unexpected solutions before combat work begins.
+- Run real-provider sustained play evaluations after the deterministic multi-thread stress suite.
 - Validate generated wording and pacing through real-provider play; adjust modules without changing these approved boundaries.
 - Design the final d6-start-and-attack opening flow before authoring its first generated quest.
 

@@ -147,5 +147,5 @@ Ordinary generated quests begin recoverable and require at least one recorded ro
 ## Still required
 
 - Live play validation of quest changes and recovery across sustained multi-scene sessions
-- Multi-thread simulation of adaptive objectives, recovery, unexpected solutions, and compact journal behavior
+- Real-provider sustained play evaluation of generated wording, pacing, and recovery across multi-scene sessions
 - Final d6-start-and-attack implementation that creates the opening quest at the approved moment

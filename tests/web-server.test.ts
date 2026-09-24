@@ -3,7 +3,8 @@ import assert from "node:assert/strict";
 import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { buildJournalEvents, createVelmoraWebServer } from "../src/web/server.ts";
+import { buildJournalEvents } from "../src/application/journal-builder.ts";
+import { createVelmoraWebServer } from "../src/web/server.ts";
 
 test("journal keeps only the latest five meaningful player-known events", () => {
   const quest = { questId: "QUEST-KNOWN", title: "Hold the Crown", resolutionSummary: null, failureReason: null, objectives: [{ objectiveId: "OBJ-ONE", summary: "Reach the sealed gate" }] };
