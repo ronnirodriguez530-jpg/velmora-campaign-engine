@@ -35,6 +35,7 @@ import type {
   VelmoraContent,
   WorldFact
 } from "../domain/types.ts";
+import type { OpeningState } from "../domain/types.ts";
 
 export type CampaignRow = {
   id: string;
@@ -70,6 +71,7 @@ export type StateSnapshot = {
     milestones: ProgressionMilestone[];
     advancements: CharacterAdvancement[];
   };
+  opening?: OpeningState;
 };
 
 export function openDatabase(path: string): DatabaseSync {
@@ -633,6 +635,24 @@ function migrate(db: DatabaseSync): void {
       );
     `);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(24, ?)").run(new Date().toISOString());
+  }
+  const migrationTwentyFive = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 25").get() as { present: number } | undefined;
+  if (!migrationTwentyFive) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS opening_state (
+        campaign_id TEXT PRIMARY KEY,
+        phase TEXT NOT NULL CHECK(phase IN ('awaiting_roll','exploration')),
+        spawn_roll INTEGER CHECK(spawn_roll BETWEEN 1 AND 6),
+        spawn_id TEXT,
+        convergence_roll INTEGER CHECK(convergence_roll BETWEEN 1 AND 6),
+        convergence_hook_id TEXT,
+        exploration_turns INTEGER NOT NULL DEFAULT 0 CHECK(exploration_turns >= 0),
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+      INSERT OR IGNORE INTO opening_state(campaign_id, phase, exploration_turns)
+        SELECT id, 'awaiting_roll', 0 FROM campaigns;
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(25, ?)").run(new Date().toISOString());
   }
 }
 
@@ -1628,6 +1648,7 @@ export function createCampaign(db: DatabaseSync, content: VelmoraContent, name: 
     }
     const blueprint = generateCampaignBlueprint(content, id, seed);
     persistCampaignBlueprint(db, blueprint);
+    db.prepare("INSERT INTO opening_state(campaign_id, phase, exploration_turns) VALUES(?, 'awaiting_roll', 0)").run(id);
     for (const thread of createInitialBlueprintThreads(blueprint)) persistStoryThread(db, thread);
     db.prepare("INSERT INTO event_log(campaign_id, turn, event_type, payload_json, created_at) VALUES(?, 0, 'campaign_created', ?, ?)")
       .run(id, JSON.stringify({ seed }), now);
@@ -1710,6 +1731,10 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
         advancements: listCharacterAdvancements(db, campaignId)
       }
     : undefined;
+  const opening = db.prepare(`SELECT campaign_id AS campaignId, phase, spawn_roll AS spawnRoll,
+      spawn_id AS spawnId, convergence_roll AS convergenceRoll,
+      convergence_hook_id AS convergenceHookId, exploration_turns AS explorationTurns
+    FROM opening_state WHERE campaign_id = ?`).get(campaignId) as OpeningState | undefined;
   return {
     campaign,
     factions,
@@ -1721,7 +1746,8 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
     playerCharacter,
     playerPowers,
     playerInventory,
-    progression
+    progression,
+    opening
   };
 }
 
@@ -1824,6 +1850,13 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
       persistPlayerProgression(db, snapshot.progression.state);
       for (const milestone of snapshot.progression.milestones) persistProgressionMilestone(db, milestone);
       for (const advancement of snapshot.progression.advancements) persistCharacterAdvancement(db, advancement);
+    }
+    if (snapshot.opening !== undefined) {
+      db.prepare(`UPDATE opening_state SET phase = ?, spawn_roll = ?, spawn_id = ?, convergence_roll = ?,
+        convergence_hook_id = ?, exploration_turns = ? WHERE campaign_id = ?`)
+        .run(snapshot.opening.phase, snapshot.opening.spawnRoll, snapshot.opening.spawnId,
+          snapshot.opening.convergenceRoll, snapshot.opening.convergenceHookId,
+          snapshot.opening.explorationTurns, campaign.id);
     }
     if (snapshot.npcState) {
       db.prepare("DELETE FROM npc_relationship_qualities WHERE campaign_id = ?").run(campaign.id);

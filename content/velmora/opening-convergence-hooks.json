@@ -1,0 +1,44 @@
+[
+  {
+    "roll": 1,
+    "id": "OPEN-HOOK-OFFICIAL-REQUEST",
+    "title": "Official request",
+    "summary": "A Council official or independent guard asks for bounded help that brings the public address closer to the player's path.",
+    "adaptationRule": "The request may be refused. If it is, advance the official duty through another actor or let its consequences cross the player's path; never narrate acceptance for the player."
+  },
+  {
+    "roll": 2,
+    "id": "OPEN-HOOK-PERSON-IN-NEED",
+    "title": "Person in need",
+    "summary": "A person nearby needs immediate, limited help while the public gathering develops around them.",
+    "adaptationRule": "The player may decline or leave. The need continues independently and may create a later intersection; never force sympathy, aid, or pursuit."
+  },
+  {
+    "roll": 3,
+    "id": "OPEN-HOOK-ACCESS-CHANGE",
+    "title": "Restricted access change",
+    "summary": "A guard line, ward, closure, or authorization change alters which parts of the Council Crown are presently accessible.",
+    "adaptationRule": "Change the external routes and available spaces without choosing the player's destination or claiming they obeyed an instruction."
+  },
+  {
+    "roll": 4,
+    "id": "OPEN-HOOK-SUSPICIOUS-ACTIVITY",
+    "title": "Suspicious activity",
+    "summary": "An observable person, object, or inconsistency moves through the Crown as the public address approaches.",
+    "adaptationRule": "The player may ignore it. Let the activity proceed causally and surface evidence or consequences later instead of forcing investigation."
+  },
+  {
+    "roll": 5,
+    "id": "OPEN-HOOK-MINOR-EMERGENCY",
+    "title": "Minor emergency",
+    "summary": "A bounded disturbance redirects nearby people and resources without beginning the central attack.",
+    "adaptationRule": "Keep the emergency proportionate and external. Adapt to avoidance or refusal without escalating it into the First Speaker strike."
+  },
+  {
+    "roll": 6,
+    "id": "OPEN-HOOK-PUBLIC-MOVEMENT",
+    "title": "Public movement",
+    "summary": "Bells, crowd movement, or a schedule change shifts the public event and alters nearby access.",
+    "adaptationRule": "Describe what the public and officials do, but leave the player's movement and response entirely to the player."
+  }
+]

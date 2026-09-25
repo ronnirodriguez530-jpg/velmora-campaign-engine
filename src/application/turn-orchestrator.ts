@@ -8,6 +8,7 @@ import { executeToolRequest } from "../tools/executor.ts";
 import { buildDirectorPlanningContext } from "./context-builder.ts";
 import { evaluateStageProgression } from "./stage-progression.ts";
 import { maybePersistTearArrival } from "./tear-event-generator.ts";
+import { recordOpeningExplorationTurn } from "./opening-system.ts";
 
 const MAX_DIRECTOR_ATTEMPTS = 2;
 
@@ -115,6 +116,7 @@ export async function runPlayerAction(
       .run(nextTurn, new Date().toISOString(), campaign.id);
     evaluateStageProgression(db, content, campaignName, nextTurn);
     maybePersistTearArrival(db, campaign.id, campaign.seed, nextTurn);
+    recordOpeningExplorationTurn(db, campaign.id);
     appendEvent(db, campaign.id, nextTurn, "world_turn_committed", {
       playerInput,
       directorSummary: plan.summary,

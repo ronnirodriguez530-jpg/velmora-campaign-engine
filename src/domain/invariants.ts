@@ -69,6 +69,11 @@ export function validateContent(content: VelmoraContent): void {
   assert(content.openingSpawns.every((spawn) => spawn.locationId === content.campaign.initialLocationId), "Every opening spawn must remain inside the Council Crown");
   assert(content.openingSpawns.every((spawn) => spawn.spawnArea.length > 0 && spawn.entryReason.length > 0 && spawn.immediatePressure.length > 0), "Every opening spawn requires an area, entry reason, and immediate pressure");
 
+  assert(content.openingConvergenceHooks.length === 6, "The opening requires exactly six hidden convergence hooks");
+  assert(content.openingConvergenceHooks.every((hook, index) => hook.roll === index + 1), "Opening convergence rolls must cover 1 through 6 in order");
+  assert(new Set(content.openingConvergenceHooks.map((hook) => hook.id)).size === 6, "Opening convergence hook IDs must be unique");
+  assert(content.openingConvergenceHooks.every((hook) => hook.title.length > 0 && hook.summary.length > 0 && hook.adaptationRule.length > 0), "Every convergence hook requires a title, summary, and adaptation rule");
+
   const blueprintPools = content.storyBlueprintPools;
   assert(blueprintPools.version >= 1, "Story blueprint pool version is required");
   assert(blueprintPools.openingPressures.length >= 6, "The campaign blueprint requires at least six opening pressures");

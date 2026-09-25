@@ -23,3 +23,6 @@
 .roll-dice { color: #d6b0f6; font-size: 1rem; }
 .roll-result strong { font: 800 3.6rem/1 Georgia, serif; }
 .roll-result span { color: #d5c4e0; text-transform: capitalize; }
+.opening-result { margin: 1.25rem 0; padding: 1rem; border: 1px solid #7b5d8f; border-radius: .75rem; text-align: center; }
+.opening-result > strong { display: block; color: #d6b0f6; font: 800 3rem/1 Georgia, serif; }
+.opening-result h2 { margin: .5rem 0; }

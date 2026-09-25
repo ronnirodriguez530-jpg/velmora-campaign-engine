@@ -82,6 +82,28 @@ export type OpeningSpawnDefinition = {
   immediatePressure: string;
 };
 
+export type OpeningConvergenceHookDefinition = {
+  roll: number;
+  id: string;
+  title: string;
+  summary: string;
+  adaptationRule: string;
+};
+
+export type OpeningState = {
+  campaignId: string;
+  phase: "awaiting_roll" | "exploration";
+  spawnRoll: number | null;
+  spawnId: string | null;
+  convergenceRoll: number | null;
+  convergenceHookId: string | null;
+  explorationTurns: number;
+};
+
+export type PlayerOpeningState = Omit<OpeningState, "convergenceRoll" | "convergenceHookId"> & {
+  spawn: OpeningSpawnDefinition | null;
+};
+
 export type OpeningPressureDefinition = {
   id: string;
   title: string;
@@ -124,6 +146,7 @@ export type VelmoraContent = {
   characters: CharacterDefinition[];
   truths: TruthDefinition[];
   openingSpawns: OpeningSpawnDefinition[];
+  openingConvergenceHooks: OpeningConvergenceHookDefinition[];
   storyBlueprintPools: StoryBlueprintPools;
   powers: PowerDefinition[];
   items: ItemDefinition[];
@@ -342,6 +365,7 @@ export type PerspectiveContext = {
   playerProgression: PlayerProgression;
   playerQuests: PlayerQuestView[];
   playerKnownStoryThreads: StoryThread[];
+  opening: PlayerOpeningState;
   visibleOpeningPressure: OpeningPressureDefinition | null;
 };
 
@@ -381,6 +405,7 @@ export type DirectorPlanningContext = PerspectiveContext & {
   directorQuestDetails: QuestInstance[];
   campaignBlueprint: CampaignBlueprint;
   recoveryEvidenceEvents: Array<{ sequence: number; turn: number; toolType: string; reason: string }>;
+  directorOpening: OpeningState & { convergenceHook: OpeningConvergenceHookDefinition | null };
 };
 
 export type QuestType = "main" | "faction" | "side" | "personal" | "dynamic" | "fragment";

@@ -56,7 +56,11 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Generative opening-pressure foundation connected to the initial scene without exposing the hidden campaign blueprint
 - [x] Opening convergence and witnessed inciting event: public address in Council Plaza during the First Speaker's attack and the Surge's failure to end
 - [x] Six fully concrete, engine-validated Council Crown spawn situations mapped to permanent d6 results
-- [ ] Player-clicked opening d6 selection and saved outcome, implemented with the core dice system
+- [x] Player-clicked opening d6 selection and saved outcome, with refresh-safe anti-reroll protection
+- [x] Separate hidden d6 selects one of six permanent convergence-hook categories without exposing it to player context
+- [x] Pre-attack opening remains exploratory and adaptive; convergence hooks change external events without forcing player decisions
+- [ ] Engine-validated readiness rule for when exploration converges on the First Speaker's public address and strike
+- [ ] Post-strike opening crisis revealed only after the witnessed attack, followed by the first formal quest
 - [x] Variable opening conflict over replacing the incapacitated First Speaker
 - [ ] Replacement candidates and selection events generated from approved campaign conditions rather than one preset outcome
 - [x] First Speaker's hidden transformation, false recovery, intermittent control, and escalating influence established as a campaign conflict
@@ -319,7 +323,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 108 of 108 tests
+- [x] Current automated suite passes 109 of 109 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations

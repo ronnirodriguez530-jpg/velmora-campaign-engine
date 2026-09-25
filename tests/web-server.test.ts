@@ -82,6 +82,19 @@ test("browser API creates, plays, persists, acts, and rolls back", async () => {
     assert.equal(characterBody.playerCharacter.maxHp, 14);
     assert.equal(characterBody.playerCharacter.defense, 12);
 
+    const beforeRoll = await fetch(`${base}/api/campaigns/browser-proof/play?director=local`);
+    const beforeRollBody = await beforeRoll.json() as { moment: null; context: { opening: { phase: string } } };
+    assert.equal(beforeRollBody.moment, null);
+    assert.equal(beforeRollBody.context.opening.phase, "awaiting_roll");
+
+    const openingRoll = await fetch(`${base}/api/campaigns/browser-proof/opening-roll`, { method: "POST" });
+    const openingBody = await openingRoll.json() as { opening: { phase: string; spawnRoll: number; spawn: { spawnArea: string } }; context: unknown };
+    assert.equal(openingBody.opening.phase, "exploration");
+    assert.ok(openingBody.opening.spawnRoll >= 1 && openingBody.opening.spawnRoll <= 6);
+    assert.ok(openingBody.opening.spawn.spawnArea.length > 0);
+    assert.equal(JSON.stringify(openingBody).includes("convergenceHook"), false);
+    assert.equal(JSON.stringify(openingBody).includes("convergenceRoll"), false);
+
     const played = await fetch(`${base}/api/campaigns/browser-proof/play?director=local`);
     const playBody = await played.json() as { moment: { scene: { locationId: string }; presentation: { source: string } } };
     assert.equal(playBody.moment.scene.locationId, "LOC-COUNCIL-CROWN");

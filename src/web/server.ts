@@ -12,6 +12,7 @@ import { openPresentedStoryMoment } from "../application/story-session.ts";
 import { createPlayerCharacter, type PlayerCharacterInput } from "../application/player-character.ts";
 import { checkForUpdate, installLatestUpdate } from "../application/update-manager.ts";
 import { buildJournalEvents } from "../application/journal-builder.ts";
+import { getOpeningState, rollOpeningStart } from "../application/opening-system.ts";
 import { spawn } from "node:child_process";
 import { cloudDirectorFromEnvironment } from "../director/cloud-director.ts";
 import { MockDirector } from "../director/mock-director.ts";
@@ -146,7 +147,7 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         return;
       }
 
-      const match = url.pathname.match(/^\/api\/campaigns\/([^/]+)(?:\/(play|actions|directions|rolls|rollback|log|character))?$/u);
+      const match = url.pathname.match(/^\/api\/campaigns\/([^/]+)(?:\/(play|actions|directions|rolls|rollback|log|character|opening-roll))?$/u);
       if (match) {
         const name = decodeURIComponent(match[1]);
         const operation = match[2];
@@ -161,6 +162,10 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
           return;
         }
         if (method === "GET" && operation === "play") {
+          if (getOpeningState(db, campaign.id).phase === "awaiting_roll") {
+            sendJson(response, 200, { campaign, moment: null, ...playerView(name) });
+            return;
+          }
           const director = selectDirector(url.searchParams.get("director"));
           sendJson(response, 200, { campaign, moment: await openPresentedStoryMoment(db, content, director, name), ...playerView(name) });
           return;
@@ -182,8 +187,15 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
           sendJson(response, 201, { campaign: getCampaign(db, name), playerCharacter, ...playerView(name) });
           return;
         }
+        if (method === "POST" && operation === "opening-roll") {
+          if (!getPlayerCharacter(db, campaign.id)) throw new Error("Create your player character before rolling the opening d6");
+          const opening = rollOpeningStart(db, content, campaign.id);
+          sendJson(response, 200, { campaign: getCampaign(db, name), opening, ...playerView(name) });
+          return;
+        }
         if (method === "POST" && operation === "actions") {
           if (!getPlayerCharacter(db, campaign.id)) throw new Error("Create your player character before beginning story play");
+          if (getOpeningState(db, campaign.id).phase === "awaiting_roll") throw new Error("Roll the opening d6 before beginning story play");
           const body = await readJson(request);
           const input = typeof body.input === "string" ? body.input.trim() : "";
           if (!input || input.length > 1000) throw new Error("Action must be 1-1000 characters");

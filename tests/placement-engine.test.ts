@@ -45,8 +45,9 @@ test("seeded placement is reproducible and stage-valid", async () => {
     assert.equal(first.stage, "opening");
     assert.ok(first.threatLevel <= context.stageMaxThreatLevel);
     assert.equal(first.locationId, context.currentLocation.id);
-    assert.equal(first.conflictKey, context.visibleOpeningPressure?.id);
-    assert.equal(first.visibleFacts.some((fact) => fact.includes(context.visibleOpeningPressure!.summary)), true);
+    assert.equal(context.visibleOpeningPressure, null);
+    assert.equal(first.conflictKey, "test_opening_pressure");
+    assert.equal(first.visibleFacts.some((fact) => fact.includes("OPEN-PRESSURE")), false);
   } finally {
     db.close();
   }

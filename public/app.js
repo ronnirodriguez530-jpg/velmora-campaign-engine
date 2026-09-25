@@ -9,7 +9,7 @@ const skills = [
   ["performance", "Performance", "Charisma"], ["persuasion", "Persuasion", "Charisma"], ["religion", "Religion", "Intelligence"],
   ["sleight_of_hand", "Sleight of Hand", "Dexterity"], ["stealth", "Stealth", "Dexterity"], ["survival", "Survival", "Wisdom"]
 ];
-let campaignName = "", cloudAvailable = false, directorMode = "cloud", currentPayload = null, pendingCheck = null, pendingDirectionConfirmation = null;
+let campaignName = "", cloudAvailable = false, directorMode = "cloud", currentPayload = null, pendingCheck = null, pendingDirectionConfirmation = null, openingRolled = false;
 
 async function api(path, options = {}) {
   const response = await fetch(path, { headers: { "content-type": "application/json" }, ...options });
@@ -105,6 +105,13 @@ function render(payload) {
   renderJournal(journal, quests);
   badge("quests", actionable.quests || 0); badge("factions", actionable.factions || 0); badge("locations", actionable.locations || 0); badge("inventory", actionable.inventory || 0);
   renderCharacter(playerCharacter); showPage(playerCharacter ? "story" : "character");
+  const needsOpeningRoll = Boolean(playerCharacter && context.opening?.phase === "awaiting_roll");
+  if (needsOpeningRoll) {
+    openingRolled = false; $("#opening-result").classList.add("hidden"); $("#opening-roll-button").textContent = "Roll";
+    $("#opening-overlay").classList.remove("hidden"); $("#opening-roll-button").focus();
+  } else {
+    $("#opening-overlay").classList.add("hidden");
+  }
   if (payload.pendingDirectionConfirmation) showDirectionConfirmation(payload.pendingDirectionConfirmation);
   if (payload.pendingCheck) showRoll(payload.pendingCheck);
 }
@@ -156,6 +163,25 @@ $("#roll-button").onclick = async () => {
     $("#roll-total").textContent = String(payload.roll.total); $("#roll-outcome").textContent = title(payload.roll.outcome); $("#roll-result").classList.remove("hidden");
     $("#roll-message").textContent = ""; pendingCheck = null; $("#roll-button").textContent = "Continue";
   } catch (error) { $("#roll-message").textContent = error.message; } finally { busy(false); }
+};
+$("#opening-roll-button").onclick = async () => {
+  if (openingRolled) {
+    busy(true);
+    try { $("#opening-overlay").classList.add("hidden"); render(await api(`/api/campaigns/${encodeURIComponent(campaignName)}/play?${directorQuery()}`)); }
+    catch (error) { $("#opening-message").textContent = error.message; $("#opening-overlay").classList.remove("hidden"); }
+    finally { busy(false); }
+    return;
+  }
+  busy(true); $("#opening-message").textContent = "Rolling…";
+  try {
+    const payload = await api(`/api/campaigns/${encodeURIComponent(campaignName)}/opening-roll`, { method: "POST", body: "{}" });
+    currentPayload = { ...currentPayload, ...payload };
+    $("#opening-die").textContent = String(payload.opening.spawnRoll);
+    $("#opening-area").textContent = payload.opening.spawn.spawnArea;
+    $("#opening-reason").textContent = payload.opening.spawn.entryReason;
+    $("#opening-result").classList.remove("hidden"); $("#opening-message").textContent = "";
+    $("#opening-roll-button").textContent = "Enter Velmora"; openingRolled = true;
+  } catch (error) { $("#opening-message").textContent = error.message; } finally { busy(false); }
 };
 $("#menu-button").onclick = () => openMenu(true); $("#close-menu").onclick = () => openMenu(false); $("#scrim").onclick = () => openMenu(false); document.querySelectorAll(".nav-item").forEach((item) => { item.onclick = () => showPage(item.dataset.page); });
 $("#open-campaign").onclick = () => openCampaign(false); $("#new-campaign").onclick = () => openCampaign(true);

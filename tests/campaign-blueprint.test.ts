@@ -53,7 +53,8 @@ test("campaign creation persists a hidden stage-gated blueprint", async () => {
   assert.equal(initialThreads.find((thread) => thread.threadId === "THREAD-CAMPAIGN-REVERSAL")?.minimumStage, blueprint.reversal.minimumStage);
 
   const perspective = buildPerspectiveContext(db, content, "blueprint-test");
-  assert.equal(perspective.visibleOpeningPressure?.id, blueprint.openingPressure.id);
+  assert.equal(perspective.visibleOpeningPressure, null);
+  assert.equal(JSON.stringify(perspective).includes(blueprint.openingPressure.id), false);
   assert.equal(JSON.stringify(perspective).includes(blueprint.factionPressure.id), false);
   assert.equal(JSON.stringify(perspective).includes(blueprint.reversal.id), false);
   const planning = buildDirectorPlanningContext(db, content, "blueprint-test");

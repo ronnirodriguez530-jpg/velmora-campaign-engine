@@ -1,5 +1,5 @@
 {
-  "version": "0.4.3",
+  "version": "0.4.4",
   "channel": "main",
-  "notes": "Add sustained multi-thread Quest Engine stress simulations covering adaptive objectives, unexpected solutions, recovery routes, concurrency caps, and journal bounds."
+  "notes": "Add the persistent player-clicked opening d6, hidden adaptive convergence d6, exploratory pre-attack phase, browser roll experience, and secrecy protections."
 }

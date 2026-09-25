@@ -4,6 +4,7 @@ import { getCampaign, getCampaignBlueprint, getPlayerCharacter, getPlayerProgres
 import { buildNpcContext } from "../npc/npc-context-gate.ts";
 import { listOwnedPlayerPowers } from "./power-system.ts";
 import { listOwnedInventory } from "./inventory-system.ts";
+import { getOpeningState, getPlayerOpeningState } from "./opening-system.ts";
 
 function toPlayerQuestView(quest: QuestInstance): PlayerQuestView {
   const { recoveryEvidenceEventSequences: _recoveryEvidence, failureEvidenceEventSequences: _failureEvidence, ...visible } = quest;
@@ -90,8 +91,10 @@ export function buildPerspectiveContext(
     playerInventory: listOwnedInventory(db, content, campaign.id),
     playerProgression: getPlayerProgression(db, campaign.id),
     playerQuests: listRelevantQuestInstances(db, campaign.id, campaign.stage, "player").map(toPlayerQuestView),
-    playerKnownStoryThreads: listRelevantStoryThreads(db, campaign.id, campaign.stage, currentLocation.id, "player"),
-    visibleOpeningPressure: campaign.stage === "opening" && campaign.turn === 0 ? blueprint.openingPressure : null
+    playerKnownStoryThreads: listRelevantStoryThreads(db, campaign.id, campaign.stage, currentLocation.id, "player")
+      .filter((thread) => thread.threadId !== "THREAD-OPENING-PRESSURE"),
+    opening: getPlayerOpeningState(db, content, campaign.id),
+    visibleOpeningPressure: null
   };
 }
 
@@ -104,6 +107,10 @@ export function buildDirectorPlanningContext(
   const campaignBlueprint = getCampaignBlueprint(db, perspective.campaignId)!;
   const playerQuestDetails = listRelevantQuestInstances(db, perspective.campaignId, perspective.stage, "player");
   const directorQuests = listRelevantQuestInstances(db, perspective.campaignId, perspective.stage, "director");
+  const opening = getOpeningState(db, perspective.campaignId);
+  const convergenceHook = opening.convergenceHookId
+    ? content.openingConvergenceHooks.find((entry) => entry.id === opening.convergenceHookId) ?? null
+    : null;
   return {
     ...perspective,
     campaignBlueprint,
@@ -112,6 +119,7 @@ export function buildDirectorPlanningContext(
       .sort((left, right) => right.updatedTurn - left.updatedTurn || left.questId.localeCompare(right.questId))
       .slice(0, 24),
     recoveryEvidenceEvents: listRecentConsequenceEvents(db, perspective.campaignId),
+    directorOpening: { ...opening, convergenceHook },
     directorStoryThreads: listRelevantStoryThreads(
       db,
       perspective.campaignId,
