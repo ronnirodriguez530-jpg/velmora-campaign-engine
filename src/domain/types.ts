@@ -92,16 +92,24 @@ export type OpeningConvergenceHookDefinition = {
 
 export type OpeningState = {
   campaignId: string;
-  phase: "awaiting_roll" | "exploration";
+  phase: "awaiting_roll" | "exploration" | "convergence_ready";
   spawnRoll: number | null;
   spawnId: string | null;
   convergenceRoll: number | null;
   convergenceHookId: string | null;
   explorationTurns: number;
+  readinessTurn: number | null;
+  readinessReason: string | null;
 };
 
-export type PlayerOpeningState = Omit<OpeningState, "convergenceRoll" | "convergenceHookId"> & {
+export type PlayerOpeningState = Omit<OpeningState, "phase" | "convergenceRoll" | "convergenceHookId" | "readinessTurn" | "readinessReason"> & {
+  phase: "awaiting_roll" | "exploration";
   spawn: OpeningSpawnDefinition | null;
+};
+
+export type OpeningConvergenceProposal = {
+  evidence: "player_entered_witnessing_position" | "public_address_reached_player" | "established_duty_placed_player_at_address";
+  reason: string;
 };
 
 export type OpeningPressureDefinition = {
@@ -857,6 +865,7 @@ export type DirectorTurnPlan = {
   toolRequests: ToolRequest[];
   suggestedActions: [string, string];
   allowsFreeText: true;
+  openingConvergenceProposal?: OpeningConvergenceProposal | null;
 };
 
 export type TurnResult = {

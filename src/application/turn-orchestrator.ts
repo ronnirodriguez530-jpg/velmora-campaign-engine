@@ -8,7 +8,7 @@ import { executeToolRequest } from "../tools/executor.ts";
 import { buildDirectorPlanningContext } from "./context-builder.ts";
 import { evaluateStageProgression } from "./stage-progression.ts";
 import { maybePersistTearArrival } from "./tear-event-generator.ts";
-import { recordOpeningExplorationTurn } from "./opening-system.ts";
+import { recordOpeningExplorationTurn, validateOpeningConvergenceProposal } from "./opening-system.ts";
 
 const MAX_DIRECTOR_ATTEMPTS = 2;
 
@@ -73,6 +73,9 @@ async function requestValidPlan(
         if (matchingComplications.length !== 1) throw new Error("Quest neglect must pair with exactly one bounded complication tool using the same reason");
       }
       for (const request of plan.toolRequests) validateToolRequest(db, content, context.campaignId, request);
+      if (plan.openingConvergenceProposal) {
+        validateOpeningConvergenceProposal(db, context.campaignId, plan.openingConvergenceProposal);
+      }
       return plan;
     } catch (error) {
       const message = error instanceof Error ? error.message : String(error);
@@ -96,6 +99,7 @@ export async function runPlayerAction(
 
   const isMajor = isMajorPlayerAction(playerInput) || plan.majorActionProposal;
   if (!isMajor) {
+    if (plan.openingConvergenceProposal) throw new Error("Opening convergence requires a meaningful committed scene");
     return {
       advanced: false,
       previousTurn: campaign.turn,
@@ -116,7 +120,13 @@ export async function runPlayerAction(
       .run(nextTurn, new Date().toISOString(), campaign.id);
     evaluateStageProgression(db, content, campaignName, nextTurn);
     maybePersistTearArrival(db, campaign.id, campaign.seed, nextTurn);
-    recordOpeningExplorationTurn(db, campaign.id);
+    const opening = recordOpeningExplorationTurn(db, campaign.id, nextTurn, plan.openingConvergenceProposal ?? null);
+    if (opening.phase === "convergence_ready" && opening.readinessTurn === nextTurn) {
+      appendEvent(db, campaign.id, nextTurn, "opening_convergence_ready", {
+        explorationTurns: opening.explorationTurns,
+        reason: opening.readinessReason
+      });
+    }
     appendEvent(db, campaign.id, nextTurn, "world_turn_committed", {
       playerInput,
       directorSummary: plan.summary,

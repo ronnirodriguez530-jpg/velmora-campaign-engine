@@ -59,7 +59,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Player-clicked opening d6 selection and saved outcome, with refresh-safe anti-reroll protection
 - [x] Separate hidden d6 selects one of six permanent convergence-hook categories without exposing it to player context
 - [x] Pre-attack opening remains exploratory and adaptive; convergence hooks change external events without forcing player decisions
-- [ ] Engine-validated readiness rule for when exploration converges on the First Speaker's public address and strike
+- [x] Engine-validated adaptive readiness window: two protected meaningful scenes, grounded convergence on scenes 2–3, and a four-scene anti-stall ceiling without forced player decisions
 - [ ] Post-strike opening crisis revealed only after the witnessed attack, followed by the first formal quest
 - [x] Variable opening conflict over replacing the incapacitated First Speaker
 - [ ] Replacement candidates and selection events generated from approved campaign conditions rather than one preset outcome
@@ -323,7 +323,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 109 of 109 tests
+- [x] Current automated suite passes 112 of 112 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations

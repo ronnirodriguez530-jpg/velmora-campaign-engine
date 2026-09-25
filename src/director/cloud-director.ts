@@ -12,6 +12,7 @@ import type {
   StoryPresentation,
   ToolRequest
 } from "../domain/types.ts";
+import type { OpeningConvergenceProposal } from "../domain/types.ts";
 
 type FetchLike = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 
@@ -118,6 +119,7 @@ type SubmittedPlan = {
   }>;
   suggestedActions: [string, string];
   allowsFreeText: true;
+  openingConvergenceProposal?: OpeningConvergenceProposal | null;
 };
 
 const ASSESS_ACTION_TOOL = {
@@ -170,6 +172,17 @@ const PLAN_TOOL = {
     properties: {
       summary: { type: "string", description: "Player-visible result using only supplied perspective information." },
       majorActionProposal: { type: "boolean", description: "Whether the input should advance the durable world turn." },
+      openingConvergenceProposal: {
+        anyOf: [{
+          type: "object",
+          properties: {
+            evidence: { type: "string", enum: ["player_entered_witnessing_position", "public_address_reached_player", "established_duty_placed_player_at_address"] },
+            reason: { type: "string" }
+          },
+          required: ["evidence", "reason"],
+          additionalProperties: false
+        }, { type: "null" }]
+      },
       factionChanges: {
         type: "array",
         items: {
@@ -457,7 +470,7 @@ const PLAN_TOOL = {
       },
       allowsFreeText: { type: "boolean", enum: [true] }
     },
-    required: ["summary", "majorActionProposal", "factionChanges", "npcReputationChanges", "movements", "factionPathAdvances", "locationConsequences", "npcRequests", "npcUpdates", "storyThreadUpdates", "storyThreadCreations", "questGenerations", "questRecoveries", "questDirectionRevisions", "questUpdates", "suggestedActions", "allowsFreeText"],
+    required: ["summary", "majorActionProposal", "openingConvergenceProposal", "factionChanges", "npcReputationChanges", "movements", "factionPathAdvances", "locationConsequences", "npcRequests", "npcUpdates", "storyThreadUpdates", "storyThreadCreations", "questGenerations", "questRecoveries", "questDirectionRevisions", "questUpdates", "suggestedActions", "allowsFreeText"],
     additionalProperties: false
   }
 } as const;
@@ -481,7 +494,7 @@ const SCENE_TOOL = {
 
 const DIRECTOR_RULES = `You are the D&D-style Campaign Master and Story Brain for Velmora. The engine is the sole source of durable truth.
 The planning context includes player-visible state plus a hidden campaignBlueprint and directorStoryThreads. Use hidden material to preserve long-form structure, callbacks, and stage gates, but never reveal it merely because it appears in planning context. Reveal information only through events, evidence, and knowledge the player has actually reached. Do not invent mechanics, change authored canon, create travel through Tears, or mutate state directly.
-While directorOpening.phase is exploration, the First Speaker has not been struck. Allow the player to explore and interact. Use the hidden convergenceHook only as an external event that gradually brings the public address nearer; follow its adaptationRule and never force the player's movement, acceptance, attention, or choice. Do not trigger, narrate, foreshorten, or create consequences of the strike until the engine later marks it ready.
+While directorOpening.phase is exploration, the First Speaker has not been struck. Allow the player to explore and interact. Use the hidden convergenceHook only as an external event that gradually brings the public address nearer; follow its adaptationRule and never force the player's movement, acceptance, attention, or choice. The first two meaningful scenes are protected exploration. On the second or third committed scene, openingConvergenceProposal may be supplied only when this turn establishes one approved witnessing condition with a specific reason. Otherwise use null. By the fourth scene, bring the public address into the player's situation through external events. Do not trigger, narrate, foreshorten, or create consequences of the strike; convergence_ready means only that the next opening transition may occur.
 Player-facing quest records contain goals, stakes, possible directions, and likely tradeoffs but intentionally omit uncommitted objectives and exact outcomes. Full quest mechanics appear only in directorQuestDetails for planning and validation. Never reveal an unselected exact outcome or consequence seed.
 The supplied playerCharacter is the player's fixed identity and mechanical foundation. Portray the world responding to that character, but never choose the character's thoughts, dialogue, decisions, history, abilities, or actions for the player, and never redefine their recorded identity notes.
 You may create temporary sensory detail, dialogue, reactions, and immediate complications needed to make the current scene feel alive. Do not promote those details into permanent world facts unless the engine accepts a corresponding tool request.
@@ -526,6 +539,11 @@ function parseSubmittedPlan(value: unknown): DirectorTurnPlan {
     throw new Error("Cloud Director plan requires exactly two suggested actions");
   }
   if (plan.allowsFreeText !== true) throw new Error("Cloud Director must allow free-text actions");
+  if (plan.openingConvergenceProposal !== undefined && plan.openingConvergenceProposal !== null) {
+    if (typeof plan.openingConvergenceProposal !== "object" || typeof plan.openingConvergenceProposal.reason !== "string") {
+      throw new Error("Cloud Director returned an invalid opening convergence proposal");
+    }
+  }
 
   const toolRequests: ToolRequest[] = [
     ...plan.factionChanges.map((change) => ({ type: "change_faction_condition" as const, ...change })),
@@ -547,7 +565,8 @@ function parseSubmittedPlan(value: unknown): DirectorTurnPlan {
     majorActionProposal: plan.majorActionProposal,
     toolRequests,
     suggestedActions: [plan.suggestedActions[0], plan.suggestedActions[1]],
-    allowsFreeText: true
+    allowsFreeText: true,
+    openingConvergenceProposal: plan.openingConvergenceProposal ?? null
   };
 }
 
