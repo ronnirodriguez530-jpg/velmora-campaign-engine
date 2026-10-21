@@ -1,5 +1,5 @@
 {
-  "version": "0.4.5",
+  "version": "0.4.6",
   "channel": "main",
-  "notes": "Add the approved adaptive two-to-four-scene opening readiness window, grounded witnessing evidence, anti-stall convergence, secrecy, persistence, and rollback."
+  "notes": "Automatically begin the fixed First Speaker public address and one-time witnessed strike in the next presented scene after opening convergence."
 }

@@ -12,6 +12,8 @@ type OpeningRow = {
   explorationTurns: number;
   readinessTurn: number | null;
   readinessReason: string | null;
+  strikeTurn: number | null;
+  strikeWitnessedTurn: number | null;
 };
 
 export function getOpeningState(db: DatabaseSync, campaignId: string): OpeningState {
@@ -19,7 +21,8 @@ export function getOpeningState(db: DatabaseSync, campaignId: string): OpeningSt
   const row = db.prepare(`SELECT campaign_id AS campaignId, phase, spawn_roll AS spawnRoll,
       spawn_id AS spawnId, convergence_roll AS convergenceRoll,
       convergence_hook_id AS convergenceHookId, exploration_turns AS explorationTurns,
-      readiness_turn AS readinessTurn, readiness_reason AS readinessReason
+      readiness_turn AS readinessTurn, readiness_reason AS readinessReason,
+      strike_turn AS strikeTurn, strike_witnessed_turn AS strikeWitnessedTurn
     FROM opening_state WHERE campaign_id = ?`).get(campaignId) as OpeningRow | undefined;
   if (!row) throw new Error(`Campaign ${campaignId} has no opening state`);
   return row;
@@ -30,12 +33,33 @@ export function getPlayerOpeningState(db: DatabaseSync, content: VelmoraContent,
   const spawn = state.spawnId ? content.openingSpawns.find((entry) => entry.id === state.spawnId) ?? null : null;
   return {
     campaignId: state.campaignId,
-    phase: state.phase === "awaiting_roll" ? "awaiting_roll" : "exploration",
+    phase: state.phase === "awaiting_roll" ? "awaiting_roll"
+      : state.phase === "strike" ? "strike"
+      : state.phase === "strike_witnessed" ? "strike_witnessed"
+      : "exploration",
     spawnRoll: state.spawnRoll,
     spawnId: state.spawnId,
     explorationTurns: state.explorationTurns,
     spawn
   };
+}
+
+export function beginOpeningStrike(db: DatabaseSync, campaignId: string, turn: number): OpeningState {
+  const state = getOpeningState(db, campaignId);
+  if (state.phase === "strike" || state.phase === "strike_witnessed") return state;
+  if (state.phase !== "convergence_ready") throw new Error("The First Speaker strike cannot begin before opening convergence is ready");
+  db.prepare("UPDATE opening_state SET phase = 'strike', strike_turn = ? WHERE campaign_id = ? AND phase = 'convergence_ready'")
+    .run(turn, campaignId);
+  return getOpeningState(db, campaignId);
+}
+
+export function markOpeningStrikeWitnessed(db: DatabaseSync, campaignId: string, turn: number): OpeningState {
+  const state = getOpeningState(db, campaignId);
+  if (state.phase === "strike_witnessed") return state;
+  if (state.phase !== "strike") throw new Error("The First Speaker strike cannot be witnessed before it begins");
+  db.prepare("UPDATE opening_state SET phase = 'strike_witnessed', strike_witnessed_turn = ? WHERE campaign_id = ? AND phase = 'strike'")
+    .run(turn, campaignId);
+  return getOpeningState(db, campaignId);
 }
 
 export function rollOpeningStart(

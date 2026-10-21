@@ -92,7 +92,7 @@ export type OpeningConvergenceHookDefinition = {
 
 export type OpeningState = {
   campaignId: string;
-  phase: "awaiting_roll" | "exploration" | "convergence_ready";
+  phase: "awaiting_roll" | "exploration" | "convergence_ready" | "strike" | "strike_witnessed";
   spawnRoll: number | null;
   spawnId: string | null;
   convergenceRoll: number | null;
@@ -100,10 +100,12 @@ export type OpeningState = {
   explorationTurns: number;
   readinessTurn: number | null;
   readinessReason: string | null;
+  strikeTurn: number | null;
+  strikeWitnessedTurn: number | null;
 };
 
-export type PlayerOpeningState = Omit<OpeningState, "phase" | "convergenceRoll" | "convergenceHookId" | "readinessTurn" | "readinessReason"> & {
-  phase: "awaiting_roll" | "exploration";
+export type PlayerOpeningState = Omit<OpeningState, "phase" | "convergenceRoll" | "convergenceHookId" | "readinessTurn" | "readinessReason" | "strikeTurn" | "strikeWitnessedTurn"> & {
+  phase: "awaiting_roll" | "exploration" | "strike" | "strike_witnessed";
   spawn: OpeningSpawnDefinition | null;
 };
 

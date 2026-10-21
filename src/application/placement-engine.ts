@@ -16,6 +16,7 @@ export function generateScene(context: PerspectiveContext, content: VelmoraConte
     : seededInteger(`${selectionSeed}|threat`, template.minThreatLevel, upperThreat);
   const suffix = createHash("sha256").update(`${selectionSeed}|${template.id}`).digest("hex").slice(0, 12).toUpperCase();
   const factionIds = context.currentLocation.district.startsWith("FAC-") ? [context.currentLocation.district] : [];
+  const isOpeningStrike = context.opening.phase === "strike";
   return {
     id: `SCN-${suffix}`,
     campaignId: context.campaignId,
@@ -28,16 +29,19 @@ export function generateScene(context: PerspectiveContext, content: VelmoraConte
     ],
     factionIds,
     questLinks: [],
-    conflictKey: context.visibleOpeningPressure?.id ?? template.conflictKey,
-    objectiveKey: context.visibleOpeningPressure ? "respond_to_opening_pressure" : template.objectiveKey,
-    threatLevel,
+    conflictKey: isOpeningStrike ? "FIRST-SPEAKER-STRIKE" : context.visibleOpeningPressure?.id ?? template.conflictKey,
+    objectiveKey: isOpeningStrike ? "witness_the_inciting_attack" : context.visibleOpeningPressure ? "respond_to_opening_pressure" : template.objectiveKey,
+    threatLevel: isOpeningStrike ? 1 : threatLevel,
     visibleFacts: [
+      ...(isOpeningStrike ? ["opening-event:The First Speaker begins the public address and is struck by raw Tear-magic in the player's presence."] : []),
       ...(context.visibleOpeningPressure ? [`opening-pressure:${context.visibleOpeningPressure.summary}`] : []),
       ...context.currentLocation.perspectiveTags.map((tag) => `location:${tag}`),
       ...context.persistentConsequences.map((consequence) => `consequence:${consequence}`)
     ],
     proposedConsequences: [],
-    suggestedActions: ["Inspect the immediate situation", "Respond to the present pressure"],
+    suggestedActions: isOpeningStrike
+      ? ["React to the immediate danger", "Observe what happens around the First Speaker"]
+      : ["Inspect the immediate situation", "Respond to the present pressure"],
     allowsFreeText: true,
     templateId: template.id
   };
@@ -52,12 +56,13 @@ export function getOrCreateEncounteredScene(
   if (existing) return { scene: existing, reused: true };
   const scene = generateScene(context, content);
   validateScenePackage(scene, context, content);
-  db.exec("BEGIN IMMEDIATE");
+  const ownsTransaction = !db.isTransaction;
+  if (ownsTransaction) db.exec("BEGIN IMMEDIATE");
   try {
     persistScene(db, scene);
-    db.exec("COMMIT");
+    if (ownsTransaction) db.exec("COMMIT");
   } catch (error) {
-    db.exec("ROLLBACK");
+    if (ownsTransaction) db.exec("ROLLBACK");
     throw error;
   }
   return { scene, reused: false };

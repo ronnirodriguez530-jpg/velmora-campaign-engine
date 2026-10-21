@@ -5,11 +5,13 @@ import { join, resolve } from "node:path";
 import test from "node:test";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { buildDirectorPlanningContext, buildPerspectiveContext } from "../src/application/context-builder.ts";
-import { getOpeningState, recordOpeningExplorationTurn, rollOpeningStart, validateOpeningConvergenceProposal } from "../src/application/opening-system.ts";
-import { createCampaign, openDatabase } from "../src/persistence/database.ts";
+import { beginOpeningStrike, getOpeningState, recordOpeningExplorationTurn, rollOpeningStart, validateOpeningConvergenceProposal } from "../src/application/opening-system.ts";
+import { createCampaign, listEvents, openDatabase } from "../src/persistence/database.ts";
 import { restorePreviousTurn } from "../src/persistence/database.ts";
 import { runPlayerAction } from "../src/application/turn-orchestrator.ts";
 import { MockDirector } from "../src/director/mock-director.ts";
+import { openPresentedStoryMoment } from "../src/application/story-session.ts";
+import { beginPlayableAction } from "../src/application/gameplay-session.ts";
 
 const projectRoot = resolve(import.meta.dirname, "..");
 
@@ -83,6 +85,46 @@ test("opening convergence cannot drift beyond four meaningful scenes", async () 
     assert.equal(ready.readinessTurn, 4);
     assert.match(ready.readinessReason ?? "", /four meaningful exploratory scenes/);
     assert.equal(recordOpeningExplorationTurn(db, campaignId, 5).explorationTurns, 4);
+  } finally {
+    db.close();
+  }
+});
+
+test("the next presented scene begins and records the First Speaker strike exactly once", async () => {
+  const db = openDatabase(join(mkdtempSync(join(tmpdir(), "velmora-opening-strike-")), "save.sqlite"));
+  const content = await loadVelmoraContent(projectRoot);
+  const campaignId = createCampaign(db, content, "opening-strike", "opening-strike-seed");
+  try {
+    rollOpeningStart(db, content, campaignId, () => 2);
+    recordOpeningExplorationTurn(db, campaignId, 1);
+    assert.throws(() => beginOpeningStrike(db, campaignId, 1), /cannot begin before/);
+    recordOpeningExplorationTurn(db, campaignId, 2, {
+      evidence: "public_address_reached_player",
+      reason: "The public address has reached the player's current courtyard."
+    });
+    const director = new MockDirector();
+    await assert.rejects(
+      beginPlayableAction(db, content, director, "opening-strike", "I move closer."),
+      /View the First Speaker strike scene/
+    );
+    assert.equal(getOpeningState(db, campaignId).phase, "strike");
+
+    const first = await openPresentedStoryMoment(db, content, director, "opening-strike");
+    assert.equal(first.scene.conflictKey, "FIRST-SPEAKER-STRIKE");
+    assert.equal(first.scene.objectiveKey, "witness_the_inciting_attack");
+    assert.equal(first.scene.visibleFacts.some((fact) => fact.includes("struck by raw Tear-magic")), true);
+    assert.equal(getOpeningState(db, campaignId).phase, "strike_witnessed");
+
+    const player = buildPerspectiveContext(db, content, "opening-strike");
+    assert.equal(player.opening.phase, "strike_witnessed");
+    assert.equal(player.visibleOpeningPressure, null);
+    assert.equal(JSON.stringify(player).includes("THREAD-OPENING-PRESSURE"), false);
+
+    const repeated = await openPresentedStoryMoment(db, content, director, "opening-strike");
+    assert.equal(repeated.reused, true);
+    const eventTypes = listEvents(db, campaignId).map((event) => event.eventType);
+    assert.equal(eventTypes.filter((event) => event === "first_speaker_strike_began").length, 1);
+    assert.equal(eventTypes.filter((event) => event === "first_speaker_strike_witnessed").length, 1);
   } finally {
     db.close();
   }

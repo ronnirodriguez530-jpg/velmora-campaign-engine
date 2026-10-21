@@ -678,6 +678,33 @@ function migrate(db: DatabaseSync): void {
     `);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(26, ?)").run(new Date().toISOString());
   }
+  const migrationTwentySeven = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 27").get() as { present: number } | undefined;
+  if (!migrationTwentySeven) {
+    db.exec(`
+      ALTER TABLE opening_state RENAME TO opening_state_before_strike;
+      CREATE TABLE opening_state (
+        campaign_id TEXT PRIMARY KEY,
+        phase TEXT NOT NULL CHECK(phase IN ('awaiting_roll','exploration','convergence_ready','strike','strike_witnessed')),
+        spawn_roll INTEGER CHECK(spawn_roll BETWEEN 1 AND 6),
+        spawn_id TEXT,
+        convergence_roll INTEGER CHECK(convergence_roll BETWEEN 1 AND 6),
+        convergence_hook_id TEXT,
+        exploration_turns INTEGER NOT NULL DEFAULT 0 CHECK(exploration_turns >= 0),
+        readiness_turn INTEGER,
+        readiness_reason TEXT,
+        strike_turn INTEGER,
+        strike_witnessed_turn INTEGER,
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+      INSERT INTO opening_state(campaign_id, phase, spawn_roll, spawn_id, convergence_roll,
+        convergence_hook_id, exploration_turns, readiness_turn, readiness_reason, strike_turn, strike_witnessed_turn)
+      SELECT campaign_id, phase, spawn_roll, spawn_id, convergence_roll,
+        convergence_hook_id, exploration_turns, readiness_turn, readiness_reason, NULL, NULL
+      FROM opening_state_before_strike;
+      DROP TABLE opening_state_before_strike;
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(27, ?)").run(new Date().toISOString());
+  }
 }
 
 const STAGE_ORDER = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 } as const;
@@ -1758,7 +1785,8 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
   const opening = db.prepare(`SELECT campaign_id AS campaignId, phase, spawn_roll AS spawnRoll,
       spawn_id AS spawnId, convergence_roll AS convergenceRoll,
       convergence_hook_id AS convergenceHookId, exploration_turns AS explorationTurns,
-      readiness_turn AS readinessTurn, readiness_reason AS readinessReason
+      readiness_turn AS readinessTurn, readiness_reason AS readinessReason,
+      strike_turn AS strikeTurn, strike_witnessed_turn AS strikeWitnessedTurn
     FROM opening_state WHERE campaign_id = ?`).get(campaignId) as OpeningState | undefined;
   return {
     campaign,
@@ -1878,11 +1906,13 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
     }
     if (snapshot.opening !== undefined) {
       db.prepare(`UPDATE opening_state SET phase = ?, spawn_roll = ?, spawn_id = ?, convergence_roll = ?,
-        convergence_hook_id = ?, exploration_turns = ?, readiness_turn = ?, readiness_reason = ? WHERE campaign_id = ?`)
+        convergence_hook_id = ?, exploration_turns = ?, readiness_turn = ?, readiness_reason = ?,
+        strike_turn = ?, strike_witnessed_turn = ? WHERE campaign_id = ?`)
         .run(snapshot.opening.phase, snapshot.opening.spawnRoll, snapshot.opening.spawnId,
           snapshot.opening.convergenceRoll, snapshot.opening.convergenceHookId,
           snapshot.opening.explorationTurns, snapshot.opening.readinessTurn,
-          snapshot.opening.readinessReason, campaign.id);
+          snapshot.opening.readinessReason, snapshot.opening.strikeTurn ?? null,
+          snapshot.opening.strikeWitnessedTurn ?? null, campaign.id);
     }
     if (snapshot.npcState) {
       db.prepare("DELETE FROM npc_relationship_qualities WHERE campaign_id = ?").run(campaign.id);

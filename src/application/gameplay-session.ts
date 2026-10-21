@@ -6,6 +6,8 @@ import { getOrCreateEncounteredScene } from "./placement-engine.ts";
 import { runPlayerAction } from "./turn-orchestrator.ts";
 import { assessPlayerAction, completePendingAction, getPendingActionCheck, rollPendingAction } from "./dice-resolution.ts";
 import { acceptPendingQuestDirectionConfirmation, createPendingQuestDirectionConfirmation, getPendingQuestDirectionConfirmation, rejectPendingQuestDirectionConfirmation } from "./quest-direction-confirmation.ts";
+import { beginOpeningStrike, getOpeningState } from "./opening-system.ts";
+import { appendEvent, getCampaign } from "../persistence/database.ts";
 
 export type PlayableMoment = {
   scene: ScenePackage;
@@ -17,6 +19,27 @@ export function openPlayableMoment(
   content: VelmoraContent,
   campaignName: string
 ): PlayableMoment {
+  const campaign = getCampaign(db, campaignName);
+  if (!campaign) throw new Error(`Campaign '${campaignName}' does not exist`);
+  const opening = getOpeningState(db, campaign.id);
+  if (opening.phase === "convergence_ready") {
+    const ownsTransaction = !db.isTransaction;
+    if (ownsTransaction) db.exec("BEGIN IMMEDIATE");
+    try {
+      const strike = beginOpeningStrike(db, campaign.id, campaign.turn);
+      appendEvent(db, campaign.id, campaign.turn, "first_speaker_strike_began", {
+        explorationTurns: strike.explorationTurns,
+        readinessTurn: strike.readinessTurn
+      });
+      const context = buildPerspectiveContext(db, content, campaignName);
+      const moment = getOrCreateEncounteredScene(db, context, content);
+      if (ownsTransaction) db.exec("COMMIT");
+      return moment;
+    } catch (error) {
+      if (ownsTransaction) db.exec("ROLLBACK");
+      throw error;
+    }
+  }
   const context = buildPerspectiveContext(db, content, campaignName);
   return getOrCreateEncounteredScene(db, context, content);
 }
@@ -64,6 +87,9 @@ export async function beginPlayableAction(
 ): Promise<BegunPlayableAction> {
   openPlayableMoment(db, content, campaignName);
   const context = buildPerspectiveContext(db, content, campaignName);
+  if (getOpeningState(db, context.campaignId).phase === "strike") {
+    throw new Error("View the First Speaker strike scene before taking another action");
+  }
   const pendingCheck = getPendingActionCheck(db, context.campaignId);
   if (pendingCheck) return { status: "roll_required", pendingCheck };
   const existing = getPendingQuestDirectionConfirmation(db, context.campaignId);
