@@ -92,7 +92,7 @@ export type OpeningConvergenceHookDefinition = {
 
 export type OpeningState = {
   campaignId: string;
-  phase: "awaiting_roll" | "exploration" | "convergence_ready" | "strike" | "strike_witnessed";
+  phase: "awaiting_roll" | "exploration" | "convergence_ready" | "strike" | "strike_witnessed" | "crisis" | "crisis_presented";
   spawnRoll: number | null;
   spawnId: string | null;
   convergenceRoll: number | null;
@@ -102,10 +102,13 @@ export type OpeningState = {
   readinessReason: string | null;
   strikeTurn: number | null;
   strikeWitnessedTurn: number | null;
+  crisisTurn: number | null;
+  crisisPresentedTurn: number | null;
+  firstQuestId: string | null;
 };
 
-export type PlayerOpeningState = Omit<OpeningState, "phase" | "convergenceRoll" | "convergenceHookId" | "readinessTurn" | "readinessReason" | "strikeTurn" | "strikeWitnessedTurn"> & {
-  phase: "awaiting_roll" | "exploration" | "strike" | "strike_witnessed";
+export type PlayerOpeningState = Omit<OpeningState, "phase" | "convergenceRoll" | "convergenceHookId" | "readinessTurn" | "readinessReason" | "strikeTurn" | "strikeWitnessedTurn" | "crisisTurn" | "crisisPresentedTurn"> & {
+  phase: "awaiting_roll" | "exploration" | "strike" | "strike_witnessed" | "crisis" | "crisis_presented";
   spawn: OpeningSpawnDefinition | null;
 };
 

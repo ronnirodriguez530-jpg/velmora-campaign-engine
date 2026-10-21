@@ -6,8 +6,9 @@ import { getOrCreateEncounteredScene } from "./placement-engine.ts";
 import { runPlayerAction } from "./turn-orchestrator.ts";
 import { assessPlayerAction, completePendingAction, getPendingActionCheck, rollPendingAction } from "./dice-resolution.ts";
 import { acceptPendingQuestDirectionConfirmation, createPendingQuestDirectionConfirmation, getPendingQuestDirectionConfirmation, rejectPendingQuestDirectionConfirmation } from "./quest-direction-confirmation.ts";
-import { beginOpeningStrike, getOpeningState } from "./opening-system.ts";
+import { beginOpeningStrike, getOpeningState, revealOpeningCrisis } from "./opening-system.ts";
 import { appendEvent, getCampaign } from "../persistence/database.ts";
+import { applyGeneratedQuest } from "./quest-generator.ts";
 
 export type PlayableMoment = {
   scene: ScenePackage;
@@ -32,6 +33,25 @@ export function openPlayableMoment(
         readinessTurn: strike.readinessTurn
       });
       const context = buildPerspectiveContext(db, content, campaignName);
+      const moment = getOrCreateEncounteredScene(db, context, content);
+      if (ownsTransaction) db.exec("COMMIT");
+      return moment;
+    } catch (error) {
+      if (ownsTransaction) db.exec("ROLLBACK");
+      throw error;
+    }
+  }
+  if (opening.phase === "strike_witnessed" && opening.strikeWitnessedTurn !== null && campaign.turn > opening.strikeWitnessedTurn) {
+    const ownsTransaction = !db.isTransaction;
+    if (ownsTransaction) db.exec("BEGIN IMMEDIATE");
+    try {
+      const quest = applyGeneratedQuest(db, content, campaign.id, "THREAD-OPENING-PRESSURE", campaign.turn);
+      revealOpeningCrisis(db, campaign.id, campaign.turn, quest.questId);
+      const context = buildPerspectiveContext(db, content, campaignName);
+      appendEvent(db, campaign.id, campaign.turn, "opening_crisis_revealed", {
+        openingPressureId: context.visibleOpeningPressure?.id,
+        questId: quest.questId
+      });
       const moment = getOrCreateEncounteredScene(db, context, content);
       if (ownsTransaction) db.exec("COMMIT");
       return moment;
@@ -87,8 +107,12 @@ export async function beginPlayableAction(
 ): Promise<BegunPlayableAction> {
   openPlayableMoment(db, content, campaignName);
   const context = buildPerspectiveContext(db, content, campaignName);
-  if (getOpeningState(db, context.campaignId).phase === "strike") {
+  const opening = getOpeningState(db, context.campaignId);
+  if (opening.phase === "strike") {
     throw new Error("View the First Speaker strike scene before taking another action");
+  }
+  if (opening.phase === "crisis") {
+    throw new Error("View the post-strike crisis scene before taking another action");
   }
   const pendingCheck = getPendingActionCheck(db, context.campaignId);
   if (pendingCheck) return { status: "roll_required", pendingCheck };

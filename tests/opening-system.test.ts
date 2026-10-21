@@ -6,7 +6,7 @@ import test from "node:test";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
 import { buildDirectorPlanningContext, buildPerspectiveContext } from "../src/application/context-builder.ts";
 import { beginOpeningStrike, getOpeningState, recordOpeningExplorationTurn, rollOpeningStart, validateOpeningConvergenceProposal } from "../src/application/opening-system.ts";
-import { createCampaign, listEvents, openDatabase } from "../src/persistence/database.ts";
+import { createCampaign, listEvents, listQuestInstances, openDatabase } from "../src/persistence/database.ts";
 import { restorePreviousTurn } from "../src/persistence/database.ts";
 import { runPlayerAction } from "../src/application/turn-orchestrator.ts";
 import { MockDirector } from "../src/director/mock-director.ts";
@@ -125,6 +125,62 @@ test("the next presented scene begins and records the First Speaker strike exact
     const eventTypes = listEvents(db, campaignId).map((event) => event.eventType);
     assert.equal(eventTypes.filter((event) => event === "first_speaker_strike_began").length, 1);
     assert.equal(eventTypes.filter((event) => event === "first_speaker_strike_witnessed").length, 1);
+  } finally {
+    db.close();
+  }
+});
+
+test("the following meaningful scene reveals the seeded crisis and generates one formal quest", async () => {
+  const db = openDatabase(join(mkdtempSync(join(tmpdir(), "velmora-opening-crisis-")), "save.sqlite"));
+  const content = await loadVelmoraContent(projectRoot);
+  const campaignId = createCampaign(db, content, "opening-crisis", "opening-crisis-seed");
+  try {
+    rollOpeningStart(db, content, campaignId, () => 3);
+    recordOpeningExplorationTurn(db, campaignId, 1);
+    recordOpeningExplorationTurn(db, campaignId, 2, {
+      evidence: "public_address_reached_player",
+      reason: "The public address has reached the player's current records station."
+    });
+    const director = new MockDirector();
+    await openPresentedStoryMoment(db, content, director, "opening-crisis");
+    assert.equal(getOpeningState(db, campaignId).phase, "strike_witnessed");
+    assert.equal(listQuestInstances(db, campaignId).length, 0);
+
+    await runPlayerAction(db, content, director, "opening-crisis", "support league");
+    await assert.rejects(
+      beginPlayableAction(db, content, director, "opening-crisis", "I respond to the new danger."),
+      /View the post-strike crisis scene/
+    );
+
+    const revealed = getOpeningState(db, campaignId);
+    assert.equal(revealed.phase, "crisis");
+    assert.ok(revealed.firstQuestId);
+    const quests = listQuestInstances(db, campaignId);
+    assert.equal(quests.length, 1);
+    assert.equal(quests[0]!.questId, revealed.firstQuestId);
+    assert.equal(quests[0]!.sourceThreadId, "THREAD-OPENING-PRESSURE");
+
+    const player = buildPerspectiveContext(db, content, "opening-crisis");
+    assert.ok(player.visibleOpeningPressure);
+    assert.equal(player.playerKnownStoryThreads.some((thread) => thread.threadId === "THREAD-OPENING-PRESSURE"), true);
+    assert.equal(player.playerQuests.length, 1);
+    assert.deepEqual(player.playerQuests[0]!.outcomes, []);
+
+    const presented = await openPresentedStoryMoment(db, content, director, "opening-crisis");
+    assert.equal(presented.scene.conflictKey, player.visibleOpeningPressure!.id);
+    assert.deepEqual(presented.scene.questLinks, [revealed.firstQuestId]);
+    assert.equal(getOpeningState(db, campaignId).phase, "crisis_presented");
+
+    await openPresentedStoryMoment(db, content, director, "opening-crisis");
+    assert.equal(listQuestInstances(db, campaignId).length, 1);
+    const eventTypes = listEvents(db, campaignId).map((event) => event.eventType);
+    assert.equal(eventTypes.filter((event) => event === "opening_crisis_revealed").length, 1);
+    assert.equal(eventTypes.filter((event) => event === "opening_crisis_presented").length, 1);
+
+    restorePreviousTurn(db, "opening-crisis");
+    assert.equal(getOpeningState(db, campaignId).phase, "strike_witnessed");
+    assert.equal(listQuestInstances(db, campaignId).length, 0);
+    assert.equal(buildPerspectiveContext(db, content, "opening-crisis").visibleOpeningPressure, null);
   } finally {
     db.close();
   }

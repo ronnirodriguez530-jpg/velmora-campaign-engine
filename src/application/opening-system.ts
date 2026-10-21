@@ -14,6 +14,9 @@ type OpeningRow = {
   readinessReason: string | null;
   strikeTurn: number | null;
   strikeWitnessedTurn: number | null;
+  crisisTurn: number | null;
+  crisisPresentedTurn: number | null;
+  firstQuestId: string | null;
 };
 
 export function getOpeningState(db: DatabaseSync, campaignId: string): OpeningState {
@@ -22,7 +25,9 @@ export function getOpeningState(db: DatabaseSync, campaignId: string): OpeningSt
       spawn_id AS spawnId, convergence_roll AS convergenceRoll,
       convergence_hook_id AS convergenceHookId, exploration_turns AS explorationTurns,
       readiness_turn AS readinessTurn, readiness_reason AS readinessReason,
-      strike_turn AS strikeTurn, strike_witnessed_turn AS strikeWitnessedTurn
+      strike_turn AS strikeTurn, strike_witnessed_turn AS strikeWitnessedTurn,
+      crisis_turn AS crisisTurn, crisis_presented_turn AS crisisPresentedTurn,
+      first_quest_id AS firstQuestId
     FROM opening_state WHERE campaign_id = ?`).get(campaignId) as OpeningRow | undefined;
   if (!row) throw new Error(`Campaign ${campaignId} has no opening state`);
   return row;
@@ -36,17 +41,20 @@ export function getPlayerOpeningState(db: DatabaseSync, content: VelmoraContent,
     phase: state.phase === "awaiting_roll" ? "awaiting_roll"
       : state.phase === "strike" ? "strike"
       : state.phase === "strike_witnessed" ? "strike_witnessed"
+      : state.phase === "crisis" ? "crisis"
+      : state.phase === "crisis_presented" ? "crisis_presented"
       : "exploration",
     spawnRoll: state.spawnRoll,
     spawnId: state.spawnId,
     explorationTurns: state.explorationTurns,
+    firstQuestId: state.firstQuestId,
     spawn
   };
 }
 
 export function beginOpeningStrike(db: DatabaseSync, campaignId: string, turn: number): OpeningState {
   const state = getOpeningState(db, campaignId);
-  if (state.phase === "strike" || state.phase === "strike_witnessed") return state;
+  if (["strike", "strike_witnessed", "crisis", "crisis_presented"].includes(state.phase)) return state;
   if (state.phase !== "convergence_ready") throw new Error("The First Speaker strike cannot begin before opening convergence is ready");
   db.prepare("UPDATE opening_state SET phase = 'strike', strike_turn = ? WHERE campaign_id = ? AND phase = 'convergence_ready'")
     .run(turn, campaignId);
@@ -58,6 +66,30 @@ export function markOpeningStrikeWitnessed(db: DatabaseSync, campaignId: string,
   if (state.phase === "strike_witnessed") return state;
   if (state.phase !== "strike") throw new Error("The First Speaker strike cannot be witnessed before it begins");
   db.prepare("UPDATE opening_state SET phase = 'strike_witnessed', strike_witnessed_turn = ? WHERE campaign_id = ? AND phase = 'strike'")
+    .run(turn, campaignId);
+  return getOpeningState(db, campaignId);
+}
+
+export function revealOpeningCrisis(db: DatabaseSync, campaignId: string, turn: number, firstQuestId: string): OpeningState {
+  const state = getOpeningState(db, campaignId);
+  if (state.phase === "crisis" || state.phase === "crisis_presented") return state;
+  if (state.phase !== "strike_witnessed") throw new Error("The opening crisis cannot be revealed before the First Speaker strike is witnessed");
+  if (state.strikeWitnessedTurn === null || turn <= state.strikeWitnessedTurn) {
+    throw new Error("The opening crisis must begin in a later meaningful scene");
+  }
+  if (!/^QUEST-[A-Z0-9][A-Z0-9-]{2,95}$/.test(firstQuestId)) throw new Error("The opening crisis requires a valid generated quest ID");
+  db.prepare(`UPDATE opening_state SET phase = 'crisis', crisis_turn = ?, first_quest_id = ?
+      WHERE campaign_id = ? AND phase = 'strike_witnessed'`)
+    .run(turn, firstQuestId, campaignId);
+  return getOpeningState(db, campaignId);
+}
+
+export function markOpeningCrisisPresented(db: DatabaseSync, campaignId: string, turn: number): OpeningState {
+  const state = getOpeningState(db, campaignId);
+  if (state.phase === "crisis_presented") return state;
+  if (state.phase !== "crisis") throw new Error("The opening crisis cannot be presented before it is revealed");
+  db.prepare(`UPDATE opening_state SET phase = 'crisis_presented', crisis_presented_turn = ?
+      WHERE campaign_id = ? AND phase = 'crisis'`)
     .run(turn, campaignId);
   return getOpeningState(db, campaignId);
 }

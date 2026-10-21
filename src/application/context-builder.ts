@@ -63,6 +63,8 @@ export function buildPerspectiveContext(
   const encounteredScene = getSceneForTurnAndLocation(db, campaign.id, campaign.turn, currentLocation.id) ?? null;
   const blueprint = getCampaignBlueprint(db, campaign.id);
   if (!blueprint) throw new Error(`Campaign ${campaign.id} is missing its hidden story blueprint`);
+  const opening = getPlayerOpeningState(db, content, campaign.id);
+  const openingCrisisVisible = opening.phase === "crisis" || opening.phase === "crisis_presented";
   return {
     campaignId: campaign.id,
     seed: campaign.seed,
@@ -92,9 +94,9 @@ export function buildPerspectiveContext(
     playerProgression: getPlayerProgression(db, campaign.id),
     playerQuests: listRelevantQuestInstances(db, campaign.id, campaign.stage, "player").map(toPlayerQuestView),
     playerKnownStoryThreads: listRelevantStoryThreads(db, campaign.id, campaign.stage, currentLocation.id, "player")
-      .filter((thread) => thread.threadId !== "THREAD-OPENING-PRESSURE"),
-    opening: getPlayerOpeningState(db, content, campaign.id),
-    visibleOpeningPressure: null
+      .filter((thread) => thread.threadId !== "THREAD-OPENING-PRESSURE" || openingCrisisVisible),
+    opening,
+    visibleOpeningPressure: openingCrisisVisible ? blueprint.openingPressure : null
   };
 }
 

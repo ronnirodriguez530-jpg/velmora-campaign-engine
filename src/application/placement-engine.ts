@@ -17,6 +17,7 @@ export function generateScene(context: PerspectiveContext, content: VelmoraConte
   const suffix = createHash("sha256").update(`${selectionSeed}|${template.id}`).digest("hex").slice(0, 12).toUpperCase();
   const factionIds = context.currentLocation.district.startsWith("FAC-") ? [context.currentLocation.district] : [];
   const isOpeningStrike = context.opening.phase === "strike";
+  const isOpeningCrisis = context.opening.phase === "crisis" && context.opening.firstQuestId !== null;
   return {
     id: `SCN-${suffix}`,
     campaignId: context.campaignId,
@@ -28,7 +29,7 @@ export function generateScene(context: PerspectiveContext, content: VelmoraConte
       ...context.npcContext.full.map((entry) => entry.npc.npcId)
     ],
     factionIds,
-    questLinks: [],
+    questLinks: isOpeningCrisis ? [context.opening.firstQuestId!] : [],
     conflictKey: isOpeningStrike ? "FIRST-SPEAKER-STRIKE" : context.visibleOpeningPressure?.id ?? template.conflictKey,
     objectiveKey: isOpeningStrike ? "witness_the_inciting_attack" : context.visibleOpeningPressure ? "respond_to_opening_pressure" : template.objectiveKey,
     threatLevel: isOpeningStrike ? 1 : threatLevel,
