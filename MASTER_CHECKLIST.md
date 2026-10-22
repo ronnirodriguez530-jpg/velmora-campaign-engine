@@ -238,7 +238,7 @@ Implemented progression scope: each unique validated major milestone awards one 
 - [x] No forced replacement when credible unused directions are exhausted; the last route requires explicit quest failure
 - [x] Compact Quest journal: active main quests, other active quests, and the latest five meaningful player-known events
 
-Implemented quest engineering: the durable contract, tagged modular composer, adaptive lifecycle and objective graph, hard two-unresolved-quest-per-thread cap, meaningful alternative validation, bounded Campaign Master controls, exact causal resolutions, unexpected-solution completion, atomic consequences, evidence-backed route invalidation, recoverable ordinary failure, durable received warnings, mild evidence-backed neglect, fixed origin classification, paced quest advancement, compact player journal, persistence, privacy, rollback, and deterministic multi-thread stress coverage. The first quest is correctly withheld until the future d6-and-attack opening flow. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
+Implemented quest engineering: the durable contract, tagged modular composer, adaptive lifecycle and objective graph, hard two-unresolved-quest-per-thread cap, meaningful alternative validation, bounded Campaign Master controls, exact causal resolutions, unexpected-solution completion, atomic consequences, evidence-backed route invalidation, recoverable ordinary failure, durable received warnings, mild evidence-backed neglect, fixed origin classification, paced quest advancement, compact player journal, persistence, privacy, rollback, and deterministic multi-thread stress coverage. The first quest is now generated only after the d6 opening, adaptive exploration, witnessed strike, and seeded post-strike crisis. Permanent failure remains blocked until warned deadlines, irreversible choices, and major world events can be verified from engine records. See `QUEST_ENGINE_V1.md`.
 
 - [x] Sustained isolated multi-thread quest simulations cover adaptive objectives, unexpected solutions, failure, two-route recovery, concurrency caps, and compact-journal bounds
 
@@ -282,6 +282,9 @@ Approved progression bridge: the engine can validate one designated major object
 - [ ] Proper use of rolls, combat, abilities, items, and player freedom
 - [ ] Rules and campaign reference retrieval
 - [ ] Approved story-craft reference library for quests, mysteries, factions, consequences, pacing, and recovery
+- [x] Quest-reference foundation with repository-stored provenance, abstract structural fields, cross-source composition limits, and enforced prohibitions on copied expression, source text, source-specific identities, and live model training
+- [ ] Curated observational analyses of acclaimed game quests using the approved abstraction contract
+- [ ] Quest-pattern transformation and similarity evaluation connected to live generation
 - [ ] Examples and evaluation tests for coherent long-form DM behavior
 - [ ] Complete evaluation set for callbacks, varied paths, failure recovery, and stage-gated endgame pacing
 - [x] Mechanical tests for thread continuity, recovery-path replacement, hidden-context isolation, stage gates, rollback, and growing thread history
@@ -324,7 +327,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 114 of 114 tests
+- [x] Current automated suite passes 117 of 117 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations

@@ -1,0 +1,19 @@
+{
+  "version": 1,
+  "purpose": "Teach reusable quest-design techniques without copying another game's protected expression or turning source material into Velmora canon.",
+  "minimumDistinctSourcesPerComposition": 3,
+  "maximumPatternsPerComposition": 5,
+  "copiedExpressionAllowed": false,
+  "storedSourceTextAllowed": false,
+  "liveModelTrainingAllowed": false,
+  "requireSourceProvenance": true,
+  "requireOriginalVelmoraRealization": true,
+  "prohibitedMaterial": [
+    "copied or lightly paraphrased dialogue",
+    "source characters, factions, lore, names, or named items",
+    "source maps, art, audio, scripts, quest text, or extracted game files",
+    "a recognizable sequence of source-specific scenes or set pieces",
+    "source-specific twists reproduced with cosmetic substitutions",
+    "unlicensed source text stored for model training or retrieval"
+  ]
+}

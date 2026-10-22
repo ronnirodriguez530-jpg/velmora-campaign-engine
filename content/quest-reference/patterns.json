@@ -1,0 +1,44 @@
+[
+  {
+    "id": "QPAT-PRESSURE-WITH-DIRECTIONS",
+    "sourceIds": ["SRC-VELMORA-QUEST-CONTRACT"],
+    "tags": ["pressure", "choice", "agency", "opening"],
+    "emotionalPromise": "The player can materially affect an urgent problem without being assigned one predetermined solution.",
+    "setupFunction": "Establish a concrete pressure, affected people, and visible reason that action matters now.",
+    "pressureFunction": "Let the situation change through established world activity rather than an arbitrary countdown.",
+    "structuralTurn": "New information changes the cost or meaning of a route without invalidating prior player reasoning.",
+    "choiceShape": "Offer two credible directions, with a third only when established circumstances genuinely support it.",
+    "failureMotion": "Preserve the failed result and create an altered route only when recorded consequences support one.",
+    "consequenceEcho": "Return the chosen cost through later NPC, faction, location, or resource conditions.",
+    "transferRules": [
+      "Derive every route from current Velmora people, places, pressures, and available resources.",
+      "Show likely tradeoffs while keeping exact outcomes unresolved until play establishes them."
+    ],
+    "forbiddenElements": [
+      "A disguised version of a source quest's characters or set pieces.",
+      "A false choice whose branches immediately collapse into the same authored scene."
+    ],
+    "sourceSpecificReferences": []
+  },
+  {
+    "id": "QPAT-CONSEQUENCE-CREATES-ROUTE",
+    "sourceIds": ["SRC-VELMORA-QUEST-CONTRACT"],
+    "tags": ["failure", "recovery", "consequence", "adaptation"],
+    "emotionalPromise": "Failure changes the campaign without making continued play pointless.",
+    "setupFunction": "Make the immediate objective and the risk of failure understandable before commitment.",
+    "pressureFunction": "Allow one bounded complication to emerge from the actual failed attempt or neglected warning.",
+    "structuralTurn": "The consequence closes the original method while exposing different leverage, allies, costs, or locations.",
+    "choiceShape": "Offer no more than two recovery routes and retain both unless later consequences invalidate one.",
+    "failureMotion": "Record the failure permanently, then require concrete evidence before constructing any altered route.",
+    "consequenceEcho": "Let later scenes remember both what was lost and what the player did with the changed situation.",
+    "transferRules": [
+      "Use only consequences already stored in the campaign ledger as recovery evidence.",
+      "Make a new route meaningfully distinct through approach, ally, location, moral cost, or resource cost."
+    ],
+    "forbiddenElements": [
+      "Erasing failure so the original quest can simply restart.",
+      "Inventing a convenient escape route unsupported by campaign state."
+    ],
+    "sourceSpecificReferences": []
+  }
+]

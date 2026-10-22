@@ -1,0 +1,11 @@
+[
+  {
+    "id": "SRC-VELMORA-QUEST-CONTRACT",
+    "title": "Velmora Approved Quest Contract",
+    "creator": "Velmora project",
+    "kind": "velmora_contract",
+    "rightsBasis": "ORIGINAL",
+    "allowedUse": "rules_reference",
+    "storesSourceText": false
+  }
+]
