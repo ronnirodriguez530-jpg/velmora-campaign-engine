@@ -40,5 +40,68 @@
       "Inventing a convenient escape route unsupported by campaign state."
     ],
     "sourceSpecificReferences": []
+  },
+  {
+    "id": "QPAT-CURIOSITY-LED-PROGRESSION",
+    "sourceIds": ["SRC-GDC-OUTER-WILDS-CURIOSITY"],
+    "tags": ["exploration", "mystery", "discovery", "player_direction", "nonlinear"],
+    "emotionalPromise": "The player advances because an unanswered question creates genuine curiosity rather than because a marker assigns an errand.",
+    "setupFunction": "Place an observable contradiction, trace, or incomplete explanation inside the player's current circumstances.",
+    "pressureFunction": "Let changes in the world or limits on access make discovery consequential without dictating where the player must go.",
+    "structuralTurn": "A discovery answers one local question while exposing a more useful question connected to another reachable part of the world.",
+    "choiceShape": "Allow the player to decide which known question, location, witness, or trace is worth pursuing next.",
+    "failureMotion": "Preserve information already learned and let failed access attempts reveal another requirement, perspective, or route.",
+    "consequenceEcho": "Previously learned information changes how later evidence, locations, and NPC claims are interpreted.",
+    "transferRules": [
+      "Build curiosity from current Velmora evidence and incomplete causal relationships, not imported mysteries or source locations.",
+      "Reward exploration with actionable understanding rather than only items, experience, or journal completion."
+    ],
+    "forbiddenElements": [
+      "Reproducing the source game's time-loop premise, planetary structure, discoveries, or solution chain.",
+      "Replacing player curiosity with a mandatory sequence disguised as open exploration."
+    ],
+    "sourceSpecificReferences": []
+  },
+  {
+    "id": "QPAT-EXPRESSIVE-BRANCHING",
+    "sourceIds": ["SRC-GDC-DISCO-BRANCHING"],
+    "tags": ["dialogue", "choice", "identity", "relationship", "branching"],
+    "emotionalPromise": "Choices let the player express who the character is becoming even when every option does not create a separate plotline.",
+    "setupFunction": "Frame a conversation around conflicting interpretations, priorities, or social risks already established in the scene.",
+    "pressureFunction": "Make the immediate response affect trust, knowledge, access, tone, or self-presentation without promising a world-changing branch every time.",
+    "structuralTurn": "An apparently small response becomes meaningful when another participant remembers it or interprets the player's pattern of behavior.",
+    "choiceShape": "Offer responses that differ in intent, method, or cost rather than several phrasings of the same hidden decision.",
+    "failureMotion": "Let an unsuccessful conversational approach change the relationship or available information while leaving another credible social or practical route.",
+    "consequenceEcho": "Later dialogue, cooperation, resistance, or recollection reflects the player's accumulated choices rather than a single morality score.",
+    "transferRules": [
+      "Generate every option from the player's current relationships, knowledge, and plausible intentions in Velmora.",
+      "Record only choices that create a meaningful memory, relationship change, information change, or future callback."
+    ],
+    "forbiddenElements": [
+      "Copying the source game's internal voices, dialogue style, political language, characters, or identity system.",
+      "Inflating every conversational option into a permanent branch that the engine cannot sustain."
+    ],
+    "sourceSpecificReferences": []
+  },
+  {
+    "id": "QPAT-PERSISTENT-REACTIVE-STORY",
+    "sourceIds": ["SRC-GDC-HADES-PERSISTENCE"],
+    "tags": ["callback", "failure", "npc", "continuity", "repetition"],
+    "emotionalPromise": "Returning after success or failure feels like continued life because characters recognize what has changed.",
+    "setupFunction": "Give recurring NPCs distinct current concerns and enough campaign memory to respond selectively to recent events.",
+    "pressureFunction": "Use repeated contact to advance relationships and unresolved tensions instead of repeating identical exposition.",
+    "structuralTurn": "A later encounter reinterprets an earlier result through an NPC's new knowledge, changed motive, or remembered reaction.",
+    "choiceShape": "Let the player decide which recurring relationship or unfinished exchange receives attention when several are available.",
+    "failureMotion": "Treat setbacks as new conversational and relational material rather than resetting characters to their prior state.",
+    "consequenceEcho": "Short callbacks accumulate into visible relationship development while remaining subordinate to current play.",
+    "transferRules": [
+      "Retrieve only the few NPC memories relevant to the present Velmora scene and current relationship.",
+      "Vary callbacks through changed knowledge, motive, and circumstance rather than cosmetic alternate wording."
+    ],
+    "forbiddenElements": [
+      "Reproducing the source game's mythological cast, escape-cycle premise, dialogue, or encounter structure.",
+      "Forcing a callback into every interaction until recurring NPCs become repetitive exposition devices."
+    ],
+    "sourceSpecificReferences": []
   }
 ]

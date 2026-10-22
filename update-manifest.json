@@ -1,5 +1,5 @@
 {
-  "version": "0.4.8",
+  "version": "0.4.9",
   "channel": "main",
-  "notes": "Add the repository-backed quest reference-learning contract, provenance records, abstract pattern retrieval, and enforceable anti-copying safeguards."
+  "notes": "Add the first curated quest-design reference batch: abstract, provenance-backed lessons from Outer Wilds, Disco Elysium, and Hades without storing or copying source content."
 }

@@ -18,6 +18,8 @@ export type QuestReferenceSource = {
   allowedUse: "abstract_design_analysis" | "distilled_principles" | "rules_reference";
   attribution?: string;
   storesSourceText: false;
+  observedWork?: string;
+  recognition?: Array<{ organization: string; award: string; url: string }>;
 };
 
 export type QuestDesignPattern = {
@@ -108,6 +110,9 @@ export function validateQuestReferenceLibrary(library: QuestReferenceLibrary): v
     if (source.storesSourceText !== false) throw new Error(`Quest reference source ${source.id} may not store source text`);
     if (source.rightsBasis === "OBSERVATIONAL_REFERENCE" && source.allowedUse !== "abstract_design_analysis") {
       throw new Error(`Copyrighted observational source ${source.id} is limited to abstract design analysis`);
+    }
+    if (source.rightsBasis === "OBSERVATIONAL_REFERENCE" && (!source.url?.trim() || !source.observedWork?.trim() || !source.recognition?.length)) {
+      throw new Error(`Copyrighted observational source ${source.id} requires a public design reference and recognition provenance`);
     }
     if (source.rightsBasis === "CC-BY-4.0" && !source.attribution?.trim()) {
       throw new Error(`CC BY quest reference ${source.id} requires attribution`);

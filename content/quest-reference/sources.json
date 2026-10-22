@@ -7,5 +7,59 @@
     "rightsBasis": "ORIGINAL",
     "allowedUse": "rules_reference",
     "storesSourceText": false
+  },
+  {
+    "id": "SRC-GDC-OUTER-WILDS-CURIOSITY",
+    "title": "Sparking Curiosity-Driven Exploration Through Narrative in Outer Wilds",
+    "creator": "Kelsey Beachum",
+    "kind": "developer_commentary",
+    "url": "https://www.gdcvault.com/play/1027368/Independent-Games-Summit-Sparking-Curiosity",
+    "rightsBasis": "OBSERVATIONAL_REFERENCE",
+    "allowedUse": "abstract_design_analysis",
+    "storesSourceText": false,
+    "observedWork": "Outer Wilds",
+    "recognition": [
+      {
+        "organization": "BAFTA",
+        "award": "2020 Best Game and Game Design winner",
+        "url": "https://www.bafta.org/media-centre/press-releases/winners-announced-british-academy-games-awards-2020/"
+      }
+    ]
+  },
+  {
+    "id": "SRC-GDC-DISCO-BRANCHING",
+    "title": "Disco Elysium: Meaningless Choices and Impractical Advice",
+    "creator": "Justin Keenan",
+    "kind": "developer_commentary",
+    "url": "https://www.gdcvault.com/play/1027160/contactUs",
+    "rightsBasis": "OBSERVATIONAL_REFERENCE",
+    "allowedUse": "abstract_design_analysis",
+    "storesSourceText": false,
+    "observedWork": "Disco Elysium",
+    "recognition": [
+      {
+        "organization": "BAFTA",
+        "award": "2020 Narrative winner",
+        "url": "https://www.bafta.org/media-centre/press-releases/winners-announced-british-academy-games-awards-2020/"
+      }
+    ]
+  },
+  {
+    "id": "SRC-GDC-HADES-PERSISTENCE",
+    "title": "Breathing Life into Greek Myth: The Dialogue of Hades",
+    "creator": "Greg Kasavin and Darren Korb",
+    "kind": "developer_commentary",
+    "url": "https://www.gdcvault.com/play/1026975/Breathing-Life-into-Greek-Myth",
+    "rightsBasis": "OBSERVATIONAL_REFERENCE",
+    "allowedUse": "abstract_design_analysis",
+    "storesSourceText": false,
+    "observedWork": "Hades",
+    "recognition": [
+      {
+        "organization": "BAFTA",
+        "award": "2021 Best Game, Game Design, and Narrative winner",
+        "url": "https://www.bafta.org/media-centre/press-releases/winners-announced-british-academy-games-awards-2021/"
+      }
+    ]
   }
 ]

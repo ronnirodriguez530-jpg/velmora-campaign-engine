@@ -13,16 +13,32 @@ test("quest references preserve provenance without storing protected source cont
   assert.equal(library.policy.liveModelTrainingAllowed, false);
   assert.ok(library.sources.every((source) => source.storesSourceText === false));
   assert.ok(library.patterns.every((pattern) => pattern.sourceSpecificReferences.length === 0));
+  const observational = library.sources.filter((source) => source.rightsBasis === "OBSERVATIONAL_REFERENCE");
+  assert.equal(observational.length, 3);
+  assert.ok(observational.every((source) => source.allowedUse === "abstract_design_analysis" && Boolean(source.observedWork) && Boolean(source.recognition?.length)));
   assert.equal(JSON.stringify(library).includes("sourceText"), false);
+});
+
+test("first acclaimed-game batch yields distinct abstract lessons without source identities", async () => {
+  const library = await loadQuestReferenceLibrary(projectRoot);
+  const patterns = retrieveQuestDesignPatterns(library, ["exploration", "dialogue", "callback"], 5);
+  assert.deepEqual(patterns.map((pattern) => pattern.id), [
+    "QPAT-CURIOSITY-LED-PROGRESSION",
+    "QPAT-EXPRESSIVE-BRANCHING",
+    "QPAT-PERSISTENT-REACTIVE-STORY"
+  ]);
+  assert.ok(patterns.every((pattern) => pattern.sourceSpecificReferences.length === 0));
+  assert.equal(JSON.stringify(patterns).includes("Zagreus"), false);
+  assert.equal(JSON.stringify(patterns).includes("Revachol"), false);
 });
 
 test("quest pattern retrieval returns bounded abstract structure rather than source scenes", async () => {
   const library = await loadQuestReferenceLibrary(projectRoot);
   const patterns = retrieveQuestDesignPatterns(library, ["failure", "recovery", "consequence"], 20);
-  assert.equal(patterns.length, 1);
+  assert.ok(patterns.length >= 1 && patterns.length <= library.policy.maximumPatternsPerComposition);
   assert.equal(patterns[0]!.id, "QPAT-CONSEQUENCE-CREATES-ROUTE");
-  assert.ok(patterns[0]!.transferRules.length >= 2);
-  assert.ok(patterns[0]!.forbiddenElements.length >= 2);
+  assert.ok(patterns.every((pattern) => pattern.transferRules.length >= 2));
+  assert.ok(patterns.every((pattern) => pattern.forbiddenElements.length >= 2));
 });
 
 test("copyrighted observational references cannot carry source text or non-abstract authority", () => {

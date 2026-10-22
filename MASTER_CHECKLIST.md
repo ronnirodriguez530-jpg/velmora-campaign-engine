@@ -283,6 +283,7 @@ Approved progression bridge: the engine can validate one designated major object
 - [ ] Rules and campaign reference retrieval
 - [ ] Approved story-craft reference library for quests, mysteries, factions, consequences, pacing, and recovery
 - [x] Quest-reference foundation with repository-stored provenance, abstract structural fields, cross-source composition limits, and enforced prohibitions on copied expression, source text, source-specific identities, and live model training
+- [x] First curated observational batch: provenance-backed abstract lessons from Outer Wilds, Disco Elysium, and Hades with explicit recognition records and source-specific exclusion rules
 - [ ] Curated observational analyses of acclaimed game quests using the approved abstraction contract
 - [ ] Quest-pattern transformation and similarity evaluation connected to live generation
 - [ ] Examples and evaluation tests for coherent long-form DM behavior
@@ -327,7 +328,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 117 of 117 tests
+- [x] Current automated suite passes 118 of 118 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
