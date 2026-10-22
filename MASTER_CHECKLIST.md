@@ -286,6 +286,7 @@ Approved progression bridge: the engine can validate one designated major object
 - [x] First curated observational batch: provenance-backed abstract lessons from Outer Wilds, Disco Elysium, and Hades with explicit recognition records and source-specific exclusion rules
 - [x] Deeper curated observational batch: The Witcher 3, Fallout: New Vegas, Baldur's Gate 3, Pentiment, Deus Ex: Human Revolution, and Mass Effect 2 across six missing quest-design departments
 - [x] Curated observational analyses of acclaimed game quests using the approved abstraction contract
+- [x] Deterministic quest-pattern recipe and originality evaluator with minimum three-source diversity, causal relevance, stable-world bindings, design-facet limits, phrase-overlap rejection, and external similarity thresholds
 - [ ] Quest-pattern transformation and similarity evaluation connected to live generation
 - [ ] Examples and evaluation tests for coherent long-form DM behavior
 - [ ] Complete evaluation set for callbacks, varied paths, failure recovery, and stage-gated endgame pacing
@@ -329,7 +330,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 119 of 119 tests
+- [x] Current automated suite passes 124 of 124 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
