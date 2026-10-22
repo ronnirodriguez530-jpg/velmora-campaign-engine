@@ -13,6 +13,7 @@ import type {
   ToolRequest
 } from "../domain/types.ts";
 import type { OpeningConvergenceProposal } from "../domain/types.ts";
+import type { QuestSimilarityReviewInput, QuestSimilaritySignal } from "../quest/quest-pattern-transformer.ts";
 
 type FetchLike = (input: string | URL | Request, init?: RequestInit) => Promise<Response>;
 
@@ -161,6 +162,36 @@ const INTERPRET_QUEST_DIRECTION_TOOL = {
     additionalProperties: false
   }
 } as const;
+
+const QUEST_SIMILARITY_TOOL = {
+  type: "function",
+  name: "score_quest_similarity",
+  description: "Score an original Velmora quest candidate against each named observed work without quoting or reconstructing source content.",
+  strict: true,
+  parameters: {
+    type: "object",
+    properties: {
+      scores: {
+        type: "array",
+        items: {
+          type: "object",
+          properties: {
+            sourceId: { type: "string" },
+            semantic: { type: "number", minimum: 0, maximum: 1 },
+            sequence: { type: "number", minimum: 0, maximum: 1 }
+          },
+          required: ["sourceId", "semantic", "sequence"],
+          additionalProperties: false
+        }
+      }
+    },
+    required: ["scores"],
+    additionalProperties: false
+  }
+} as const;
+
+const QUEST_SIMILARITY_RULES = `You are an originality reviewer, not a quest writer. Compare the supplied original Velmora candidate with every supplied observed work using only the abstract labels and exclusions provided. Do not quote, reconstruct, imitate, or add source content.
+Semantic similarity measures resemblance in distinctive premise, conflict, characters, moral dilemma, reveal, or twist beyond a reusable abstract design technique. Sequence similarity measures whether the ordered beats, reversals, locations, or set pieces would be recognizable as the observed work. Score each from 0 to 1. Return exactly one score for every supplied source ID and no others. Always call score_quest_similarity exactly once.`;
 
 const PLAN_TOOL = {
   type: "function",
@@ -579,6 +610,7 @@ export class CloudDirector implements CampaignDirector {
   readonly #endpoint: string;
   readonly #timeoutMs: number;
   lastUsage: DirectorUsage | null = null;
+  lastQuestSimilarityUsage: DirectorUsage | null = null;
 
   constructor(options: CloudDirectorOptions) {
     if (!options.apiKey.trim()) throw new Error("Cloud Director requires OPENAI_API_KEY");
@@ -686,6 +718,63 @@ export class CloudDirector implements CampaignDirector {
       throw new Error("Campaign Master returned an invalid quest-direction interpretation");
     }
     return { questId: value.questId, directionId: value.directionId, explanation: value.explanation };
+  }
+
+  async reviewQuestSimilarity(input: QuestSimilarityReviewInput): Promise<QuestSimilaritySignal[]> {
+    const response = await this.#fetch(this.#endpoint, {
+      method: "POST",
+      signal: AbortSignal.timeout(this.#timeoutMs),
+      headers: { "content-type": "application/json", authorization: `Bearer ${this.#apiKey}` },
+      body: JSON.stringify({
+        model: this.#model,
+        instructions: QUEST_SIMILARITY_RULES,
+        input: JSON.stringify(input),
+        tools: [QUEST_SIMILARITY_TOOL],
+        tool_choice: { type: "function", name: "score_quest_similarity" }
+      })
+    });
+    if (!response.ok) {
+      const body = await response.text();
+      throw new Error(`Quest similarity review failed (${response.status}): ${body.slice(0, 300)}`);
+    }
+    const payload = await response.json() as {
+      output?: Array<{ type?: string; name?: string; arguments?: string }>;
+      usage?: { input_tokens?: number; output_tokens?: number; total_tokens?: number };
+    };
+    if (payload.usage) {
+      this.lastQuestSimilarityUsage = {
+        inputTokens: payload.usage.input_tokens ?? 0,
+        outputTokens: payload.usage.output_tokens ?? 0,
+        totalTokens: payload.usage.total_tokens ?? 0
+      };
+    }
+    const call = payload.output?.find((item) => item.type === "function_call" && item.name === "score_quest_similarity");
+    if (!call?.arguments) throw new Error("Cloud Director did not submit quest similarity scores");
+    let value: unknown;
+    try {
+      value = JSON.parse(call.arguments);
+    } catch {
+      throw new Error("Cloud Director returned invalid quest similarity JSON");
+    }
+    const scores = (value as { scores?: unknown })?.scores;
+    if (!Array.isArray(scores)) throw new Error("Cloud Director returned invalid quest similarity scores");
+    const expected = new Set(input.sources.map((source) => source.sourceId));
+    const seen = new Set<string>();
+    const signals: QuestSimilaritySignal[] = [];
+    for (const score of scores) {
+      if (!score || typeof score !== "object") throw new Error("Cloud Director returned an invalid quest similarity score");
+      const { sourceId, semantic, sequence } = score as Record<string, unknown>;
+      if (typeof sourceId !== "string" || !expected.has(sourceId) || seen.has(sourceId)) {
+        throw new Error("Cloud Director quest similarity sources must exactly match the requested unique source IDs");
+      }
+      if (typeof semantic !== "number" || !Number.isFinite(semantic) || semantic < 0 || semantic > 1 || typeof sequence !== "number" || !Number.isFinite(sequence) || sequence < 0 || sequence > 1) {
+        throw new Error("Cloud Director quest similarity scores must be finite values from zero to one");
+      }
+      seen.add(sourceId);
+      signals.push({ sourceId, kind: "semantic", score: semantic }, { sourceId, kind: "sequence", score: sequence });
+    }
+    if (seen.size !== expected.size) throw new Error("Cloud Director must score every requested quest-reference source exactly once");
+    return signals;
   }
 
   async planTurn(context: DirectorPlanningContext, playerInput: string, validationFeedback: string[] = [], actionResolution?: ActionResolution): Promise<DirectorTurnPlan> {

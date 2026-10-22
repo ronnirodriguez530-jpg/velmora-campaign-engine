@@ -82,12 +82,18 @@ export function validateToolRequest(db: DatabaseSync, content: VelmoraContent, c
   }
 
   if (request.type === "generate_quest") {
-    validateGeneratedQuest(db, content, campaignId, request.sourceThreadId, request.relationships);
+    validateGeneratedQuest(db, content, campaignId, request.sourceThreadId, request.relationships, {
+      similaritySignals: request.referenceSimilaritySignals,
+      similarityReview: request.referenceSimilaritySignals ? "provider" : "internal_only"
+    });
     return;
   }
 
   if (request.type === "generate_recovery_quest") {
-    validateRecoveryQuest(db, content, campaignId, request.failedQuestId, request.recoveryPath, request.consequenceEventSequences);
+    validateRecoveryQuest(db, content, campaignId, request.failedQuestId, request.recoveryPath, request.consequenceEventSequences, {
+      similaritySignals: request.referenceSimilaritySignals,
+      similarityReview: request.referenceSimilaritySignals ? "provider" : "internal_only"
+    });
     return;
   }
 

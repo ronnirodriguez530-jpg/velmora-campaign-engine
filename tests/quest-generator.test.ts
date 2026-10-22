@@ -93,6 +93,20 @@ test("failed reference originality evaluation leaves no quest or creation event"
   } finally { db.close(); }
 });
 
+test("provider review cannot omit selected-source semantic or sequence coverage", async () => {
+  const { content, db, campaignId } = await setup("quest-reference-coverage", "quest-reference-coverage-seed");
+  try {
+    assert.throws(
+      () => generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE", [], {
+        similarityReview: "provider",
+        similaritySignals: [{ sourceId: "SRC-GDC-WITCHER-CYBERPUNK-QUESTS", kind: "semantic", score: 0.1 }]
+      }),
+      /requires exactly one (semantic|sequence) score/
+    );
+    assert.equal(listQuestInstances(db, campaignId).length, 0);
+  } finally { db.close(); }
+});
+
 test("a thread permits one primary and one alternative unresolved quest, then enforces the hard cap", async () => {
   const { content, db, campaignId } = await setup("quest-sequence", "quest-sequence-seed");
   try {

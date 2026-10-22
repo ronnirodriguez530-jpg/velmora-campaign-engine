@@ -474,6 +474,9 @@ export type QuestReferenceDesignRecord = {
   sourceIds: string[];
   distinctSourceCount: number;
   maximumPatternPhraseOverlap: number;
+  similarityReview: "internal_only" | "provider";
+  maximumSemanticSimilarity: number | null;
+  maximumSequenceSimilarity: number | null;
   accepted: true;
 };
 
@@ -835,6 +838,7 @@ export type GenerateQuestRequest = {
   sourceThreadId: string;
   relationships: QuestRelationship[];
   reason: string;
+  referenceSimilaritySignals?: Array<{ sourceId: string; kind: "semantic" | "sequence"; score: number }>;
 };
 
 export type GenerateRecoveryQuestRequest = {
@@ -843,6 +847,7 @@ export type GenerateRecoveryQuestRequest = {
   recoveryPath: string;
   consequenceEventSequences: number[];
   reason: string;
+  referenceSimilaritySignals?: Array<{ sourceId: string; kind: "semantic" | "sequence"; score: number }>;
 };
 
 export type ReviseQuestDirectionsRequest = {

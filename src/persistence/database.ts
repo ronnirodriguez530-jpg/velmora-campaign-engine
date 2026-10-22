@@ -861,7 +861,12 @@ function questFromRow(row: Record<string, unknown>): QuestInstance {
       tradeoffKey: `legacy:${stored.outcomes.map((outcome) => outcome.summary).join("|")}`,
       costKey: `legacy:${stored.stakes}`
     },
-    referenceDesign: stored.referenceDesign ?? null,
+    referenceDesign: stored.referenceDesign ? {
+      ...stored.referenceDesign,
+      similarityReview: stored.referenceDesign.similarityReview ?? "internal_only",
+      maximumSemanticSimilarity: stored.referenceDesign.maximumSemanticSimilarity ?? null,
+      maximumSequenceSimilarity: stored.referenceDesign.maximumSequenceSimilarity ?? null
+    } : null,
     neglectPolicy: stored.neglectPolicy ?? {
       allowedTriggers: ["ignored_warning_after_deliberate_choice", "recorded_world_event_advances_threat"],
       maximumEffect: "proportional_complication"

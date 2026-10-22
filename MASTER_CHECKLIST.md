@@ -288,7 +288,7 @@ Approved progression bridge: the engine can validate one designated major object
 - [x] Curated observational analyses of acclaimed game quests using the approved abstraction contract
 - [x] Deterministic quest-pattern recipe and originality evaluator with minimum three-source diversity, causal relevance, stable-world bindings, design-facet limits, phrase-overlap rejection, and external similarity thresholds
 - [x] Internal quest-pattern transformation and originality evaluation connected to ordinary and recovery generation before persistence, with Director-only audit provenance and atomic rejection
-- [ ] Cloud-provider semantic and sequence similarity scoring with bounded retry on rejected candidates
+- [x] Cloud-provider semantic and sequence similarity scoring with exact selected-source coverage, deterministic thresholds, Director-only audit maxima, and one bounded repair attempt on rejected candidates
 - [ ] Examples and evaluation tests for coherent long-form DM behavior
 - [ ] Complete evaluation set for callbacks, varied paths, failure recovery, and stage-gated endgame pacing
 - [x] Mechanical tests for thread continuity, recovery-path replacement, hidden-context isolation, stage gates, rollback, and growing thread history
@@ -331,7 +331,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 125 of 125 tests
+- [x] Current automated suite passes 130 of 130 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations
@@ -430,7 +430,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the tested generative Quest Engine foundation in step 6. The strict quest contract, approved tagged modular composer, adaptive objective flow, exact causal outcomes, unexpected-solution handling, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, warning and neglect execution, evidence-backed route invalidation, progression bridge, persistence, rollback, compact Quest journal, and sustained isolated multi-thread stress simulations now work. Opening timing is approved and automatic pre-opening quest creation has been removed. The next dependency is the future d6-start-and-attack opening integration. Combat, real-provider sustained play evaluation, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5 and the tested generative Quest Engine foundation in step 6. The strict quest contract, approved tagged modular composer, adaptive objective flow, exact causal outcomes, unexpected-solution handling, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, warning and neglect execution, evidence-backed route invalidation, progression bridge, persistence, rollback, compact Quest journal, sustained isolated multi-thread stress simulations, and automatic cloud semantic/sequence originality review now work. The d6 opening, adaptive pre-strike exploration, witnessed First Speaker strike, hidden crisis, and first formal quest are integrated. Combat, real-provider sustained play evaluation, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

@@ -49,9 +49,15 @@ export async function executeToolRequest(db: DatabaseSync, content: VelmoraConte
   } else if (request.type === "create_story_thread") {
     applyStoryThreadCreation(db, campaignId, turn, request);
   } else if (request.type === "generate_quest") {
-    applyGeneratedQuest(db, content, campaignId, request.sourceThreadId, turn, request.relationships);
+    applyGeneratedQuest(db, content, campaignId, request.sourceThreadId, turn, request.relationships, {
+      similaritySignals: request.referenceSimilaritySignals,
+      similarityReview: request.referenceSimilaritySignals ? "provider" : "internal_only"
+    });
   } else if (request.type === "generate_recovery_quest") {
-    applyRecoveryQuest(db, content, campaignId, request.failedQuestId, request.recoveryPath, request.consequenceEventSequences, turn);
+    applyRecoveryQuest(db, content, campaignId, request.failedQuestId, request.recoveryPath, request.consequenceEventSequences, turn, {
+      similaritySignals: request.referenceSimilaritySignals,
+      similarityReview: request.referenceSimilaritySignals ? "provider" : "internal_only"
+    });
   } else if (request.type === "revise_quest_directions") {
     applyQuestDirectionRevision(db, campaignId, turn, request);
   } else if (request.type === "manage_quest") {

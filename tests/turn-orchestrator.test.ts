@@ -17,6 +17,7 @@ import {
   getNpcKnowledge,
   getNpcRelationship,
   listEvents,
+  listQuestInstances,
   listNpcDesignProfiles,
   listNpcsAtLocation,
   listRelevantNpcMemories,
@@ -25,6 +26,84 @@ import {
   persistWorldFact,
   restorePreviousTurn
 } from "../src/persistence/database.ts";
+
+test("automatic similarity review records accepted provider maxima before quest persistence", async () => {
+  const { content, db, campaignId } = await setup();
+  let reviews = 0;
+  const director: CampaignDirector = {
+    source: "diagnostic",
+    preview: (context) => new MockDirector().preview(context),
+    presentScene: (context, scene) => new MockDirector().presentScene(context, scene),
+    reviewQuestSimilarity: async (input) => {
+      reviews += 1;
+      return input.sources.flatMap((source, index) => [
+        { sourceId: source.sourceId, kind: "semantic" as const, score: 0.2 + index * 0.01 },
+        { sourceId: source.sourceId, kind: "sequence" as const, score: 0.1 + index * 0.01 }
+      ]);
+    },
+    planTurn: async () => ({
+      summary: "The opening pressure becomes a concrete route.",
+      majorActionProposal: true,
+      toolRequests: [{ type: "generate_quest", sourceThreadId: "THREAD-OPENING-PRESSURE", relationships: [], reason: "The player commits to the opening pressure." }],
+      suggestedActions: ["Follow the lead", "Assess the danger"],
+      allowsFreeText: true
+    })
+  };
+  try {
+    await runPlayerAction(db, content, director, "turn-test", "commit to addressing the opening pressure");
+    const quest = listQuestInstances(db, campaignId)[0]!;
+    assert.equal(reviews, 1);
+    assert.equal(quest.referenceDesign?.similarityReview, "provider");
+    assert.ok((quest.referenceDesign?.maximumSemanticSimilarity ?? 1) < 0.72);
+    assert.ok((quest.referenceDesign?.maximumSequenceSimilarity ?? 1) < 0.5);
+  } finally {
+    db.close();
+  }
+});
+
+test("rejected similarity review gets one repair attempt and leaves the campaign untouched", async () => {
+  const { content, db, campaignId } = await setup();
+  let plans = 0;
+  let reviews = 0;
+  let repairFeedback = "";
+  const director: CampaignDirector = {
+    source: "diagnostic",
+    preview: (context) => new MockDirector().preview(context),
+    presentScene: (context, scene) => new MockDirector().presentScene(context, scene),
+    reviewQuestSimilarity: async (input) => {
+      reviews += 1;
+      return input.sources.flatMap((source, index) => [
+        { sourceId: source.sourceId, kind: "semantic" as const, score: index === 0 ? 0.9 : 0.2 },
+        { sourceId: source.sourceId, kind: "sequence" as const, score: 0.1 }
+      ]);
+    },
+    planTurn: async (_context, _input, feedback) => {
+      plans += 1;
+      repairFeedback = feedback?.[0] ?? repairFeedback;
+      return {
+        summary: "The Director proposes the same rejected route.",
+        majorActionProposal: true,
+        toolRequests: [{ type: "generate_quest", sourceThreadId: "THREAD-OPENING-PRESSURE", relationships: [], reason: "The player commits to the opening pressure." }],
+        suggestedActions: ["Follow the lead", "Assess the danger"],
+        allowsFreeText: true
+      };
+    }
+  };
+  try {
+    await assert.rejects(
+      () => runPlayerAction(db, content, director, "turn-test", "commit to addressing the opening pressure"),
+      /could not produce a valid plan after 2 attempts.*semantic similarity threshold/
+    );
+    assert.equal(plans, 2);
+    assert.equal(reviews, 2);
+    assert.match(repairFeedback, /semantic similarity threshold/);
+    assert.equal(listQuestInstances(db, campaignId).length, 0);
+    assert.equal(getCampaign(db, "turn-test")?.turn, 0);
+    assert.equal(countCheckpoints(db, campaignId), 0);
+  } finally {
+    db.close();
+  }
+});
 
 async function setup() {
   const content = await loadVelmoraContent(resolve(import.meta.dirname, ".."));

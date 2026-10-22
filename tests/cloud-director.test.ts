@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { CloudDirector } from "../src/director/cloud-director.ts";
 import type { DirectorPlanningContext } from "../src/domain/types.ts";
+import type { QuestSimilarityReviewInput } from "../src/quest/quest-pattern-transformer.ts";
 
 const context: DirectorPlanningContext = {
   campaignId: "SAVE-TEST",
@@ -40,6 +41,69 @@ const context: DirectorPlanningContext = {
     createdTurn: 0
   }
 };
+
+const similarityReview: QuestSimilarityReviewInput = {
+  recipeId: "QRECIPE-TEST-001",
+  candidate: {
+    goal: "Protect a threatened witness without surrendering the evidence.",
+    stakes: "Delay gives a rival time to close the district exits.",
+    directions: [
+      { summary: "Move the witness through a public route.", likelyTradeoff: "Visibility discourages violence but exposes allies." },
+      { summary: "Trade leverage for a concealed passage.", likelyTradeoff: "Safety costs political influence." }
+    ]
+  },
+  sources: [
+    { sourceId: "SRC-A", observedWork: "Observed Work A", patternIds: ["PAT-A"], forbiddenElements: ["named source character"] },
+    { sourceId: "SRC-B", observedWork: "Observed Work B", patternIds: ["PAT-B"], forbiddenElements: ["recognizable set piece"] },
+    { sourceId: "SRC-C", observedWork: "Observed Work C", patternIds: ["PAT-C"], forbiddenElements: ["copied twist"] }
+  ]
+};
+
+test("cloud Director returns strict semantic and sequence similarity scores for every selected source", async () => {
+  let sentBody: Record<string, unknown> | undefined;
+  const fakeFetch = async (_input: string | URL | Request, init?: RequestInit) => {
+    sentBody = JSON.parse(String(init?.body)) as Record<string, unknown>;
+    return new Response(JSON.stringify({
+      output: [{
+        type: "function_call",
+        name: "score_quest_similarity",
+        arguments: JSON.stringify({ scores: [
+          { sourceId: "SRC-A", semantic: 0.21, sequence: 0.13 },
+          { sourceId: "SRC-B", semantic: 0.3, sequence: 0.24 },
+          { sourceId: "SRC-C", semantic: 0.19, sequence: 0.18 }
+        ] })
+      }],
+      usage: { input_tokens: 90, output_tokens: 30, total_tokens: 120 }
+    }), { status: 200, headers: { "content-type": "application/json" } });
+  };
+  const director = new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch });
+  const signals = await director.reviewQuestSimilarity(similarityReview);
+  assert.equal(signals.length, 6);
+  assert.deepEqual(signals.slice(0, 2), [
+    { sourceId: "SRC-A", kind: "semantic", score: 0.21 },
+    { sourceId: "SRC-A", kind: "sequence", score: 0.13 }
+  ]);
+  assert.deepEqual(director.lastQuestSimilarityUsage, { inputTokens: 90, outputTokens: 30, totalTokens: 120 });
+  const tool = (sentBody?.tools as Array<Record<string, unknown>>)[0];
+  assert.equal(tool.name, "score_quest_similarity");
+  assert.equal(tool.strict, true);
+  assert.equal((sentBody?.tool_choice as Record<string, unknown>).name, "score_quest_similarity");
+});
+
+test("cloud Director rejects missing or duplicate quest-reference score coverage", async () => {
+  const fakeFetch = async () => new Response(JSON.stringify({ output: [{
+    type: "function_call",
+    name: "score_quest_similarity",
+    arguments: JSON.stringify({ scores: [
+      { sourceId: "SRC-A", semantic: 0.2, sequence: 0.2 },
+      { sourceId: "SRC-A", semantic: 0.3, sequence: 0.3 }
+    ] })
+  }] }), { status: 200, headers: { "content-type": "application/json" } });
+  await assert.rejects(
+    () => new CloudDirector({ apiKey: "test-key", fetchImpl: fakeFetch }).reviewQuestSimilarity(similarityReview),
+    /exactly match the requested unique source IDs/
+  );
+});
 
 test("cloud Director requests a bounded hidden-DC action check", async () => {
   let sentBody: Record<string, unknown> | undefined;

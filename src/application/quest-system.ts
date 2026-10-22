@@ -260,6 +260,16 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
     if (!Number.isFinite(input.referenceDesign.maximumPatternPhraseOverlap) || input.referenceDesign.maximumPatternPhraseOverlap < 0 || input.referenceDesign.maximumPatternPhraseOverlap > 0.4) {
       throw new Error("Quest reference phrase overlap exceeds the accepted bound");
     }
+    if (input.referenceDesign.similarityReview === "provider") {
+      if (input.referenceDesign.maximumSemanticSimilarity === null || input.referenceDesign.maximumSequenceSimilarity === null) {
+        throw new Error("Provider-reviewed quest requires semantic and sequence similarity scores");
+      }
+      if (input.referenceDesign.maximumSemanticSimilarity >= 0.72 || input.referenceDesign.maximumSequenceSimilarity >= 0.5) {
+        throw new Error("Provider-reviewed quest exceeds an accepted similarity bound");
+      }
+    } else if (input.referenceDesign.similarityReview !== "internal_only") {
+      throw new Error("Quest reference design has an unknown similarity-review source");
+    }
   }
   if (unresolvedOnSourceThread.length === 1) {
     const existingRoute = unresolvedOnSourceThread[0]!;

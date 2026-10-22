@@ -1,6 +1,6 @@
 # Quest Pattern Transformation V1
 
-This layer converts causally relevant abstract quest-design patterns into a bounded recipe for an original Velmora quest candidate. It does not author scenes. As of version 0.5.2, the internal recipe and originality gate is connected to ordinary and recovery quest generation.
+This layer converts causally relevant abstract quest-design patterns into a bounded recipe for an original Velmora quest candidate. It does not author scenes. As of version 0.5.3, the internal recipe, automatic cloud similarity review, and originality gate are connected to ordinary and recovery quest generation.
 
 ## Composition contract
 
@@ -43,7 +43,7 @@ A candidate is rejected when it:
 | Semantic | 0.72 |
 | Sequence | 0.50 |
 
-Internal phrase-overlap evaluation runs without a provider. Semantic and sequence scores are validated when supplied, but the live AI adapter does not yet calculate them.
+Internal phrase-overlap evaluation runs without a provider. For live cloud quest generation, the adapter automatically requests exactly one semantic and one sequence score for every selected reference source. The deterministic engine—not the provider—applies the rejection thresholds.
 
 ## Live persistence gate
 
@@ -54,16 +54,18 @@ Before an engine-generated ordinary or recovery quest is persisted, the generato
 3. converts the generated goal, stakes, directions, tradeoffs, and world bindings into a candidate;
 4. evaluates the candidate against structural, source-diversity, world-binding, facet-dominance, and phrase-overlap rules;
 5. rejects the operation before persistence when evaluation fails;
-6. stores the accepted recipe ID, pattern/source provenance, source count, and overlap result as a Director-only audit record.
+6. sends only the original candidate, observed-work labels, selected abstract pattern IDs, and forbidden-element labels to the cloud originality reviewer—never source text, dialogue, transcripts, or copied sequences;
+7. requires complete, unique, finite semantic and sequence scores for every selected source;
+8. stores the accepted recipe ID, pattern/source provenance, source count, overlap result, review source, and maximum semantic and sequence scores as a Director-only audit record.
 
 The player-facing quest view removes this audit record. Players see only the approved quest information, not reference sources or hidden design machinery. Authored and legacy quest records remain compatible through a `null` audit value.
 
-External lexical, semantic, or sequence signals may be supplied to the same live gate. A failing signal leaves neither a quest row nor a `quest_created` event. Automatic provider scoring remains unfinished.
+External lexical, semantic, or sequence signals use the same live gate. A failing cloud score rejects the proposed plan and gives the Campaign Master one repair attempt within the existing two-attempt turn limit. A second rejection aborts the turn. Neither rejection creates a quest, event, checkpoint, or turn advance, and there is no silent provider fallback.
 
 ## Tests
 
-The focused tests prove deterministic composition, minimum source diversity, refusal to force irrelevant patterns, acceptance of an original Velmora candidate, and rejection of unbound entities, source references, pattern/facet dominance, copied wording, and excessive semantic or sequence similarity.
+The focused tests prove deterministic composition, minimum source diversity, refusal to force irrelevant patterns, acceptance of an original Velmora candidate, and rejection of unbound entities, source references, pattern/facet dominance, copied wording, excessive similarity, incomplete score coverage, malformed cloud output, and repeated rejection without persistence.
 
-## Next integration
+## Remaining evaluation
 
-The next checkpoint must connect the cloud Campaign Master to automatic semantic and sequence scoring, then retry a rejected provider candidate within a strict bounded attempt limit. Hidden outcomes, consequence seeds, exact objectives, and reference audits must remain outside player context.
+The adapter and deterministic enforcement are complete. A real-provider end-to-end playtest is still required before release to measure score consistency, token cost, latency, and false-positive rates across sustained campaign generation. Hidden outcomes, consequence seeds, exact objectives, and reference audits remain outside player context.

@@ -56,6 +56,21 @@ export type QuestSimilaritySignal = {
   score: number;
 };
 
+export type QuestSimilarityReviewInput = {
+  recipeId: string;
+  candidate: {
+    goal: string;
+    stakes: string;
+    directions: Array<{ summary: string; likelyTradeoff: string }>;
+  };
+  sources: Array<{
+    sourceId: string;
+    observedWork: string;
+    patternIds: string[];
+    forbiddenElements: string[];
+  }>;
+};
+
 export type QuestOriginalityEvaluation = {
   accepted: boolean;
   problems: string[];

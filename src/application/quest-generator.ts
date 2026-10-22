@@ -3,7 +3,7 @@ import { resolve } from "node:path";
 import type { CreateQuestInput } from "./quest-system.ts";
 import type { QuestDirection, QuestRelationship, StoryThread, VelmoraContent } from "../domain/types.ts";
 import { listQuestInstances, listStoryThreads } from "../persistence/database.ts";
-import { composeQuestPatternRecipe, evaluateQuestPatternCandidate, type QuestSimilaritySignal } from "../quest/quest-pattern-transformer.ts";
+import { composeQuestPatternRecipe, evaluateQuestPatternCandidate, type QuestSimilarityReviewInput, type QuestSimilaritySignal } from "../quest/quest-pattern-transformer.ts";
 import { loadQuestReferenceLibrarySync, type QuestReferenceLibrary } from "../quest/quest-reference-library.ts";
 import { seededSample } from "./seeded-random.ts";
 import { applyQuestCreation, createQuestInstance, QUEST_TYPE_BY_THREAD_KIND, validateQuestCreation } from "./quest-system.ts";
@@ -14,6 +14,7 @@ type ComplicationFamily = "new_information" | "changed_access" | "third_party" |
 
 export type QuestReferenceGenerationOptions = {
   similaritySignals?: QuestSimilaritySignal[];
+  similarityReview?: "internal_only" | "provider";
 };
 
 let cachedQuestReferenceLibrary: QuestReferenceLibrary | null = null;
@@ -61,6 +62,20 @@ function attachReferenceDesign(
       capabilityTags: [...new Set(input.possibleDirections.map((direction) => direction.approachKey))]
     }
   });
+  if (options.similarityReview === "provider") {
+    const expected = new Set(recipe.sourceIds);
+    const signals = options.similaritySignals ?? [];
+    for (const sourceId of expected) {
+      for (const kind of ["semantic", "sequence"] as const) {
+        if (signals.filter((signal) => signal.sourceId === sourceId && signal.kind === kind).length !== 1) {
+          throw new Error(`Provider similarity review requires exactly one ${kind} score for ${sourceId}`);
+        }
+      }
+    }
+    if (signals.some((signal) => !expected.has(signal.sourceId) || (signal.kind !== "semantic" && signal.kind !== "sequence"))) {
+      throw new Error("Provider similarity review may score only the selected sources with semantic and sequence signals");
+    }
+  }
   const evaluation = evaluateQuestPatternCandidate(library, recipe, {
     recipeId: recipe.recipeId,
     goal: input.goal,
@@ -82,8 +97,41 @@ function attachReferenceDesign(
       sourceIds: recipe.sourceIds,
       distinctSourceCount: evaluation.distinctSourceCount,
       maximumPatternPhraseOverlap: evaluation.maximumPatternPhraseOverlap,
+      similarityReview: options.similarityReview ?? "internal_only",
+      maximumSemanticSimilarity: maximumSimilarity(options.similaritySignals, "semantic"),
+      maximumSequenceSimilarity: maximumSimilarity(options.similaritySignals, "sequence"),
       accepted: true
     }
+  };
+}
+
+function maximumSimilarity(signals: QuestSimilaritySignal[] | undefined, kind: "semantic" | "sequence"): number | null {
+  const matching = (signals ?? []).filter((signal) => signal.kind === kind).map((signal) => signal.score);
+  return matching.length > 0 ? Math.max(...matching) : null;
+}
+
+function similarityReviewForQuest(input: CreateQuestInput): QuestSimilarityReviewInput {
+  if (!input.referenceDesign) throw new Error("Quest similarity review requires a reference-design recipe");
+  const library = questReferenceLibrary();
+  const selectedPatternIds = new Set(input.referenceDesign.patternIds);
+  return {
+    recipeId: input.referenceDesign.recipeId,
+    candidate: {
+      goal: input.goal,
+      stakes: input.stakes,
+      directions: input.possibleDirections.map((direction) => ({ summary: direction.summary, likelyTradeoff: direction.likelyTradeoff }))
+    },
+    sources: input.referenceDesign.sourceIds.map((sourceId) => {
+      const source = library.sources.find((candidate) => candidate.id === sourceId);
+      if (!source) throw new Error(`Missing selected quest-reference source ${sourceId}`);
+      const patterns = library.patterns.filter((pattern) => selectedPatternIds.has(pattern.id) && pattern.sourceIds.includes(sourceId));
+      return {
+        sourceId,
+        observedWork: source.observedWork ?? source.title,
+        patternIds: patterns.map((pattern) => pattern.id),
+        forbiddenElements: [...new Set(patterns.flatMap((pattern) => pattern.forbiddenElements))].sort()
+      };
+    })
   };
 }
 
@@ -397,6 +445,16 @@ export function validateGeneratedQuest(
   validateQuestCreation(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId, relationships, referenceOptions));
 }
 
+export function buildGeneratedQuestSimilarityReview(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignId: string,
+  threadId: string,
+  relationships: QuestRelationship[] = []
+): QuestSimilarityReviewInput {
+  return similarityReviewForQuest(composeQuestFromThread(db, content, campaignId, threadId, relationships));
+}
+
 export function applyGeneratedQuest(
   db: DatabaseSync,
   content: VelmoraContent,
@@ -474,6 +532,17 @@ export function validateRecoveryQuest(
   referenceOptions: QuestReferenceGenerationOptions = {}
 ): void {
   validateQuestCreation(db, content, campaignId, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath, consequenceEventSequences, referenceOptions));
+}
+
+export function buildRecoveryQuestSimilarityReview(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignId: string,
+  failedQuestId: string,
+  recoveryPath: string,
+  consequenceEventSequences: number[]
+): QuestSimilarityReviewInput {
+  return similarityReviewForQuest(composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath, consequenceEventSequences));
 }
 
 export function applyRecoveryQuest(

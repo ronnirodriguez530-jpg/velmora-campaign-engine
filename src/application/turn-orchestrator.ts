@@ -1,6 +1,6 @@
 import type { DatabaseSync } from "node:sqlite";
 import type { CampaignDirector } from "../director/director.ts";
-import type { ActionResolution, TurnResult, VelmoraContent } from "../domain/types.ts";
+import type { ActionResolution, DirectorTurnPlan, ToolRequest, TurnResult, VelmoraContent } from "../domain/types.ts";
 import { isMajorPlayerAction } from "./action-classifier.ts";
 import { appendEvent, captureSnapshot, getCampaign, insertCheckpoint } from "../persistence/database.ts";
 import { validateToolRequest } from "../tools/validator.ts";
@@ -9,8 +9,39 @@ import { buildDirectorPlanningContext } from "./context-builder.ts";
 import { evaluateStageProgression } from "./stage-progression.ts";
 import { maybePersistTearArrival } from "./tear-event-generator.ts";
 import { recordOpeningExplorationTurn, validateOpeningConvergenceProposal } from "./opening-system.ts";
+import { buildGeneratedQuestSimilarityReview, buildRecoveryQuestSimilarityReview } from "./quest-generator.ts";
 
 const MAX_DIRECTOR_ATTEMPTS = 2;
+
+async function attachQuestSimilarityReviews(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  director: CampaignDirector,
+  campaignId: string,
+  plan: DirectorTurnPlan
+): Promise<DirectorTurnPlan> {
+  const questRequests = plan.toolRequests.filter((request) => request.type === "generate_quest" || request.type === "generate_recovery_quest");
+  if (questRequests.length === 0) return plan;
+  if (!director.reviewQuestSimilarity) {
+    if (director.source === "cloud") throw new Error("Cloud quest generation requires automatic semantic and sequence similarity review");
+    return plan;
+  }
+  const toolRequests: ToolRequest[] = [];
+  for (const request of plan.toolRequests) {
+    if (request.type === "generate_quest") {
+      const review = buildGeneratedQuestSimilarityReview(db, content, campaignId, request.sourceThreadId, request.relationships);
+      const signals = await director.reviewQuestSimilarity(review);
+      toolRequests.push({ ...request, referenceSimilaritySignals: signals.filter((signal) => signal.kind !== "lexical") });
+    } else if (request.type === "generate_recovery_quest") {
+      const review = buildRecoveryQuestSimilarityReview(db, content, campaignId, request.failedQuestId, request.recoveryPath, request.consequenceEventSequences);
+      const signals = await director.reviewQuestSimilarity(review);
+      toolRequests.push({ ...request, referenceSimilaritySignals: signals.filter((signal) => signal.kind !== "lexical") });
+    } else {
+      toolRequests.push(request);
+    }
+  }
+  return { ...plan, toolRequests };
+}
 
 async function requestValidPlan(
   db: DatabaseSync,
@@ -23,8 +54,9 @@ async function requestValidPlan(
   const context = buildDirectorPlanningContext(db, content, campaignName);
   let feedback: string[] | undefined;
   for (let attempt = 1; attempt <= MAX_DIRECTOR_ATTEMPTS; attempt += 1) {
-    const plan = await director.planTurn(context, playerInput, feedback, actionResolution);
+    const proposedPlan = await director.planTurn(context, playerInput, feedback, actionResolution);
     try {
+      const plan = await attachQuestSimilarityReviews(db, content, director, context.campaignId, proposedPlan);
       if (plan.toolRequests.filter((request) => request.type === "request_minor_npc").length > 1) {
         throw new Error("A turn may request at most one new minor NPC");
       }
