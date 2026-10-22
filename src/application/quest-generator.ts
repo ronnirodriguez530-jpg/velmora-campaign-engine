@@ -1,13 +1,91 @@
 import type { DatabaseSync } from "node:sqlite";
+import { resolve } from "node:path";
 import type { CreateQuestInput } from "./quest-system.ts";
 import type { QuestDirection, QuestRelationship, StoryThread, VelmoraContent } from "../domain/types.ts";
 import { listQuestInstances, listStoryThreads } from "../persistence/database.ts";
+import { composeQuestPatternRecipe, evaluateQuestPatternCandidate, type QuestSimilaritySignal } from "../quest/quest-pattern-transformer.ts";
+import { loadQuestReferenceLibrarySync, type QuestReferenceLibrary } from "../quest/quest-reference-library.ts";
 import { seededSample } from "./seeded-random.ts";
 import { applyQuestCreation, createQuestInstance, QUEST_TYPE_BY_THREAD_KIND, validateQuestCreation } from "./quest-system.ts";
 
 type ObjectiveFamily = "discover" | "influence" | "secure" | "change";
 type PressureFamily = "opposition" | "instability" | "scarcity" | "conflict";
 type ComplicationFamily = "new_information" | "changed_access" | "third_party" | "bounded_cost";
+
+export type QuestReferenceGenerationOptions = {
+  similaritySignals?: QuestSimilaritySignal[];
+};
+
+let cachedQuestReferenceLibrary: QuestReferenceLibrary | null = null;
+
+function questReferenceLibrary(): QuestReferenceLibrary {
+  cachedQuestReferenceLibrary ??= loadQuestReferenceLibrarySync(resolve(import.meta.dirname, "../.."));
+  return cachedQuestReferenceLibrary;
+}
+
+function causalReferenceTags(thread: StoryThread): string[] {
+  const tags = new Set(["choice", "consequence", "recovery"]);
+  if (thread.kind === "main" || thread.kind === "mystery") ["mystery", "investigation", "discovery"].forEach((tag) => tags.add(tag));
+  if (thread.kind === "faction" || thread.factionIds.length > 0) ["faction", "politics", "dialogue"].forEach((tag) => tags.add(tag));
+  if (thread.kind === "personal") ["companion", "relationship", "callback"].forEach((tag) => tags.add(tag));
+  if (thread.kind === "dynamic") ["systemic", "unexpected_solution", "adaptation"].forEach((tag) => tags.add(tag));
+  if (thread.npcIds.length > 0) ["npc", "social", "relationship"].forEach((tag) => tags.add(tag));
+  if (thread.locationIds.length > 0) ["approach", "exploration"].forEach((tag) => tags.add(tag));
+  if (thread.urgency >= 2) tags.add("pressure");
+  return [...tags].sort();
+}
+
+function attachReferenceDesign(
+  db: DatabaseSync,
+  campaignId: string,
+  thread: StoryThread,
+  input: CreateQuestInput,
+  options: QuestReferenceGenerationOptions = {}
+): CreateQuestInput {
+  const campaign = db.prepare("SELECT seed FROM campaigns WHERE id = ?").get(campaignId) as { seed: string } | undefined;
+  if (!campaign) throw new Error(`Missing campaign state ${campaignId}`);
+  const library = questReferenceLibrary();
+  const requestedTags = causalReferenceTags(thread);
+  const recipe = composeQuestPatternRecipe(library, {
+    seed: `${campaign.seed}|${input.questId}|reference-design`,
+    requestedTags,
+    desiredPatternCount: library.policy.minimumDistinctSourcesPerComposition,
+    maximumDirections: input.possibleDirections.length === 3 ? 3 : 2,
+    world: {
+      threadId: thread.threadId,
+      threadTitle: thread.title,
+      threadSummary: thread.summary,
+      locationIds: input.locationIds,
+      npcIds: input.npcIds,
+      factionIds: input.factionIds,
+      capabilityTags: [...new Set(input.possibleDirections.map((direction) => direction.approachKey))]
+    }
+  });
+  const evaluation = evaluateQuestPatternCandidate(library, recipe, {
+    recipeId: recipe.recipeId,
+    goal: input.goal,
+    stakes: input.stakes,
+    directions: input.possibleDirections.map((direction) => ({ summary: direction.summary, likelyTradeoff: direction.likelyTradeoff })),
+    worldEntityIds: [thread.threadId, ...input.locationIds, ...input.npcIds, ...input.factionIds],
+    influences: recipe.influences.map((influence) => ({ patternId: influence.patternId, facets: [...influence.facets] })),
+    sourceSpecificReferences: []
+  }, options.similaritySignals ?? []);
+  if (!evaluation.accepted) {
+    throw new Error(`Generated quest rejected by reference originality evaluation: ${evaluation.problems.join("; ")}`);
+  }
+  return {
+    ...input,
+    referenceDesign: {
+      recipeId: recipe.recipeId,
+      requestedTags: recipe.requestedTags,
+      patternIds: recipe.patternIds,
+      sourceIds: recipe.sourceIds,
+      distinctSourceCount: evaluation.distinctSourceCount,
+      maximumPatternPhraseOverlap: evaluation.maximumPatternPhraseOverlap,
+      accepted: true
+    }
+  };
+}
 
 type QuestModule = {
   key: string;
@@ -186,7 +264,8 @@ export function composeQuestFromThread(
   content: VelmoraContent,
   campaignId: string,
   threadId: string,
-  relationships: QuestRelationship[] = []
+  relationships: QuestRelationship[] = [],
+  referenceOptions: QuestReferenceGenerationOptions = {}
 ): CreateQuestInput {
   const campaign = db.prepare("SELECT seed, stage, turn, current_location_id AS currentLocationId FROM campaigns WHERE id = ?")
     .get(campaignId) as { seed: string; stage: StoryThread["minimumStage"]; turn: number; currentLocationId: string } | undefined;
@@ -230,7 +309,7 @@ export function composeQuestFromThread(
   }
   const factionIds = thread.factionIds;
 
-  return {
+  const questInput: CreateQuestInput = {
     questId,
     title: bounded(thread.title, 120),
     goal: bounded(`Meaningfully change the active pressure represented by ${thread.title}.`, 300),
@@ -278,6 +357,7 @@ export function composeQuestFromThread(
       tradeoffKey: pattern.tradeoffKey,
       costKey: pattern.costKey
     },
+    referenceDesign: null,
     neglectPolicy: {
       allowedTriggers: ["ignored_warning_after_deliberate_choice", "recorded_world_event_advances_threat"],
       maximumEffect: "proportional_complication"
@@ -292,6 +372,7 @@ export function composeQuestFromThread(
     truthEvidenceIds: [],
     isTurningPoint: false
   };
+  return attachReferenceDesign(db, campaignId, thread, questInput, referenceOptions);
 }
 
 export function generateQuestFromThread(
@@ -299,9 +380,10 @@ export function generateQuestFromThread(
   content: VelmoraContent,
   campaignId: string,
   threadId: string,
-  relationships: QuestRelationship[] = []
+  relationships: QuestRelationship[] = [],
+  referenceOptions: QuestReferenceGenerationOptions = {}
 ) {
-  return createQuestInstance(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId, relationships));
+  return createQuestInstance(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId, relationships, referenceOptions));
 }
 
 export function validateGeneratedQuest(
@@ -309,9 +391,10 @@ export function validateGeneratedQuest(
   content: VelmoraContent,
   campaignId: string,
   threadId: string,
-  relationships: QuestRelationship[] = []
+  relationships: QuestRelationship[] = [],
+  referenceOptions: QuestReferenceGenerationOptions = {}
 ): void {
-  validateQuestCreation(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId, relationships));
+  validateQuestCreation(db, content, campaignId, composeQuestFromThread(db, content, campaignId, threadId, relationships, referenceOptions));
 }
 
 export function applyGeneratedQuest(
@@ -320,9 +403,10 @@ export function applyGeneratedQuest(
   campaignId: string,
   threadId: string,
   turn: number,
-  relationships: QuestRelationship[] = []
+  relationships: QuestRelationship[] = [],
+  referenceOptions: QuestReferenceGenerationOptions = {}
 ) {
-  return applyQuestCreation(db, content, campaignId, turn, composeQuestFromThread(db, content, campaignId, threadId, relationships));
+  return applyQuestCreation(db, content, campaignId, turn, composeQuestFromThread(db, content, campaignId, threadId, relationships, referenceOptions));
 }
 
 export function composeRecoveryQuest(
@@ -331,7 +415,8 @@ export function composeRecoveryQuest(
   campaignId: string,
   failedQuestId: string,
   recoveryPath: string,
-  consequenceEventSequences: number[]
+  consequenceEventSequences: number[],
+  referenceOptions: QuestReferenceGenerationOptions = {}
 ): CreateQuestInput {
   const failedQuest = listQuestInstances(db, campaignId).find((quest) => quest.questId === failedQuestId);
   if (!failedQuest || failedQuest.state !== "failed" || failedQuest.failureMode !== "recoverable") {
@@ -350,9 +435,9 @@ export function composeRecoveryQuest(
   const baseRelationships: QuestRelationship[] = unresolved.length === 1
     ? [{ questId: unresolved[0]!.questId, type: "parallel" }]
     : [];
-  const base = composeQuestFromThread(db, content, campaignId, failedQuest.sourceThreadId, baseRelationships);
+  const base = composeQuestFromThread(db, content, campaignId, failedQuest.sourceThreadId, baseRelationships, referenceOptions);
   const alteredTitle = bounded(`Altered Route: ${failedQuest.title}`, 120);
-  return {
+  const recoveryInput: CreateQuestInput = {
     ...base,
     title: alteredTitle,
     summary: bounded(`The original approach failed. Continue through this changed route: ${recoveryPath}`, 600),
@@ -375,6 +460,8 @@ export function composeRecoveryQuest(
     failureReason: null,
     failureEvidenceEventSequences: []
   };
+  const thread = listStoryThreads(db, campaignId).find((candidate) => candidate.threadId === failedQuest.sourceThreadId)!;
+  return attachReferenceDesign(db, campaignId, thread, recoveryInput, referenceOptions);
 }
 
 export function validateRecoveryQuest(
@@ -383,9 +470,10 @@ export function validateRecoveryQuest(
   campaignId: string,
   failedQuestId: string,
   recoveryPath: string,
-  consequenceEventSequences: number[]
+  consequenceEventSequences: number[],
+  referenceOptions: QuestReferenceGenerationOptions = {}
 ): void {
-  validateQuestCreation(db, content, campaignId, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath, consequenceEventSequences));
+  validateQuestCreation(db, content, campaignId, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath, consequenceEventSequences, referenceOptions));
 }
 
 export function applyRecoveryQuest(
@@ -395,7 +483,8 @@ export function applyRecoveryQuest(
   failedQuestId: string,
   recoveryPath: string,
   consequenceEventSequences: number[],
-  turn: number
+  turn: number,
+  referenceOptions: QuestReferenceGenerationOptions = {}
 ) {
-  return applyQuestCreation(db, content, campaignId, turn, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath, consequenceEventSequences));
+  return applyQuestCreation(db, content, campaignId, turn, composeRecoveryQuest(db, content, campaignId, failedQuestId, recoveryPath, consequenceEventSequences, referenceOptions));
 }

@@ -245,6 +245,22 @@ export function validateQuestCreation(db: DatabaseSync, content: VelmoraContent,
     if (typeof key !== "string") throw new Error("A quest requires an approach, tradeoff, and cost route profile");
     requireText(key, "Quest route-profile key", 2, 100);
   }
+  if (input.referenceDesign !== null && input.referenceDesign !== undefined) {
+    if (!stableId(input.referenceDesign.recipeId, "QRECIPE")) throw new Error("Quest reference recipe ID must be stable");
+    if (input.referenceDesign.accepted !== true) throw new Error("A referenced quest requires an accepted originality evaluation");
+    if (input.referenceDesign.distinctSourceCount < 3 || input.referenceDesign.sourceIds.length < 3) {
+      throw new Error("A referenced quest requires at least three distinct sources");
+    }
+    if (input.referenceDesign.patternIds.length < 3 || input.referenceDesign.patternIds.length > 5) {
+      throw new Error("A referenced quest requires three to five bounded patterns");
+    }
+    if (new Set(input.referenceDesign.sourceIds).size !== input.referenceDesign.sourceIds.length || new Set(input.referenceDesign.patternIds).size !== input.referenceDesign.patternIds.length) {
+      throw new Error("Quest reference sources and patterns must be unique");
+    }
+    if (!Number.isFinite(input.referenceDesign.maximumPatternPhraseOverlap) || input.referenceDesign.maximumPatternPhraseOverlap < 0 || input.referenceDesign.maximumPatternPhraseOverlap > 0.4) {
+      throw new Error("Quest reference phrase overlap exceeds the accepted bound");
+    }
+  }
   if (unresolvedOnSourceThread.length === 1) {
     const existingRoute = unresolvedOnSourceThread[0]!;
     if (!input.relationships.some((relationship) => relationship.questId === existingRoute.questId && (relationship.type === "parallel" || relationship.type === "optional_branch"))) {
@@ -362,6 +378,7 @@ export function applyQuestCreation(
   validateQuestCreation(db, content, campaignId, input);
   const quest: QuestInstance = {
     ...input,
+    referenceDesign: input.referenceDesign ?? null,
     title: input.title.trim(),
     goal: input.goal.trim(),
     summary: input.summary.trim(),
@@ -387,7 +404,8 @@ export function applyQuestCreation(
     questId: quest.questId,
     questType: quest.questType,
     sourceThreadId: quest.sourceThreadId,
-    visibility: quest.visibility
+    visibility: quest.visibility,
+    referenceRecipeId: quest.referenceDesign?.recipeId ?? null
   });
   return getQuest(db, campaignId, quest.questId);
 }

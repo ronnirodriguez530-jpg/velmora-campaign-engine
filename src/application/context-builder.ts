@@ -7,7 +7,12 @@ import { listOwnedInventory } from "./inventory-system.ts";
 import { getOpeningState, getPlayerOpeningState } from "./opening-system.ts";
 
 function toPlayerQuestView(quest: QuestInstance): PlayerQuestView {
-  const { recoveryEvidenceEventSequences: _recoveryEvidence, failureEvidenceEventSequences: _failureEvidence, ...visible } = quest;
+  const {
+    recoveryEvidenceEventSequences: _recoveryEvidence,
+    failureEvidenceEventSequences: _failureEvidence,
+    referenceDesign: _referenceDesign,
+    ...visible
+  } = quest;
   const selectedOutcome = quest.state === "completed" && quest.selectedOutcomeId
     ? quest.outcomes.find((outcome) => outcome.outcomeId === quest.selectedOutcomeId)
     : undefined;

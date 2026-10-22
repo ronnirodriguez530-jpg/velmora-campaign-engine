@@ -1,6 +1,6 @@
 # Quest Pattern Transformation V1
 
-This layer converts causally relevant abstract quest-design patterns into a bounded recipe for an original Velmora quest candidate. It does not author scenes and is not yet connected to live quest generation.
+This layer converts causally relevant abstract quest-design patterns into a bounded recipe for an original Velmora quest candidate. It does not author scenes. As of version 0.5.2, the internal recipe and originality gate is connected to ordinary and recovery quest generation.
 
 ## Composition contract
 
@@ -43,7 +43,22 @@ A candidate is rejected when it:
 | Semantic | 0.72 |
 | Sequence | 0.50 |
 
-Internal phrase-overlap evaluation runs without a provider. Semantic and sequence scores are validated when supplied, but the live AI adapter does not yet calculate them. Live quest generation must not claim this layer until it supplies a candidate, similarity signals, and an accepted evaluation before persistence.
+Internal phrase-overlap evaluation runs without a provider. Semantic and sequence scores are validated when supplied, but the live AI adapter does not yet calculate them.
+
+## Live persistence gate
+
+Before an engine-generated ordinary or recovery quest is persisted, the generator now:
+
+1. derives causal tags from the active thread's kind, urgency, people, factions, and locations;
+2. constructs a deterministic three-source recipe;
+3. converts the generated goal, stakes, directions, tradeoffs, and world bindings into a candidate;
+4. evaluates the candidate against structural, source-diversity, world-binding, facet-dominance, and phrase-overlap rules;
+5. rejects the operation before persistence when evaluation fails;
+6. stores the accepted recipe ID, pattern/source provenance, source count, and overlap result as a Director-only audit record.
+
+The player-facing quest view removes this audit record. Players see only the approved quest information, not reference sources or hidden design machinery. Authored and legacy quest records remain compatible through a `null` audit value.
+
+External lexical, semantic, or sequence signals may be supplied to the same live gate. A failing signal leaves neither a quest row nor a `quest_created` event. Automatic provider scoring remains unfinished.
 
 ## Tests
 
@@ -51,11 +66,4 @@ The focused tests prove deterministic composition, minimum source diversity, ref
 
 ## Next integration
 
-The next checkpoint must connect this layer to quest composition without changing the approved player-facing contract:
-
-1. derive causal tags from the active story thread and world state;
-2. build the bounded recipe;
-3. generate only goal, stakes, and two or three likely directions;
-4. evaluate originality and structural legality;
-5. retry or reject before any quest is persisted;
-6. keep hidden outcomes, consequence seeds, and exact objectives outside player context.
+The next checkpoint must connect the cloud Campaign Master to automatic semantic and sequence scoring, then retry a rejected provider candidate within a strict bounded attempt limit. Hidden outcomes, consequence seeds, exact objectives, and reference audits must remain outside player context.

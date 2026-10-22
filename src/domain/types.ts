@@ -467,6 +467,16 @@ export type QuestRouteProfile = {
   costKey: string;
 };
 
+export type QuestReferenceDesignRecord = {
+  recipeId: string;
+  requestedTags: string[];
+  patternIds: string[];
+  sourceIds: string[];
+  distinctSourceCount: number;
+  maximumPatternPhraseOverlap: number;
+  accepted: true;
+};
+
 export type QuestNeglectPolicy = {
   allowedTriggers: Array<"ignored_warning_after_deliberate_choice" | "recorded_world_event_advances_threat">;
   maximumEffect: "proportional_complication";
@@ -517,6 +527,7 @@ export type QuestInstance = {
   linkedQuestIds: string[];
   relationships: QuestRelationship[];
   routeProfile: QuestRouteProfile;
+  referenceDesign: QuestReferenceDesignRecord | null;
   neglectPolicy: QuestNeglectPolicy;
   warningHistory: QuestWarningReceipt[];
   neglectHistory: QuestNeglectRecord[];
@@ -538,7 +549,7 @@ export type PlayerQuestDirection = Pick<QuestDirection, "directionId" | "summary
 
 export type PlayerQuestView = Omit<
   QuestInstance,
-  "outcomes" | "possibleDirections" | "recoveryEvidenceEventSequences" | "failureEvidenceEventSequences"
+  "outcomes" | "possibleDirections" | "recoveryEvidenceEventSequences" | "failureEvidenceEventSequences" | "referenceDesign"
 > & {
   possibleDirections: PlayerQuestDirection[];
   outcomes: Array<Pick<QuestOutcome, "outcomeId" | "summary">>;

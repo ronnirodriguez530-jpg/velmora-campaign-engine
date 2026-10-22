@@ -287,7 +287,8 @@ Approved progression bridge: the engine can validate one designated major object
 - [x] Deeper curated observational batch: The Witcher 3, Fallout: New Vegas, Baldur's Gate 3, Pentiment, Deus Ex: Human Revolution, and Mass Effect 2 across six missing quest-design departments
 - [x] Curated observational analyses of acclaimed game quests using the approved abstraction contract
 - [x] Deterministic quest-pattern recipe and originality evaluator with minimum three-source diversity, causal relevance, stable-world bindings, design-facet limits, phrase-overlap rejection, and external similarity thresholds
-- [ ] Quest-pattern transformation and similarity evaluation connected to live generation
+- [x] Internal quest-pattern transformation and originality evaluation connected to ordinary and recovery generation before persistence, with Director-only audit provenance and atomic rejection
+- [ ] Cloud-provider semantic and sequence similarity scoring with bounded retry on rejected candidates
 - [ ] Examples and evaluation tests for coherent long-form DM behavior
 - [ ] Complete evaluation set for callbacks, varied paths, failure recovery, and stage-gated endgame pacing
 - [x] Mechanical tests for thread continuity, recovery-path replacement, hidden-context isolation, stage gates, rollback, and growing thread history
@@ -330,7 +331,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 124 of 124 tests
+- [x] Current automated suite passes 125 of 125 tests
 - [x] Isolated multi-path Simulation Runner
 - [ ] Tests for player characters, quests, combat, items, powers, and progression
 - [ ] Full-campaign multi-path simulations

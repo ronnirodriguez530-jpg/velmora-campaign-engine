@@ -1,3 +1,4 @@
+import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
 
@@ -76,6 +77,17 @@ export async function loadQuestReferenceLibrary(projectRoot: string): Promise<Qu
     policy: JSON.parse(policyText) as QuestReferencePolicy,
     sources: JSON.parse(sourcesText) as QuestReferenceSource[],
     patterns: JSON.parse(patternsText) as QuestDesignPattern[]
+  };
+  validateQuestReferenceLibrary(library);
+  return library;
+}
+
+export function loadQuestReferenceLibrarySync(projectRoot: string): QuestReferenceLibrary {
+  const referenceRoot = resolve(projectRoot, "content", "quest-reference");
+  const library = {
+    policy: JSON.parse(readFileSync(resolve(referenceRoot, "policy.json"), "utf8")) as QuestReferencePolicy,
+    sources: JSON.parse(readFileSync(resolve(referenceRoot, "sources.json"), "utf8")) as QuestReferenceSource[],
+    patterns: JSON.parse(readFileSync(resolve(referenceRoot, "patterns.json"), "utf8")) as QuestDesignPattern[]
   };
   validateQuestReferenceLibrary(library);
   return library;

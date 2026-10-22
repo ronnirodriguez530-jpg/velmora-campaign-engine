@@ -68,8 +68,28 @@ test("player quest context exposes directions and tradeoffs without exact object
     assert.equal(playerQuest.outcomes.length, 0);
     assert.equal("recoveryEvidenceEventSequences" in playerQuest, false);
     assert.equal("failureEvidenceEventSequences" in playerQuest, false);
+    assert.equal("referenceDesign" in playerQuest, false);
+    assert.equal(stored.referenceDesign?.accepted, true);
+    assert.ok((stored.referenceDesign?.distinctSourceCount ?? 0) >= 3);
+    assert.ok((stored.referenceDesign?.patternIds.length ?? 0) >= 3);
+    assert.equal(planningQuest.referenceDesign?.recipeId, stored.referenceDesign?.recipeId);
     assert.equal(planningQuest.objectives.length, 1, "A generated quest fixes only its immediate objective; later work adapts to play");
     assert.equal(planningQuest.outcomes.length, 2);
+  } finally { db.close(); }
+});
+
+test("failed reference originality evaluation leaves no quest or creation event", async () => {
+  const { content, db, campaignId } = await setup("quest-reference-rejection", "quest-reference-rejection-seed");
+  try {
+    const beforeEvents = listEvents(db, campaignId).length;
+    assert.throws(
+      () => generateQuestFromThread(db, content, campaignId, "THREAD-OPENING-PRESSURE", [], {
+        similaritySignals: [{ sourceId: "SRC-GDC-WITCHER-CYBERPUNK-QUESTS", kind: "semantic", score: 0.95 }]
+      }),
+      /rejected by reference originality evaluation.*semantic similarity threshold/
+    );
+    assert.equal(listQuestInstances(db, campaignId).length, 0);
+    assert.equal(listEvents(db, campaignId).length, beforeEvents);
   } finally { db.close(); }
 });
 
@@ -172,6 +192,8 @@ test("a failed quest needs durable consequence evidence before creating an alter
 
     const recovery = applyRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, [consequenceSequence], 0);
     assert.equal(recovery.state, "available");
+    assert.equal(recovery.referenceDesign?.accepted, true);
+    assert.ok((recovery.referenceDesign?.distinctSourceCount ?? 0) >= 3);
     assert.equal(listQuestInstances(db, campaignId).find((quest) => quest.questId === original.questId)?.state, "failed");
     assert.throws(
       () => composeRecoveryQuest(db, content, campaignId, original.questId, original.recoveryPaths[0]!, [consequenceSequence]),
