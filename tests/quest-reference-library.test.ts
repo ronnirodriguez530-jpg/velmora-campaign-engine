@@ -14,7 +14,7 @@ test("quest references preserve provenance without storing protected source cont
   assert.ok(library.sources.every((source) => source.storesSourceText === false));
   assert.ok(library.patterns.every((pattern) => pattern.sourceSpecificReferences.length === 0));
   const observational = library.sources.filter((source) => source.rightsBasis === "OBSERVATIONAL_REFERENCE");
-  assert.equal(observational.length, 3);
+  assert.equal(observational.length, 9);
   assert.ok(observational.every((source) => source.allowedUse === "abstract_design_analysis" && Boolean(source.observedWork) && Boolean(source.recognition?.length)));
   assert.equal(JSON.stringify(library).includes("sourceText"), false);
 });
@@ -22,14 +22,36 @@ test("quest references preserve provenance without storing protected source cont
 test("first acclaimed-game batch yields distinct abstract lessons without source identities", async () => {
   const library = await loadQuestReferenceLibrary(projectRoot);
   const patterns = retrieveQuestDesignPatterns(library, ["exploration", "dialogue", "callback"], 5);
-  assert.deepEqual(patterns.map((pattern) => pattern.id), [
-    "QPAT-CURIOSITY-LED-PROGRESSION",
-    "QPAT-EXPRESSIVE-BRANCHING",
-    "QPAT-PERSISTENT-REACTIVE-STORY"
-  ]);
+  const ids = patterns.map((pattern) => pattern.id);
+  assert.ok(ids.includes("QPAT-CURIOSITY-LED-PROGRESSION"));
+  assert.ok(ids.includes("QPAT-EXPRESSIVE-BRANCHING"));
+  assert.ok(ids.includes("QPAT-PERSISTENT-REACTIVE-STORY"));
   assert.ok(patterns.every((pattern) => pattern.sourceSpecificReferences.length === 0));
   assert.equal(JSON.stringify(patterns).includes("Zagreus"), false);
   assert.equal(JSON.stringify(patterns).includes("Revachol"), false);
+});
+
+test("deeper acclaimed-game batch covers six missing quest-design departments", async () => {
+  const library = await loadQuestReferenceLibrary(projectRoot);
+  const expected = new Map([
+    ["moral_choice", "QPAT-MORAL-RECONTEXTUALIZATION"],
+    ["faction", "QPAT-FACTION-PLURALISM"],
+    ["unexpected_solution", "QPAT-RESILIENT-UNEXPECTED-SOLUTION"],
+    ["investigation", "QPAT-INCOMPLETE-INVESTIGATION"],
+    ["capability", "QPAT-CAPABILITY-BASED-APPROACHES"],
+    ["convergence", "QPAT-RELATIONSHIP-PAYOFF-CONVERGENCE"]
+  ]);
+  for (const [tag, patternId] of expected) {
+    const matches = retrieveQuestDesignPatterns(library, [tag], 5);
+    assert.ok(matches.some((pattern) => pattern.id === patternId), `${tag} should retrieve ${patternId}`);
+  }
+  const deepPatterns = library.patterns.filter((pattern) => [...expected.values()].includes(pattern.id));
+  assert.equal(deepPatterns.length, 6);
+  assert.ok(deepPatterns.every((pattern) => pattern.sourceSpecificReferences.length === 0));
+  const serialized = JSON.stringify(deepPatterns);
+  for (const protectedIdentity of ["Geralt", "Mojave", "Gondian", "Andreas", "Shepard", "Adam Jensen"]) {
+    assert.equal(serialized.includes(protectedIdentity), false);
+  }
 });
 
 test("quest pattern retrieval returns bounded abstract structure rather than source scenes", async () => {

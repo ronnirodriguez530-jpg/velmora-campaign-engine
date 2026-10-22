@@ -103,5 +103,131 @@
       "Forcing a callback into every interaction until recurring NPCs become repetitive exposition devices."
     ],
     "sourceSpecificReferences": []
+  },
+  {
+    "id": "QPAT-MORAL-RECONTEXTUALIZATION",
+    "sourceIds": ["SRC-GDC-WITCHER-CYBERPUNK-QUESTS"],
+    "tags": ["moral_choice", "revelation", "npc", "consequence", "pacing"],
+    "emotionalPromise": "A difficult situation becomes more human and less certain as the player learns why each participant acted.",
+    "setupFunction": "Begin with a concrete request whose apparent moral shape is understandable but demonstrably incomplete.",
+    "pressureFunction": "Make progress depend on dealing with affected people whose needs, harm, and testimony complicate the original account.",
+    "structuralTurn": "Verified information changes how the player judges the requester without erasing either prior harm or present vulnerability.",
+    "choiceShape": "Ask the player to prioritize incompatible responsibilities rather than select an obviously virtuous or cruel label.",
+    "failureMotion": "Let delay, refusal, or a mistaken judgment preserve the human damage and produce a narrower consequence-driven route.",
+    "consequenceEcho": "Later reactions remember both the practical result and the value the player chose when no clean answer existed.",
+    "transferRules": [
+      "Build the dilemma from established Velmora relationships, harms, duties, and incomplete testimony.",
+      "Reveal complications in paced layers and stop once the decision has enough weight; length alone does not create depth."
+    ],
+    "forbiddenElements": [
+      "Copying the source work's family, creature, curse, domestic history, scenes, or resolution structure.",
+      "Manufacturing moral ambiguity by hiding arbitrary facts that no character or evidence could credibly reveal."
+    ],
+    "sourceSpecificReferences": []
+  },
+  {
+    "id": "QPAT-FACTION-PLURALISM",
+    "sourceIds": ["SRC-GDC-NEW-VEGAS-CHOICE"],
+    "tags": ["faction", "choice", "politics", "dialogue", "consequence"],
+    "emotionalPromise": "Political choices feel consequential because every faction contains real people, internal disagreement, and a defensible but costly vision.",
+    "setupFunction": "Expose the same local pressure through members of competing groups who want materially different outcomes.",
+    "pressureFunction": "Require direct contact with faction members and affected civilians so allegiance cannot remain an abstract menu selection.",
+    "structuralTurn": "A member challenges their own faction's official position or reveals a cost that its public argument concealed.",
+    "choiceShape": "Support persuasion, compromise, defection, leverage, refusal, or allegiance when current relationships and capabilities justify them.",
+    "failureMotion": "A failed negotiation changes access, trust, or faction posture without automatically converting the situation into combat.",
+    "consequenceEcho": "The chosen settlement changes later cooperation and allows individuals to respond differently from their faction's official stance.",
+    "transferRules": [
+      "Generate disagreement from each Velmora faction's approved identity and current conditions rather than a generic morality axis.",
+      "Give relevant player skills and earned relationships distinct forms of leverage without guaranteeing identical outcomes."
+    ],
+    "forbiddenElements": [
+      "Copying the source work's factions, political ideologies, setting, dialogue checks, or ending-slide outcomes.",
+      "Reducing a faction to one personality or letting a consequence-free fallback bypass every difficult commitment."
+    ],
+    "sourceSpecificReferences": []
+  },
+  {
+    "id": "QPAT-RESILIENT-UNEXPECTED-SOLUTION",
+    "sourceIds": ["SRC-LARIAN-BG3-EDGE-CASES"],
+    "tags": ["agency", "unexpected_solution", "systemic", "consequence", "recovery"],
+    "emotionalPromise": "The world acknowledges a clever or disruptive plan instead of forcing the player back onto the anticipated route.",
+    "setupFunction": "Define the required world change and its causal constraints without prescribing the action sequence that must produce it.",
+    "pressureFunction": "Let NPC availability, order of operations, environmental state, and prior consequences change which methods remain credible.",
+    "structuralTurn": "An unexpected player action satisfies, transforms, or invalidates the objective through a verifiable change in world state.",
+    "choiceShape": "Accept any method whose inputs, capabilities, and causal result can be demonstrated, then confirm how the engine interpreted it.",
+    "failureMotion": "If a key actor or route is lost, preserve the loss and continue through remaining state rather than silently restoring the intended script.",
+    "consequenceEcho": "Later scenes respond to the actual method, collateral effects, witnesses, and survivors rather than only the completion flag.",
+    "transferRules": [
+      "Validate player proposals against Velmora state, established capabilities, and required effects before resolving them.",
+      "Track missing actors, reordered events, and collateral changes as state that future quests must respect."
+    ],
+    "forbiddenElements": [
+      "Copying the source work's encounters, characters, objects, exploits, maps, or branch sequence.",
+      "Treating every invented action as valid when it lacks the means or causal effect required by the objective."
+    ],
+    "sourceSpecificReferences": []
+  },
+  {
+    "id": "QPAT-INCOMPLETE-INVESTIGATION",
+    "sourceIds": ["SRC-PENTIMENT-AMBIGUOUS-HISTORY"],
+    "tags": ["investigation", "mystery", "evidence", "community", "uncertainty"],
+    "emotionalPromise": "Investigation matters because the player must form a judgment from credible but incomplete evidence that affects a living community.",
+    "setupFunction": "Create several plausible interpretations rooted in established motives, access, testimony, and physical evidence.",
+    "pressureFunction": "Limit attention through natural obligations and changing circumstances so not every lead can be exhausted before action is required.",
+    "structuralTurn": "A discovered inconsistency changes the relative credibility of several explanations without mechanically naming the truth.",
+    "choiceShape": "Let the player choose which leads, witnesses, and contradictions deserve limited time, then decide what claim their evidence supports.",
+    "failureMotion": "An overlooked lead remains unknown while a weak accusation or delayed decision produces bounded social and institutional consequences.",
+    "consequenceEcho": "People remember the investigation's methods and judgment, while later evidence may complicate the accepted account without rewriting history.",
+    "transferRules": [
+      "Generate every clue from a hidden causal truth and label whether it supports, contradicts, or merely contextualizes a claim.",
+      "Never require certainty when the available evidence only supports a defensible inference."
+    ],
+    "forbiddenElements": [
+      "Copying the source work's historical setting, murders, suspects, art style, dialogue, or multi-era plot.",
+      "Using an unknowable arbitrary answer or declaring the player's conclusion correct without checking recorded evidence."
+    ],
+    "sourceSpecificReferences": []
+  },
+  {
+    "id": "QPAT-CAPABILITY-BASED-APPROACHES",
+    "sourceIds": ["SRC-DEUS-EX-MULTI-SOLUTION"],
+    "tags": ["approach", "capability", "combat", "stealth", "social", "systemic"],
+    "emotionalPromise": "The player's developed capabilities change how an objective can be approached instead of merely changing success percentages.",
+    "setupFunction": "Define an obstacle with multiple interacting access points, people, hazards, information channels, and material weaknesses.",
+    "pressureFunction": "Make each approach consume or risk different resources while remaining grounded in the same objective and world state.",
+    "structuralTurn": "Information or environmental change makes a previously secondary capability newly useful without erasing other credible methods.",
+    "choiceShape": "Allow martial, stealthy, social, investigative, technical, magical, or mixed methods when the character and situation support them.",
+    "failureMotion": "A failed method changes alertness, trust, access, injury, or resources and may leave another approach available at a higher cost.",
+    "consequenceEcho": "NPCs and factions respond to how the result was achieved, including visibility, violence, deception, and collateral damage.",
+    "transferRules": [
+      "Construct approach affordances from current Velmora locations, NPC roles, items, powers, and learned information.",
+      "Balance approaches by distinct risks and consequences rather than guaranteeing equal speed, rewards, or difficulty."
+    ],
+    "forbiddenElements": [
+      "Copying the source work's augmentations, cyberpunk setting, level layouts, named pillars, characters, or mission solutions.",
+      "Offering cosmetic routes that all require the same roll and produce indistinguishable consequences."
+    ],
+    "sourceSpecificReferences": []
+  },
+  {
+    "id": "QPAT-RELATIONSHIP-PAYOFF-CONVERGENCE",
+    "sourceIds": ["SRC-MASS-EFFECT-LOYALTY-CONVERGENCE"],
+    "tags": ["companion", "relationship", "preparation", "convergence", "consequence"],
+    "emotionalPromise": "Time invested in people becomes materially important when a later crisis tests trust, readiness, and understanding.",
+    "setupFunction": "Give a recurring ally one personal pressure that reveals motive, capability, and unresolved risk without reducing them to an errand giver.",
+    "pressureFunction": "Make helping, refusing, mishandling, or postponing that pressure change the ally's readiness and relationship through recorded events.",
+    "structuralTurn": "A later group crisis requires assignments or judgments that depend on what the player learned and how each relationship developed.",
+    "choiceShape": "Let the player prepare selectively, reconcile competing allies, and assign responsibility using demonstrated strengths rather than hidden labels.",
+    "failureMotion": "Poor preparation or assignment creates credible loss, injury, withdrawal, or altered cooperation without requiring a total campaign failure.",
+    "consequenceEcho": "The convergence pays off several distinct relationship histories and permanently changes who remains available afterward.",
+    "transferRules": [
+      "Tie future readiness to concrete Velmora relationship events, resolved pressures, capabilities, and trust evidence.",
+      "Signal relevant strengths and risks before convergence so outcomes follow player knowledge rather than invisible arithmetic."
+    ],
+    "forbiddenElements": [
+      "Copying the source work's crew, recruitment structure, loyalty missions, science-fiction crisis, assignments, or survival formula.",
+      "Reducing nuanced relationships to one visible loyalty score that automatically determines survival."
+    ],
+    "sourceSpecificReferences": []
   }
 ]

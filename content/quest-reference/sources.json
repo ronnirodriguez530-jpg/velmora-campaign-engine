@@ -61,5 +61,113 @@
         "url": "https://www.bafta.org/media-centre/press-releases/winners-announced-british-academy-games-awards-2021/"
       }
     ]
+  },
+  {
+    "id": "SRC-GDC-WITCHER-CYBERPUNK-QUESTS",
+    "title": "10 Key Quest Design Lessons from The Witcher 3 and Cyberpunk 2077",
+    "creator": "Pawel Sasko",
+    "kind": "developer_commentary",
+    "url": "https://www.gdcvault.com/play/1028897/10-Key-Quest-Design-Lessons",
+    "rightsBasis": "OBSERVATIONAL_REFERENCE",
+    "allowedUse": "abstract_design_analysis",
+    "storesSourceText": false,
+    "observedWork": "The Witcher 3: Wild Hunt",
+    "recognition": [
+      {
+        "organization": "BAFTA",
+        "award": "2016 Best Game, Game Design, and Story nominee",
+        "url": "https://www.bafta.org/media-centre/press-releases/nominations-announced-for-the-british-academy-games-awards-in-2016/"
+      }
+    ]
+  },
+  {
+    "id": "SRC-GDC-NEW-VEGAS-CHOICE",
+    "title": "Do (Say) The Right Thing: Choice Architecture, Player Expression, and Narrative Design in Fallout: New Vegas",
+    "creator": "Joshua Sawyer",
+    "kind": "developer_commentary",
+    "url": "https://www.gdcvault.com/play/1015758/Do-%28Say%29-The-Right-Thing",
+    "rightsBasis": "OBSERVATIONAL_REFERENCE",
+    "allowedUse": "abstract_design_analysis",
+    "storesSourceText": false,
+    "observedWork": "Fallout: New Vegas",
+    "recognition": [
+      {
+        "organization": "Golden Joystick Awards",
+        "award": "2011 Roleplay Game of the Year winner",
+        "url": "https://www.gamespot.com/articles/portal-2-takes-game-of-the-year-at-golden-joysticks/1100-6341567/"
+      }
+    ]
+  },
+  {
+    "id": "SRC-LARIAN-BG3-EDGE-CASES",
+    "title": "Scripting the Unscriptable: Accounting for Edge Cases in Baldur's Gate 3",
+    "creator": "Mihail Kostov and Larian Studios",
+    "kind": "developer_commentary",
+    "url": "https://www.gamesradar.com/games/rpg/baldurs-gate-3-dev-explains-in-painstaking-detail-how-and-why-players-get-to-break-the-game-the-easy-thing-would-be-to-block-players-but-we-dont-like-that-at-larian/",
+    "rightsBasis": "OBSERVATIONAL_REFERENCE",
+    "allowedUse": "abstract_design_analysis",
+    "storesSourceText": false,
+    "observedWork": "Baldur's Gate 3",
+    "recognition": [
+      {
+        "organization": "The Game Awards",
+        "award": "2023 Game of the Year winner",
+        "url": "https://thegameawards.com/rewind/year-2023"
+      }
+    ]
+  },
+  {
+    "id": "SRC-PENTIMENT-AMBIGUOUS-HISTORY",
+    "title": "Pentiment's Director Wants You to Know How His Characters Ate",
+    "creator": "Josh Sawyer interview by WIRED",
+    "kind": "developer_commentary",
+    "url": "https://www.wired.com/story/pentiment-josh-sawyer-interview/",
+    "rightsBasis": "OBSERVATIONAL_REFERENCE",
+    "allowedUse": "abstract_design_analysis",
+    "storesSourceText": false,
+    "observedWork": "Pentiment",
+    "recognition": [
+      {
+        "organization": "BAFTA",
+        "award": "2023 Narrative nominee",
+        "url": "https://www.bafta.org/awards/games/narrative/"
+      }
+    ]
+  },
+  {
+    "id": "SRC-DEUS-EX-MULTI-SOLUTION",
+    "title": "Deus Ex: Human Revolution's Level Design is Multi-Path, Multi-Solution",
+    "creator": "Steven Ciciola and Eidos-Montreal",
+    "kind": "developer_commentary",
+    "url": "https://blog.playstation.com/2011/01/07/deus-ex-human-revolutions-level-design-is-multi-path-multi-solution/",
+    "rightsBasis": "OBSERVATIONAL_REFERENCE",
+    "allowedUse": "abstract_design_analysis",
+    "storesSourceText": false,
+    "observedWork": "Deus Ex: Human Revolution",
+    "recognition": [
+      {
+        "organization": "BAFTA",
+        "award": "2012 Story and Strategy nominee",
+        "url": "https://www.bafta.org/games/awards/nominees-winners-2012%2C2892%2CBA.html"
+      }
+    ]
+  },
+  {
+    "id": "SRC-MASS-EFFECT-LOYALTY-CONVERGENCE",
+    "title": "The Effect on Us: Building Mass Effect 2's Final Mission",
+    "creator": "BioWare",
+    "kind": "developer_commentary",
+    "url": "https://blog.bioware.com/2013/11/07/the-effect-on-us/",
+    "rightsBasis": "OBSERVATIONAL_REFERENCE",
+    "allowedUse": "abstract_design_analysis",
+    "storesSourceText": false,
+    "observedWork": "Mass Effect 2",
+    "recognition": [
+      {
+        "organization": "BAFTA",
+        "award": "2011 Best Game winner",
+        "url": "https://www.bafta.org/awards/games/best-game/"
+      }
+    ]
   }
 ]
