@@ -1,5 +1,7 @@
 # Velmora Project Status
 
+> Historical checkpoint notice: this chronological record is intentionally preserved, but its opening status and test totals are not the current project position. Use `MASTER_CHECKLIST.md` for live status and `CAMPAIGN_MASTER_TOOLBOX_V1.md` for the authoritative single-brain/toolbox architecture.
+
 ## Current phase
 
 World-canon, generative campaign-blueprint foundation, and persistent story-memory foundation are complete; validated Story Engine authority is next.

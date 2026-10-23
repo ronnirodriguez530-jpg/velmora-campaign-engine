@@ -63,15 +63,21 @@ NPC actions come from their own motives, knowledge, memories, relationships, fac
 
 ### 6. Adaptation and learning
 
-The engine observes play rather than retraining a model during a campaign. It records usable signals such as player-chosen approaches, preferred pacing, recurring interests, abandoned threads, repetition, scene length, combat frequency, and requested tone.
+The Campaign Master is one brain using a controlled toolbox, not a collection of independent AI departments. Learning means becoming better at understanding the campaign, using the correct tools, maintaining role discipline, pacing play, avoiding accidental repetition, and developing deliberate motifs. It does not retrain the underlying model or rewrite the program during a campaign.
 
-Those signals may adjust retrieval, pacing, and content selection. Adaptation cannot rewrite canon, secretly change rules, or grant itself new authority. Behavioral changes must be evaluated before becoming defaults.
+The engine may eventually record player approaches, pacing response, recurring interests, abandoned threads, scene length, combat frequency, requested tone, recently used structures, deliberate motifs, and bounded craft evaluations. These signals may adjust retrieval, prioritization, variation, pacing, and tool selection. They remain uncertain campaign observations rather than permanent player labels.
+
+Adaptation cannot rewrite canon, secretly change rules, alter permissions or thresholds, bypass validation, or grant the Campaign Master new authority. Campaign adaptation may occur after validation; permanent engine behavior changes require human review, tests, versioning, and a GitHub update. The full contract and tool map are defined in `CAMPAIGN_MASTER_TOOLBOX_V1.md`.
 
 ### 7. Reference learning
 
 The engine may use an approved, expandable library of public-domain, openly licensed, user-owned, or original sources. It retrieves distilled principles and structural examples rather than copying scenes, characters, settings, or distinctive language.
 
 Reference material teaches techniques such as mystery construction, faction pressure, quest variation, NPC motivation, consequence design, pacing, and recovery after failure. Free browsing during live play is not required and must not silently introduce unverified canon.
+
+## Operating-mode boundary
+
+Velmora is online-first for the initial playable release. The cloud Campaign Master handles high-level interpretation and presentation, while the repository and save remain authoritative for the world, tools, rules, validation, and memory. Core interfaces remain provider-independent so a future Local Campaign Master can use the same toolbox without rebuilding the engine. Diagnostics is not an offline DM, and building offline play is deferred rather than treated as a current feature.
 
 ## Replayability rule
 

@@ -1,5 +1,5 @@
 {
-  "version": "0.5.3",
+  "version": "0.5.4",
   "channel": "main",
-  "notes": "Automatically score cloud-generated quest candidates for semantic and sequence similarity, enforce deterministic thresholds with one bounded repair attempt, and keep accepted audit maxima Director-only."
+  "notes": "Define the single Campaign Master toolbox, bounded-learning contract, online-first provider-independent architecture, and clearly separate diagnostics from future offline play."
 }

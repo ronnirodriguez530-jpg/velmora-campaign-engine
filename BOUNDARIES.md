@@ -85,3 +85,5 @@ These parts exist so the engine can run, branch, and be tested. They may be repl
 ## Hard rule
 
 The engine may select, place, combine, validate, and simulate approved structures. It may generate quest-specific minor NPCs, ordinary sublocations, objectives, pressures, complications, and outcomes inside the approved boundaries, but it may not promote generated campaign material into setting canon, rewrite the setting, or create permanent new mechanics without approval. See `QUEST_ENGINE_DECISION_AUDIT.md` for the approved Quest Engine authority boundary and remaining validation.
+
+The Campaign Master is one bounded brain using the engine toolbox defined in `CAMPAIGN_MASTER_TOOLBOX_V1.md`. Toolbox capabilities are not autonomous AI departments. Cloud interpretation cannot directly mutate state, and future adaptation cannot rewrite these boundaries. Velmora is online-first for the initial release while core world authority remains provider-independent; a future offline implementation may use the existing interface, but diagnostics is not offline campaign play.

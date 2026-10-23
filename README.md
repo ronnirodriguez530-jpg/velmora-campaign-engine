@@ -46,9 +46,11 @@ API. It receives only the current player-perspective packet and must submit a
 strict, bounded turn proposal. The engine validates every requested change,
 retries one rejected proposal, then commits atomically or changes nothing.
 
-The offline `turn` command and Mock Director remain available without internet
-or an API key. To use `cloud-turn`, set `OPENAI_API_KEY` in your environment;
-optionally set `OPENAI_MODEL` (default: `gpt-5.6`). Never commit a real key.
+The `turn` command and Mock Director remain available without internet only as
+deterministic diagnostics. They are not a genuine offline Campaign Master and
+must not be presented as normal campaign play. To use `cloud-turn`, set
+`OPENAI_API_KEY` in your environment; optionally set `OPENAI_MODEL` (default:
+`gpt-5.6`). Never commit a real key.
 
 The engine separates confirmed canon from provisional machinery in
 `BOUNDARIES.md`. The Director cannot alter canon, schemas, or mechanics.
@@ -84,6 +86,13 @@ top-left menu, choose Settings, and enter the API key there once. The key is
 stored only in the local ignored `.env` file and is never included in packaged
 checkpoints. Diagnostics is explicitly separated and does not pretend to
 generate campaign story.
+
+The first playable release is online-first. Canon, content libraries, campaign
+state, tools, validation, persistence, and rollback remain provider-independent
+inside Velmora. The cloud adapter handles provider-specific interpretation and
+presentation. A future Local Campaign Master may implement the same interface,
+but offline play is an architectural possibility rather than a current build
+target. See `CAMPAIGN_MASTER_TOOLBOX_V1.md`.
 
 On Windows, double-click `start-velmora.bat` to open the same application. The
 server binds only to this computer (`127.0.0.1`); it is not exposed publicly.

@@ -270,6 +270,8 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 15. Campaign Master / DM Core — Partial and designed
 
+- [x] Single Campaign Master brain with a documented controlled-toolbox authority model; tool families are capabilities, not separate AI departments
+- [x] Online-first, provider-independent architecture recorded; diagnostics is not an offline DM, and a future Local Campaign Master may use the same interface without becoming a current build phase
 - [x] Local Director boundary
 - [x] Strict cloud-provider request and response adapter
 - [x] Engine validation before world changes are committed
@@ -385,12 +387,16 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 24. Adaptive Campaign Master — Later
 
-- [ ] Player preference profile
+- [x] Bounded-learning contract recorded: role mastery, campaign adaptation, novelty versus motif tracking, craft evaluation, and human-approved permanent engine improvement
+- [ ] Player-tendency observations stored as uncertain campaign evidence
 - [ ] Pacing and style adaptation
-- [ ] Repetition detection and correction
+- [ ] Cross-tool novelty ledger and deliberate motif ledger
+- [ ] Bounded scene/quest craft evaluation records
+- [ ] Adaptive retrieval, variation, and tool-selection policy
 - [ ] Approved reference-library expansion
 - [ ] Evaluation before behavioral changes are accepted
 - [ ] Adaptation that cannot rewrite protected canon or rules
+- [ ] Rollback, privacy, context-budget, and long-campaign tests for adaptive records
 
 ### 25. Autonomous world — Later
 

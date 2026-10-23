@@ -1,5 +1,7 @@
 # Velmora Ghost Feature Audit
 
+> Historical audit notice: this document captured an earlier implementation checkpoint and its feature inventory is no longer current. It remains for provenance only. Use `MASTER_CHECKLIST.md` for current completion status and `CAMPAIGN_MASTER_TOOLBOX_V1.md` for the authoritative Campaign Master architecture. Items listed below as absent may have been implemented after this audit.
+
 Audit date: 2026-09-02
 
 Purpose: distinguish the application that actually exists from scaffolding, approved design, and absent features. A passing test means only that its stated scope works; it does not prove an unimplemented game system exists.
