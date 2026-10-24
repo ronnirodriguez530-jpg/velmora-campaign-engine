@@ -1,5 +1,5 @@
 {
-  "version": "0.5.4",
+  "version": "0.6.0",
   "channel": "main",
-  "notes": "Define the single Campaign Master toolbox, bounded-learning contract, online-first provider-independent architecture, and clearly separate diagnostics from future offline play."
+  "notes": "Add the first persistent theater-of-the-mind combat state with initiative, attacks, damage, defeat, victory, noncombat exits, and rollback."
 }

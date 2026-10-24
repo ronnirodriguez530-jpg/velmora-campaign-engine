@@ -121,7 +121,7 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - [x] Single-character control for the first release
 - [ ] Party membership and later party-control boundary
 
-Implemented health scope: starting/current HP and unarmored Defense are derived and persisted. Conditions, damage, death, rest, recovery, armor, and equipment effects do not exist yet.
+Implemented health scope: starting/current HP and Defense are derived and persisted. Combat damage and defeat now update player HP. Conditions, death, rest, recovery, and healing do not exist yet.
 
 ### 6. NPC Engine — Working foundation
 
@@ -148,16 +148,18 @@ Implemented health scope: starting/current HP and unarmored Defense are derived 
 
 The exact DC remains Director-only. Pending checks survive refreshes, resolved dice cannot be rerolled, and historical roll records do not enter ordinary story context. Real-provider narrative quality is still unverified.
 
-### 8. Combat and encounters — Designed
+### 8. Combat and encounters — Working foundation
 
-- [ ] Theater-of-the-mind encounter state
-- [ ] Quick, standard, and set-piece combat modes
+- [x] Theater-of-the-mind encounter state
+- [x] Quick, standard, and set-piece combat modes with bounded participant limits
 - [ ] Initiative and player-facing turn flow
 - [ ] Condensed handling for groups and supporting NPCs
 - [ ] Actions, targets, damage, defense, conditions, and defeat
 - [ ] Creature behavior and encounter resolution
-- [ ] Escape, surrender, negotiation, and non-combat solutions
+- [x] Escape, surrender, and negotiation resolution paths
 - [ ] Approximately 65/35 story-to-combat pacing target
+
+Implemented combat scope: one active persistent encounter, initiative order, rounds, current actor, opposing targets, d20 attacks, Defense, bounded damage dice, critical hits, HP, defeat, victory, and noncombat exits. Encounter actions commit atomically and roll back with the campaign. Conditions, death, recovery, creature AI, condensed groups, player-facing combat controls, Campaign Master integration, and pacing enforcement remain unfinished. See `COMBAT_SYSTEM_V1.md`.
 
 ### 9. Powers, magic, and abilities — Partial
 
@@ -436,7 +438,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ## Current position
 
-Velmora has completed the working foundations through step 5 and the tested generative Quest Engine foundation in step 6. The strict quest contract, approved tagged modular composer, adaptive objective flow, exact causal outcomes, unexpected-solution handling, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, warning and neglect execution, evidence-backed route invalidation, progression bridge, persistence, rollback, compact Quest journal, sustained isolated multi-thread stress simulations, and automatic cloud semantic/sequence originality review now work. The d6 opening, adaptive pre-strike exploration, witnessed First Speaker strike, hidden crisis, and first formal quest are integrated. Combat, real-provider sustained play evaluation, and the complete DM Core do not yet exist.
+Velmora has completed the working foundations through step 5, the tested generative Quest Engine foundation in step 6, and the first bounded combat-state checkpoint in step 7. The strict quest contract, approved tagged modular composer, adaptive objective flow, exact causal outcomes, unexpected-solution handling, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, warning and neglect execution, evidence-backed route invalidation, progression bridge, persistence, rollback, compact Quest journal, sustained isolated multi-thread stress simulations, and automatic cloud semantic/sequence originality review now work. The d6 opening, adaptive pre-strike exploration, witnessed First Speaker strike, hidden crisis, first formal quest, persistent encounter state, initiative, attacks, HP, defeat, victory, and noncombat exits are integrated at the engine level. Player-facing combat, conditions, creature behavior, pacing enforcement, real-provider sustained play evaluation, and the complete DM Core do not yet exist.
 
 ## Checkpoint discipline
 

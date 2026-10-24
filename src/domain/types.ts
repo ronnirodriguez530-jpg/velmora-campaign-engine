@@ -271,6 +271,41 @@ export type PlayerCharacter = {
   updatedTurn: number;
 };
 
+export type EncounterMode = "quick" | "standard" | "set_piece";
+export type EncounterResolution = "victory" | "defeat" | "escaped" | "surrendered" | "negotiated";
+export type EncounterCombatantStatus = "active" | "defeated" | "withdrawn" | "surrendered";
+
+export type EncounterCombatant = {
+  combatantId: string;
+  name: string;
+  side: "player" | "hostile" | "support";
+  maxHp: number;
+  currentHp: number;
+  defense: number;
+  initiativeModifier: number;
+  initiativeRoll: number;
+  initiativeTotal: number;
+  attackBonus: number;
+  damageDie: 4 | 6 | 8 | 10 | 12;
+  status: EncounterCombatantStatus;
+};
+
+export type CombatEncounter = {
+  campaignId: string;
+  encounterId: string;
+  mode: EncounterMode;
+  objective: string;
+  stakes: string;
+  status: "active" | "resolved";
+  resolution: EncounterResolution | null;
+  round: number;
+  currentTurnIndex: number;
+  combatants: EncounterCombatant[];
+  availableExits: Array<"escape" | "surrender" | "negotiation">;
+  createdTurn: number;
+  updatedTurn: number;
+};
+
 export type PowerLevel = 1 | 2 | 3;
 export type PowerUseType = "instant" | "fixed_duration" | "sustained";
 export type PowerAcquisitionSource = "innate" | "invented" | "magic_tech" | "discovered" | "taken" | "taught" | "made" | "tear" | "void_rift";

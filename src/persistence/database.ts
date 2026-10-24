@@ -5,6 +5,7 @@ import { createInitialBlueprintThreads, generateCampaignBlueprint } from "../app
 import type {
   BelievedState,
   CampaignBlueprint,
+  CombatEncounter,
   FactTruthStatus,
   FactVisibility,
   KnowledgeMethod,
@@ -72,6 +73,7 @@ export type StateSnapshot = {
     advancements: CharacterAdvancement[];
   };
   opening?: OpeningState;
+  combatEncounters?: CombatEncounter[];
 };
 
 export function openDatabase(path: string): DatabaseSync {
@@ -737,6 +739,24 @@ function migrate(db: DatabaseSync): void {
     `);
     db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(28, ?)").run(new Date().toISOString());
   }
+  const migrationTwentyNine = db.prepare("SELECT 1 AS present FROM schema_migrations WHERE version = 29").get() as { present: number } | undefined;
+  if (!migrationTwentyNine) {
+    db.exec(`
+      CREATE TABLE IF NOT EXISTS combat_encounters (
+        campaign_id TEXT NOT NULL,
+        encounter_id TEXT NOT NULL,
+        status TEXT NOT NULL CHECK(status IN ('active','resolved')),
+        encounter_json TEXT NOT NULL,
+        created_turn INTEGER NOT NULL,
+        updated_turn INTEGER NOT NULL,
+        PRIMARY KEY (campaign_id, encounter_id),
+        FOREIGN KEY (campaign_id) REFERENCES campaigns(id) ON DELETE CASCADE
+      );
+      CREATE UNIQUE INDEX IF NOT EXISTS one_active_combat_encounter_idx
+        ON combat_encounters(campaign_id) WHERE status = 'active';
+    `);
+    db.prepare("INSERT INTO schema_migrations(version, applied_at) VALUES(29, ?)").run(new Date().toISOString());
+  }
 }
 
 const STAGE_ORDER = { opening: 0, stabilization: 1, escalation: 2, resolution: 3 } as const;
@@ -1015,6 +1035,28 @@ export function persistPlayerCharacter(db: DatabaseSync, character: PlayerCharac
     if (ownsTransaction) db.exec("ROLLBACK");
     throw error;
   }
+}
+
+export function persistCombatEncounter(db: DatabaseSync, encounter: CombatEncounter): void {
+  db.prepare(`INSERT INTO combat_encounters(
+      campaign_id, encounter_id, status, encounter_json, created_turn, updated_turn
+    ) VALUES(?, ?, ?, ?, ?, ?)
+    ON CONFLICT(campaign_id, encounter_id) DO UPDATE SET
+      status = excluded.status, encounter_json = excluded.encounter_json,
+      created_turn = excluded.created_turn, updated_turn = excluded.updated_turn`)
+    .run(encounter.campaignId, encounter.encounterId, encounter.status, JSON.stringify(encounter), encounter.createdTurn, encounter.updatedTurn);
+}
+
+export function listCombatEncounters(db: DatabaseSync, campaignId: string): CombatEncounter[] {
+  return (db.prepare(`SELECT encounter_json AS encounterJson FROM combat_encounters
+      WHERE campaign_id = ? ORDER BY created_turn, encounter_id`).all(campaignId) as Array<{ encounterJson: string }>)
+    .map((row) => JSON.parse(row.encounterJson) as CombatEncounter);
+}
+
+export function getActiveCombatEncounter(db: DatabaseSync, campaignId: string): CombatEncounter | undefined {
+  const row = db.prepare(`SELECT encounter_json AS encounterJson FROM combat_encounters
+      WHERE campaign_id = ? AND status = 'active'`).get(campaignId) as { encounterJson: string } | undefined;
+  return row ? JSON.parse(row.encounterJson) as CombatEncounter : undefined;
 }
 
 export function listPlayerPowers(db: DatabaseSync, campaignId: string): PlayerPower[] {
@@ -1828,6 +1870,7 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
       crisis_turn AS crisisTurn, crisis_presented_turn AS crisisPresentedTurn,
       first_quest_id AS firstQuestId
     FROM opening_state WHERE campaign_id = ?`).get(campaignId) as OpeningState | undefined;
+  const combatEncounters = listCombatEncounters(db, campaignId);
   return {
     campaign,
     factions,
@@ -1840,7 +1883,8 @@ export function captureSnapshot(db: DatabaseSync, campaignId: string): StateSnap
     playerPowers,
     playerInventory,
     progression,
-    opening
+    opening,
+    combatEncounters
   };
 }
 
@@ -1955,6 +1999,10 @@ export function restorePreviousTurn(db: DatabaseSync, name: string): CampaignRow
           snapshot.opening.readinessReason, snapshot.opening.strikeTurn ?? null,
           snapshot.opening.strikeWitnessedTurn ?? null, snapshot.opening.crisisTurn ?? null,
           snapshot.opening.crisisPresentedTurn ?? null, snapshot.opening.firstQuestId ?? null, campaign.id);
+    }
+    if (snapshot.combatEncounters !== undefined) {
+      db.prepare("DELETE FROM combat_encounters WHERE campaign_id = ?").run(campaign.id);
+      for (const encounter of snapshot.combatEncounters) persistCombatEncounter(db, encounter);
     }
     if (snapshot.npcState) {
       db.prepare("DELETE FROM npc_relationship_qualities WHERE campaign_id = ?").run(campaign.id);
