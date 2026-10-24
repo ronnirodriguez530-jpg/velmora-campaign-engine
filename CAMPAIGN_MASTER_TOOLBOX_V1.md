@@ -39,7 +39,7 @@ The Campaign Master cannot directly edit the database, rewrite canon, change sch
 | Scene presentation | Turn validated state into player-facing narration, dialogue, atmosphere, and suggested actions | Cloud adapter working; sustained real-provider evaluation pending |
 | Journal | Show active quests and the latest five meaningful player-known events as a compact reminder | Working |
 | Persistence and rollback | Store accepted changes, checkpoints, event history, save continuity, and one-turn restoration | Working foundation |
-| Combat tools | Initiative, turns, attacks, damage, defense, conditions, defeat, escape, surrender, and encounter resolution | Not built |
+| Combat tools | Initiative, turns, attacks, damage, defense, conditions, defeat, escape, surrender, and encounter resolution | Working state/rules foundation; Campaign Master, conditions, and browser integration pending |
 | Adaptive DM tools | Track player tendencies, craft performance, motifs, repetition, and tool-use effectiveness | Designed; not built |
 
 This table describes capabilities, not autonomous agents. The Campaign Master uses only the tools justified by the current moment.
