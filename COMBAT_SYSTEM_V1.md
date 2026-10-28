@@ -16,9 +16,11 @@ This checkpoint establishes the minimum persistent theater-of-the-mind combat st
 
 The player combatant is derived from the saved character. Other combatants are supplied as validated encounter ingredients, allowing the Campaign Master to construct encounters from current quests and world state rather than selecting a prewritten fight.
 
+The approved player-facing experience is specified separately in `COMBAT_INTERFACE_DRAFT_1.md`. Its layout and interaction rules are approved, but its browser implementation remains unfinished.
+
 ## Deliberately unfinished
 
-- Browser combat controls and player-clicked combat rolls
+- Browser implementation of the approved Draft 1 combat interface and player-clicked combat rolls
 - Campaign Master encounter-generation tools and creature behavior
 - Conditions, death, rest, recovery, healing, equipment damage, and power effects
 - Condensed group and supporting-NPC turns

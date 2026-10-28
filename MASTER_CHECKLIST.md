@@ -316,7 +316,8 @@ Approved progression bridge: the engine can validate one designated major object
 - [ ] Functional Inventory page
 - [ ] Clean location and world-state presentation
 - [ ] Dice popup and contextual action control
-- [ ] Progressive combat interface
+- [x] Combat interface interaction and layout specification approved as Draft 1
+- [ ] Implement Combat Interface Draft 1 in the browser
 - [ ] NPC and relationship presentation where relevant
 - [x] Actionable Quest badge based on genuine quest state
 - [ ] Accessibility, keyboard use, readable scaling, and error feedback
