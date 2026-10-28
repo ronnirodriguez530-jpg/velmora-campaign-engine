@@ -51,11 +51,13 @@ test("browser API creates, plays, persists, acts, and rolls back", async () => {
       actionable: { quests: number };
       journal: { mainQuests: unknown[]; otherQuests: unknown[]; recentEvents: unknown[] };
       context: { playerQuests: Array<{ questId: string }> };
+      combatTurn: unknown;
     };
     assert.equal(createdBody.quests.length, 0);
     assert.equal(createdBody.actionable.quests, 0);
     assert.deepEqual(createdBody.journal, { mainQuests: [], otherQuests: [], recentEvents: [] });
     assert.equal(createdBody.context.playerQuests.length, 0);
+    assert.equal(createdBody.combatTurn, null);
 
     const blockedAction = await fetch(`${base}/api/campaigns/browser-proof/actions`, {
       method: "POST",

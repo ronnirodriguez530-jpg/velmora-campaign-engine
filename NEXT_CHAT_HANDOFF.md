@@ -71,21 +71,34 @@ Theater-of-the-mind ranges are Engaged, Near, Far, and Out of Reach. The Campaig
 
 There is no separate reaction slot in V1. At 0 HP the player becomes Downed. Without help, the player receives one Recovery Roll on each turn while circumstances allow. Success restores 1 HP and normal actions return on the next scheduled turn. Failed rolls do not accumulate toward automatic death.
 
+## Completed after the initial handoff
+
+The persistent four-slot player turn-controller foundation is now implemented:
+
+- Power, Action, Movement, and Minor Interaction slots persist in the active encounter.
+- An attack or combat exit spends Action without automatically ending the player turn.
+- End Turn is explicit and may leave slots unused.
+- New player turns refresh every slot.
+- The engine returns legal attack/exit targets plus short unavailable reasons.
+- Older active encounters receive a safe budget on first use.
+- Rollback restores the prior slot budget.
+- The browser API exposes combat-turn state and an End Turn endpoint.
+
 ## Exact next implementation checkpoint
 
-Build the **player-facing turn controller** as the next small, independently tested checkpoint:
+Build the **refresh-safe player-clicked combat roll pipeline** as the next small checkpoint:
 
-1. Persist the four-slot turn budget.
-2. Tag available combat options with their slot costs.
-3. Reject actions that are illegal, lack a target, violate range, or require spent slots.
-4. Return short player-facing reasons for greyed-out options.
-5. Resolve one selection immediately, then expose remaining slots.
-6. Support End Turn without requiring every slot to be spent.
-7. Preserve pending selection/roll state across refresh and prevent rerolls.
-8. Add focused tests plus the full regression suite.
-9. Update `MASTER_CHECKLIST.md`, commit, and publish to public GitHub before calling the checkpoint complete.
+1. Selecting Attack creates one pending attack-roll prompt rather than rolling automatically.
+2. The prompt identifies the actor, target, modifier, Defense target, and Action cost.
+3. The player clicks the attack die exactly once.
+4. A miss resolves, consumes Action, and returns the remaining slots.
+5. A hit creates a separate pending damage-roll prompt.
+6. Damage cannot be rolled before a hit and cannot be rerolled after commitment.
+7. Refresh restores the exact pending attack or damage prompt.
+8. NPC/support attacks remain automatic and visible; their behavior rules remain a later user decision.
+9. Update tests and documents, commit, and publish before moving on.
 
-This checkpoint is primarily engineering from already approved rules. Do not reopen the Draft 1 layout or silently invent missing combat mechanics.
+Do not reopen Draft 1 or silently define weapon-specific damage, range, movement, powers, conditions, or AI behavior during this checkpoint.
 
 ## Decisions that still require the user
 

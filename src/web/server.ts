@@ -13,10 +13,11 @@ import { createPlayerCharacter, type PlayerCharacterInput } from "../application
 import { checkForUpdate, installLatestUpdate } from "../application/update-manager.ts";
 import { buildJournalEvents } from "../application/journal-builder.ts";
 import { getOpeningState, rollOpeningStart } from "../application/opening-system.ts";
+import { endPlayerCombatTurn, getPlayerCombatTurnView } from "../application/combat-system.ts";
 import { spawn } from "node:child_process";
 import { cloudDirectorFromEnvironment } from "../director/cloud-director.ts";
 import { MockDirector } from "../director/mock-director.ts";
-import { backfillAuthoredState, createCampaign, getCampaign, getPlayerCharacter, listEvents, openDatabase, restorePreviousTurn } from "../persistence/database.ts";
+import { backfillAuthoredState, createCampaign, getActiveCombatEncounter, getCampaign, getPlayerCharacter, listEvents, openDatabase, restorePreviousTurn } from "../persistence/database.ts";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "../..");
 const publicRoot = join(projectRoot, "public");
@@ -78,6 +79,7 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
       playerCharacter: context.playerCharacter,
       pendingCheck: getPendingActionCheck(db, context.campaignId),
       pendingDirectionConfirmation: getPendingQuestDirectionConfirmation(db, context.campaignId),
+      combatTurn: getActiveCombatEncounter(db, context.campaignId) ? getPlayerCombatTurnView(db, context.campaignId) : null,
       storyHistory,
       factions: content.factions.map((faction) => ({
         id: faction.id,
@@ -147,7 +149,7 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         return;
       }
 
-      const match = url.pathname.match(/^\/api\/campaigns\/([^/]+)(?:\/(play|actions|directions|rolls|rollback|log|character|opening-roll))?$/u);
+      const match = url.pathname.match(/^\/api\/campaigns\/([^/]+)(?:\/(play|actions|directions|rolls|rollback|log|character|opening-roll|combat-end-turn))?$/u);
       if (match) {
         const name = decodeURIComponent(match[1]);
         const operation = match[2];
@@ -191,6 +193,11 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
           if (!getPlayerCharacter(db, campaign.id)) throw new Error("Create your player character before rolling the opening d6");
           const opening = rollOpeningStart(db, content, campaign.id);
           sendJson(response, 200, { campaign: getCampaign(db, name), opening, ...playerView(name) });
+          return;
+        }
+        if (method === "POST" && operation === "combat-end-turn") {
+          const encounter = endPlayerCombatTurn(db, campaign.id);
+          sendJson(response, 200, { encounter, campaign: getCampaign(db, name), ...playerView(name) });
           return;
         }
         if (method === "POST" && operation === "actions") {

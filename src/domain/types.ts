@@ -274,6 +274,13 @@ export type PlayerCharacter = {
 export type EncounterMode = "quick" | "standard" | "set_piece";
 export type EncounterResolution = "victory" | "defeat" | "escaped" | "surrendered" | "negotiated";
 export type EncounterCombatantStatus = "active" | "defeated" | "withdrawn" | "surrendered";
+export type CombatTurnSlot = "power" | "action" | "movement" | "minor_interaction";
+
+export type CombatTurnBudget = {
+  actorId: "PC-001";
+  round: number;
+  slots: Record<CombatTurnSlot, "available" | "spent">;
+};
 
 export type EncounterCombatant = {
   combatantId: string;
@@ -300,6 +307,7 @@ export type CombatEncounter = {
   resolution: EncounterResolution | null;
   round: number;
   currentTurnIndex: number;
+  turnBudget?: CombatTurnBudget | null;
   combatants: EncounterCombatant[];
   availableExits: Array<"escape" | "surrender" | "negotiation">;
   createdTurn: number;

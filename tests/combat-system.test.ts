@@ -4,7 +4,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
-import { resolveCombatAttack, resolveCombatExit, startCombatEncounter, type StartEncounterInput } from "../src/application/combat-system.ts";
+import { endPlayerCombatTurn, getPlayerCombatTurnView, resolveCombatAttack, resolveCombatExit, startCombatEncounter, type StartEncounterInput } from "../src/application/combat-system.ts";
 import { createPlayerCharacter, type PlayerCharacterInput } from "../src/application/player-character.ts";
 import { captureSnapshot, createCampaign, getActiveCombatEncounter, getPlayerCharacter, insertCheckpoint, listCombatEncounters, openDatabase, restorePreviousTurn } from "../src/persistence/database.ts";
 
@@ -116,5 +116,95 @@ test("rejects overfilled modes and invalid attacks without partial mutation", as
     startCombatEncounter(db, campaignId, quickEncounter, sequence(18, 7));
     assert.throws(() => resolveCombatAttack(db, campaignId, "HOSTILE-001", "PC-001"), /Mara Vale's turn/);
     assert.equal(getActiveCombatEncounter(db, campaignId)?.combatants.find((entry) => entry.combatantId === "HOSTILE-001")?.currentHp, 5);
+  } finally { db.close(); }
+});
+
+test("player attacks spend only the Action slot and require explicit End Turn", async () => {
+  const { db, campaignId } = await setup("combat-player-slots");
+  try {
+    startCombatEncounter(db, campaignId, quickEncounter, sequence(18, 7));
+    const initial = getPlayerCombatTurnView(db, campaignId);
+    assert.equal(initial.isPlayerTurn, true);
+    assert.deepEqual(initial.slots, {
+      power: "available",
+      action: "available",
+      movement: "available",
+      minor_interaction: "available"
+    });
+    assert.equal(initial.options.find((option) => option.optionId === "fight.basic_attack")?.available, true);
+
+    const missed = resolveCombatAttack(db, campaignId, "PC-001", "HOSTILE-001", () => 1);
+    assert.equal(missed.hit, false);
+    assert.equal(missed.encounter.currentTurnIndex, 0);
+    const afterAttack = getPlayerCombatTurnView(db, campaignId);
+    assert.equal(afterAttack.slots?.action, "spent");
+    assert.equal(afterAttack.slots?.movement, "available");
+    assert.equal(afterAttack.options.find((option) => option.optionId === "fight.basic_attack")?.unavailableReason, "The action slot has already been spent");
+    assert.throws(() => resolveCombatAttack(db, campaignId, "PC-001", "HOSTILE-001", () => 20), /action slot has already been spent/);
+
+    const ended = endPlayerCombatTurn(db, campaignId);
+    assert.equal(ended.combatants[ended.currentTurnIndex]?.combatantId, "HOSTILE-001");
+    assert.equal(getPlayerCombatTurnView(db, campaignId).isPlayerTurn, false);
+  } finally { db.close(); }
+});
+
+test("a new player turn refreshes every slot and End Turn may leave slots unused", async () => {
+  const { db, campaignId } = await setup("combat-slot-refresh");
+  try {
+    startCombatEncounter(db, campaignId, quickEncounter, sequence(18, 7));
+    endPlayerCombatTurn(db, campaignId);
+    resolveCombatAttack(db, campaignId, "HOSTILE-001", "PC-001", () => 1);
+    const nextTurn = getPlayerCombatTurnView(db, campaignId);
+    assert.equal(nextTurn.round, 2);
+    assert.equal(nextTurn.isPlayerTurn, true);
+    assert.deepEqual(nextTurn.slots, {
+      power: "available",
+      action: "available",
+      movement: "available",
+      minor_interaction: "available"
+    });
+  } finally { db.close(); }
+});
+
+test("a failed combat exit spends Action without silently ending the player turn", async () => {
+  const { db, campaignId } = await setup("combat-exit-slot");
+  try {
+    startCombatEncounter(db, campaignId, quickEncounter, sequence(18, 7));
+    const encounter = resolveCombatExit(db, campaignId, "PC-001", "escape", "failure");
+    assert.equal(encounter.currentTurnIndex, 0);
+    const view = getPlayerCombatTurnView(db, campaignId);
+    assert.equal(view.slots?.action, "spent");
+    assert.equal(view.options.find((option) => option.optionId === "action.escape")?.available, false);
+    assert.throws(() => resolveCombatExit(db, campaignId, "PC-001", "surrender", null), /action slot has already been spent/);
+  } finally { db.close(); }
+});
+
+test("legacy active encounters gain a safe full player budget on first use", async () => {
+  const { db, campaignId } = await setup("combat-legacy-budget");
+  try {
+    const encounter = startCombatEncounter(db, campaignId, quickEncounter, sequence(18, 7));
+    const legacy = { ...encounter };
+    delete legacy.turnBudget;
+    db.prepare("UPDATE combat_encounters SET encounter_json = ? WHERE campaign_id = ? AND encounter_id = ?")
+      .run(JSON.stringify(legacy), campaignId, encounter.encounterId);
+
+    const view = getPlayerCombatTurnView(db, campaignId);
+    assert.equal(view.slots?.action, "available");
+    resolveCombatAttack(db, campaignId, "PC-001", "HOSTILE-001", () => 1);
+    assert.equal(getActiveCombatEncounter(db, campaignId)?.turnBudget?.slots.action, "spent");
+  } finally { db.close(); }
+});
+
+test("rollback restores the player combat slot budget", async () => {
+  const { db, campaignId } = await setup("combat-slot-rollback");
+  try {
+    startCombatEncounter(db, campaignId, quickEncounter, sequence(18, 7));
+    insertCheckpoint(db, campaignId, 0, 1, "pre_turn", captureSnapshot(db, campaignId));
+    db.prepare("UPDATE campaigns SET turn = 1 WHERE id = ?").run(campaignId);
+    resolveCombatAttack(db, campaignId, "PC-001", "HOSTILE-001", () => 1);
+    assert.equal(getPlayerCombatTurnView(db, campaignId).slots?.action, "spent");
+
+    restorePreviousTurn(db, "combat-slot-rollback");
+    assert.equal(getPlayerCombatTurnView(db, campaignId).slots?.action, "available");
   } finally { db.close(); }
 });

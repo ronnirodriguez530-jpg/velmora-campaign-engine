@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import type { CombatEncounter, EncounterCombatant, EncounterMode, EncounterResolution, RollOutcome } from "../domain/types.ts";
+import type { CombatEncounter, CombatTurnBudget, CombatTurnSlot, EncounterCombatant, EncounterMode, EncounterResolution, RollOutcome } from "../domain/types.ts";
 import { appendEvent, getActiveCombatEncounter, getPlayerCharacter, persistCombatEncounter, persistPlayerCharacter } from "../persistence/database.ts";
 
 const MODE_LIMITS: Record<EncounterMode, { hostiles: number; total: number }> = {
@@ -26,6 +26,33 @@ export type StartEncounterInput = {
   stakes: string;
   participants: EncounterParticipantInput[];
   availableExits: Array<"escape" | "surrender" | "negotiation">;
+};
+
+export type CombatOptionView = {
+  optionId: string;
+  category: "fight" | "action" | "powers" | "bag" | "system";
+  label: string;
+  slotCosts: CombatTurnSlot[];
+  available: boolean;
+  unavailableReason: string | null;
+  targetIds: string[];
+};
+
+export type PlayerCombatTurnView = {
+  encounterId: string;
+  round: number;
+  currentActorId: string;
+  currentActorName: string;
+  isPlayerTurn: boolean;
+  slots: CombatTurnBudget["slots"] | null;
+  options: CombatOptionView[];
+};
+
+const FRESH_PLAYER_SLOTS: CombatTurnBudget["slots"] = {
+  power: "available",
+  action: "available",
+  movement: "available",
+  minor_interaction: "available"
 };
 
 function assertText(value: string, label: string, maximum: number): string {
@@ -112,6 +139,7 @@ export function startCombatEncounter(
     resolution: null,
     round: 1,
     currentTurnIndex: 0,
+    turnBudget: ordered[0]?.side === "player" ? { actorId: "PC-001", round: 1, slots: { ...FRESH_PLAYER_SLOTS } } : null,
     combatants: ordered,
     availableExits: exits,
     createdTurn: campaign.turn,
@@ -147,12 +175,41 @@ function currentActor(encounter: CombatEncounter): EncounterCombatant {
   return actor;
 }
 
+function ensurePlayerTurnBudget(encounter: CombatEncounter): CombatTurnBudget | null {
+  const actor = currentActor(encounter);
+  if (actor.side !== "player") {
+    encounter.turnBudget = null;
+    return null;
+  }
+  if (!encounter.turnBudget || encounter.turnBudget.actorId !== actor.combatantId || encounter.turnBudget.round !== encounter.round) {
+    encounter.turnBudget = { actorId: "PC-001", round: encounter.round, slots: { ...FRESH_PLAYER_SLOTS } };
+  }
+  return encounter.turnBudget;
+}
+
+function requirePlayerSlots(encounter: CombatEncounter, slotCosts: CombatTurnSlot[]): CombatTurnBudget {
+  const budget = ensurePlayerTurnBudget(encounter);
+  if (!budget) throw new Error("Only the player turn uses selectable combat slots");
+  const unavailable = slotCosts.find((slot) => budget.slots[slot] !== "available");
+  if (unavailable) throw new Error(`The ${unavailable.replace("_", " ")} slot has already been spent`);
+  return budget;
+}
+
+function spendPlayerSlots(encounter: CombatEncounter, slotCosts: CombatTurnSlot[]): void {
+  const budget = requirePlayerSlots(encounter, slotCosts);
+  for (const slot of slotCosts) budget.slots[slot] = "spent";
+}
+
 function advanceTurn(encounter: CombatEncounter): void {
   const start = encounter.currentTurnIndex;
   do {
     encounter.currentTurnIndex = (encounter.currentTurnIndex + 1) % encounter.combatants.length;
     if (encounter.currentTurnIndex === 0) encounter.round += 1;
-    if (encounter.combatants[encounter.currentTurnIndex]?.status === "active") return;
+    if (encounter.combatants[encounter.currentTurnIndex]?.status === "active") {
+      encounter.turnBudget = null;
+      ensurePlayerTurnBudget(encounter);
+      return;
+    }
   } while (encounter.currentTurnIndex !== start);
 }
 
@@ -163,14 +220,83 @@ function finishIfDecided(encounter: CombatEncounter): EncounterResolution | null
   return null;
 }
 
-function commitEncounter(db: DatabaseSync, encounter: CombatEncounter, resolution: EncounterResolution | null): void {
+function commitEncounter(db: DatabaseSync, encounter: CombatEncounter, resolution: EncounterResolution | null, endActorTurn = true): void {
   if (resolution) {
     encounter.status = "resolved";
     encounter.resolution = resolution;
-  } else {
+  } else if (endActorTurn) {
     advanceTurn(encounter);
   }
   persistCombatEncounter(db, encounter);
+}
+
+export function getPlayerCombatTurnView(db: DatabaseSync, campaignId: string): PlayerCombatTurnView {
+  const encounter = activeEncounter(db, campaignId);
+  const actor = currentActor(encounter);
+  const isPlayerTurn = actor.side === "player";
+  const budget = isPlayerTurn ? ensurePlayerTurnBudget(encounter) : null;
+  const actionAvailable = budget?.slots.action === "available";
+  const opposingTargets = encounter.combatants
+    .filter((combatant) => combatant.status === "active" && combatant.side === "hostile")
+    .map((combatant) => combatant.combatantId);
+  const turnReason = isPlayerTurn ? null : `It is ${actor.name}'s turn`;
+  const actionReason = turnReason ?? (actionAvailable ? null : "The action slot has already been spent");
+  const options: CombatOptionView[] = [{
+    optionId: "fight.basic_attack",
+    category: "fight",
+    label: "Attack",
+    slotCosts: ["action"],
+    available: isPlayerTurn && actionAvailable && opposingTargets.length > 0,
+    unavailableReason: actionReason ?? (opposingTargets.length === 0 ? "No active hostile target remains" : null),
+    targetIds: opposingTargets
+  }, ...encounter.availableExits.map((route): CombatOptionView => ({
+    optionId: `action.${route}`,
+    category: "action",
+    label: route[0]!.toUpperCase() + route.slice(1),
+    slotCosts: ["action"],
+    available: isPlayerTurn && actionAvailable,
+    unavailableReason: actionReason,
+    targetIds: []
+  })), {
+    optionId: "system.end_turn",
+    category: "system",
+    label: "End Turn",
+    slotCosts: [],
+    available: isPlayerTurn,
+    unavailableReason: turnReason,
+    targetIds: []
+  }];
+  return {
+    encounterId: encounter.encounterId,
+    round: encounter.round,
+    currentActorId: actor.combatantId,
+    currentActorName: actor.name,
+    isPlayerTurn,
+    slots: budget ? { ...budget.slots } : null,
+    options
+  };
+}
+
+export function endPlayerCombatTurn(db: DatabaseSync, campaignId: string): CombatEncounter {
+  const encounter = activeEncounter(db, campaignId);
+  encounter.updatedTurn = campaignTurn(db, campaignId);
+  const actor = currentActor(encounter);
+  if (actor.side !== "player") throw new Error(`It is ${actor.name}'s turn`);
+  ensurePlayerTurnBudget(encounter);
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    const spentSlots = Object.entries(encounter.turnBudget!.slots)
+      .filter(([, state]) => state === "spent")
+      .map(([slot]) => slot);
+    advanceTurn(encounter);
+    persistCombatEncounter(db, encounter);
+    appendEvent(db, campaignId, encounter.updatedTurn, "combat_player_turn_ended", { encounterId: encounter.encounterId, actorId: actor.combatantId, spentSlots });
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+  return encounter;
 }
 
 export function resolveCombatAttack(
@@ -185,6 +311,7 @@ export function resolveCombatAttack(
   encounter.updatedTurn = campaignTurn(db, campaignId);
   const actor = currentActor(encounter);
   if (actor.combatantId !== actorId) throw new Error(`It is ${actor.name}'s turn`);
+  if (actor.side === "player") requirePlayerSlots(encounter, ["action"]);
   const target = encounter.combatants.find((combatant) => combatant.combatantId === targetId);
   if (!target || target.status !== "active") throw new Error("Attack target must be an active combatant");
   if (actor.side === target.side || (actor.side !== "hostile" && target.side === "support") || (actor.side === "support" && target.side === "player")) throw new Error("Attack target must be on an opposing side");
@@ -202,6 +329,7 @@ export function resolveCombatAttack(
     target.currentHp = Math.max(0, target.currentHp - damage);
     if (target.currentHp === 0) target.status = "defeated";
   }
+  if (actor.side === "player") spendPlayerSlots(encounter, ["action"]);
   const resolution = finishIfDecided(encounter);
   db.exec("BEGIN IMMEDIATE");
   try {
@@ -209,7 +337,7 @@ export function resolveCombatAttack(
       const character = getPlayerCharacter(db, campaignId)!;
       persistPlayerCharacter(db, { ...character, currentHp: target.currentHp, updatedTurn: encounter.updatedTurn });
     }
-    commitEncounter(db, encounter, resolution);
+    commitEncounter(db, encounter, resolution, actor.side !== "player");
     appendEvent(db, campaignId, encounter.updatedTurn, "combat_attack_resolved", { encounterId: encounter.encounterId, actorId, targetId, attackRoll, attackTotal, hit, critical, damage, resolution });
     db.exec("COMMIT");
   } catch (error) {
@@ -230,9 +358,11 @@ export function resolveCombatExit(
   encounter.updatedTurn = campaignTurn(db, campaignId);
   const actor = currentActor(encounter);
   if (actor.combatantId !== actorId) throw new Error(`It is ${actor.name}'s turn`);
+  requirePlayerSlots(encounter, ["action"]);
   if (!encounter.availableExits.includes(route)) throw new Error(`${route} is not credible in this encounter`);
   if (route !== "surrender" && outcome === null) throw new Error(`${route} requires a resolved action check`);
   const succeeded = route === "surrender" || outcome === "critical_success" || outcome === "success" || outcome === "success_with_cost";
+  spendPlayerSlots(encounter, ["action"]);
   db.exec("BEGIN IMMEDIATE");
   try {
     if (succeeded) {
@@ -240,7 +370,6 @@ export function resolveCombatExit(
       const resolution: EncounterResolution = route === "escape" ? "escaped" : route === "negotiation" ? "negotiated" : "surrendered";
       commitEncounter(db, encounter, resolution);
     } else {
-      advanceTurn(encounter);
       persistCombatEncounter(db, encounter);
     }
     appendEvent(db, campaignId, encounter.updatedTurn, "combat_exit_resolved", { encounterId: encounter.encounterId, route, outcome, succeeded });

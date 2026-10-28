@@ -152,14 +152,15 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 
 - [x] Theater-of-the-mind encounter state
 - [x] Quick, standard, and set-piece combat modes with bounded participant limits
-- [ ] Initiative and player-facing turn flow
+- [x] Persistent initiative and four-slot player turn-controller foundation
+- [ ] Draft 1 browser controls and complete player-facing turn flow
 - [ ] Condensed handling for groups and supporting NPCs
 - [ ] Actions, targets, damage, defense, conditions, and defeat
 - [ ] Creature behavior and encounter resolution
 - [x] Escape, surrender, and negotiation resolution paths
 - [ ] Approximately 65/35 story-to-combat pacing target
 
-Implemented combat scope: one active persistent encounter, initiative order, rounds, current actor, opposing targets, d20 attacks, Defense, bounded damage dice, critical hits, HP, defeat, victory, and noncombat exits. Encounter actions commit atomically and roll back with the campaign. Conditions, death, recovery, creature AI, condensed groups, player-facing combat controls, Campaign Master integration, and pacing enforcement remain unfinished. See `COMBAT_SYSTEM_V1.md`.
+Implemented combat scope: one active persistent encounter, initiative order, rounds, current actor, opposing targets, d20 attacks, Defense, bounded damage dice, critical hits, HP, defeat, victory, and noncombat exits. The player now receives a persistent Power/Action/Movement/Minor Interaction budget; attacks and exits spend Action, remaining slots survive until explicit End Turn, legal-option reasons enter the browser payload, older saves receive safe defaults, and rollback restores the budget. Encounter actions commit atomically. Movement/range execution, powers, Bag use, minor interactions, custom-action splitting, player-clicked combat rolls, conditions, Downed recovery, creature AI, condensed groups, Draft 1 browser controls, Campaign Master integration, and pacing enforcement remain unfinished. See `COMBAT_SYSTEM_V1.md` and `COMBAT_INTERFACE_DRAFT_1.md`.
 
 ### 9. Powers, magic, and abilities — Partial
 
