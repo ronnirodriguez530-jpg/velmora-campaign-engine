@@ -16,6 +16,9 @@ This checkpoint establishes the minimum persistent theater-of-the-mind combat st
 - Attacks and combat exits consume Action without automatically discarding the remaining player slots
 - Explicit End Turn, fresh slots on the next player turn, legal-option availability, and short unavailable reasons
 - Combat-turn state in the browser API, including safe defaults for older active encounters
+- Player-clicked attack rolls followed by a separate damage prompt only after a hit
+- Refresh-safe pending combat rolls, Action reservation, committed-roll protection, and browser API actions for attack selection and rolling
+- Automatic NPC/support attack resolution remains separate from the protected player-clicked path
 - Atomic encounter actions, durable audit events, save compatibility, and one-turn rollback
 
 The player combatant is derived from the saved character. Other combatants are supplied as validated encounter ingredients, allowing the Campaign Master to construct encounters from current quests and world state rather than selecting a prewritten fight.
@@ -24,7 +27,7 @@ The approved player-facing experience is specified separately in `COMBAT_INTERFA
 
 ## Deliberately unfinished
 
-- Browser controls for the approved Draft 1 combat interface and player-clicked combat rolls
+- Browser controls for the approved Draft 1 combat interface and its combat-roll prompts
 - Movement choices, range enforcement, Power/Bag use, Minor Interactions, and Custom Action slot splitting
 - Campaign Master encounter-generation tools and creature behavior
 - Conditions, death, rest, recovery, healing, equipment damage, and power effects

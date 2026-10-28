@@ -13,7 +13,7 @@ import { createPlayerCharacter, type PlayerCharacterInput } from "../application
 import { checkForUpdate, installLatestUpdate } from "../application/update-manager.ts";
 import { buildJournalEvents } from "../application/journal-builder.ts";
 import { getOpeningState, rollOpeningStart } from "../application/opening-system.ts";
-import { endPlayerCombatTurn, getPlayerCombatTurnView } from "../application/combat-system.ts";
+import { beginPlayerCombatAttack, endPlayerCombatTurn, getPlayerCombatTurnView, rollPendingPlayerCombat } from "../application/combat-system.ts";
 import { spawn } from "node:child_process";
 import { cloudDirectorFromEnvironment } from "../director/cloud-director.ts";
 import { MockDirector } from "../director/mock-director.ts";
@@ -149,7 +149,7 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         return;
       }
 
-      const match = url.pathname.match(/^\/api\/campaigns\/([^/]+)(?:\/(play|actions|directions|rolls|rollback|log|character|opening-roll|combat-end-turn))?$/u);
+      const match = url.pathname.match(/^\/api\/campaigns\/([^/]+)(?:\/(play|actions|directions|rolls|rollback|log|character|opening-roll|combat-attacks|combat-rolls|combat-end-turn))?$/u);
       if (match) {
         const name = decodeURIComponent(match[1]);
         const operation = match[2];
@@ -198,6 +198,22 @@ export async function createVelmoraWebServer(options: { dataDir?: string } = {})
         if (method === "POST" && operation === "combat-end-turn") {
           const encounter = endPlayerCombatTurn(db, campaign.id);
           sendJson(response, 200, { encounter, campaign: getCampaign(db, name), ...playerView(name) });
+          return;
+        }
+        if (method === "POST" && operation === "combat-attacks") {
+          const body = await readJson(request);
+          const targetId = typeof body.targetId === "string" ? body.targetId : "";
+          if (!targetId) throw new Error("A combat attack target is required");
+          const pendingRoll = beginPlayerCombatAttack(db, campaign.id, targetId);
+          sendJson(response, 200, { pendingRoll, campaign: getCampaign(db, name), ...playerView(name) });
+          return;
+        }
+        if (method === "POST" && operation === "combat-rolls") {
+          const body = await readJson(request);
+          const rollId = typeof body.rollId === "string" ? body.rollId : "";
+          if (!rollId) throw new Error("A pending combat roll ID is required");
+          const combatRoll = rollPendingPlayerCombat(db, campaign.id, rollId);
+          sendJson(response, 200, { combatRoll, campaign: getCampaign(db, name), ...playerView(name) });
           return;
         }
         if (method === "POST" && operation === "actions") {

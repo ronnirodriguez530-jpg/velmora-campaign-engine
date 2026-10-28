@@ -153,6 +153,7 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 - [x] Theater-of-the-mind encounter state
 - [x] Quick, standard, and set-piece combat modes with bounded participant limits
 - [x] Persistent initiative and four-slot player turn-controller foundation
+- [x] Refresh-safe player-clicked attack and damage-roll pipeline
 - [ ] Draft 1 browser controls and complete player-facing turn flow
 - [ ] Condensed handling for groups and supporting NPCs
 - [ ] Actions, targets, damage, defense, conditions, and defeat
@@ -160,7 +161,7 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 - [x] Escape, surrender, and negotiation resolution paths
 - [ ] Approximately 65/35 story-to-combat pacing target
 
-Implemented combat scope: one active persistent encounter, initiative order, rounds, current actor, opposing targets, d20 attacks, Defense, bounded damage dice, critical hits, HP, defeat, victory, and noncombat exits. The player now receives a persistent Power/Action/Movement/Minor Interaction budget; attacks and exits spend Action, remaining slots survive until explicit End Turn, legal-option reasons enter the browser payload, older saves receive safe defaults, and rollback restores the budget. Encounter actions commit atomically. Movement/range execution, powers, Bag use, minor interactions, custom-action splitting, player-clicked combat rolls, conditions, Downed recovery, creature AI, condensed groups, Draft 1 browser controls, Campaign Master integration, and pacing enforcement remain unfinished. See `COMBAT_SYSTEM_V1.md` and `COMBAT_INTERFACE_DRAFT_1.md`.
+Implemented combat scope: one active persistent encounter, initiative order, rounds, current actor, opposing targets, d20 attacks, Defense, bounded damage dice, critical hits, HP, defeat, victory, and noncombat exits. The player now receives a persistent Power/Action/Movement/Minor Interaction budget; attacks and exits spend Action, remaining slots survive until explicit End Turn, legal-option reasons enter the browser payload, older saves receive safe defaults, and rollback restores the budget. Player attacks require a refresh-safe clicked attack prompt followed by a separate damage prompt only after a hit; committed roll IDs cannot be reused, while NPC/support attacks remain automatic. Encounter actions commit atomically. Weapon-specific damage, movement/range execution, powers, Bag use, minor interactions, custom-action splitting, conditions, Downed recovery, creature AI, condensed groups, Draft 1 browser controls, Campaign Master integration, and pacing enforcement remain unfinished. See `COMBAT_SYSTEM_V1.md` and `COMBAT_INTERFACE_DRAFT_1.md`.
 
 ### 9. Powers, magic, and abilities — Partial
 

@@ -1,6 +1,6 @@
 import { randomInt, randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import type { CombatEncounter, CombatTurnBudget, CombatTurnSlot, EncounterCombatant, EncounterMode, EncounterResolution, RollOutcome } from "../domain/types.ts";
+import type { CombatEncounter, CombatTurnBudget, CombatTurnSlot, EncounterCombatant, EncounterMode, EncounterResolution, PendingCombatRoll, RollOutcome } from "../domain/types.ts";
 import { appendEvent, getActiveCombatEncounter, getPlayerCharacter, persistCombatEncounter, persistPlayerCharacter } from "../persistence/database.ts";
 
 const MODE_LIMITS: Record<EncounterMode, { hostiles: number; total: number }> = {
@@ -45,7 +45,21 @@ export type PlayerCombatTurnView = {
   currentActorName: string;
   isPlayerTurn: boolean;
   slots: CombatTurnBudget["slots"] | null;
+  pendingRoll: PendingCombatRoll | null;
   options: CombatOptionView[];
+};
+
+export type PlayerCombatRollResult = {
+  phase: "attack" | "damage";
+  rollId: string;
+  dice: number[];
+  attackTotal: number | null;
+  hit: boolean | null;
+  critical: boolean;
+  damage: number;
+  resolution: EncounterResolution | null;
+  pendingRoll: PendingCombatRoll | null;
+  encounter: CombatEncounter;
 };
 
 const FRESH_PLAYER_SLOTS: CombatTurnBudget["slots"] = {
@@ -140,6 +154,7 @@ export function startCombatEncounter(
     round: 1,
     currentTurnIndex: 0,
     turnBudget: ordered[0]?.side === "player" ? { actorId: "PC-001", round: 1, slots: { ...FRESH_PLAYER_SLOTS } } : null,
+    pendingPlayerRoll: null,
     combatants: ordered,
     availableExits: exits,
     createdTurn: campaign.turn,
@@ -191,17 +206,31 @@ function requirePlayerSlots(encounter: CombatEncounter, slotCosts: CombatTurnSlo
   const budget = ensurePlayerTurnBudget(encounter);
   if (!budget) throw new Error("Only the player turn uses selectable combat slots");
   const unavailable = slotCosts.find((slot) => budget.slots[slot] !== "available");
-  if (unavailable) throw new Error(`The ${unavailable.replace("_", " ")} slot has already been spent`);
+  if (unavailable) {
+    const state = budget.slots[unavailable];
+    throw new Error(state === "reserved"
+      ? `The ${unavailable.replace("_", " ")} slot is reserved by a pending roll`
+      : `The ${unavailable.replace("_", " ")} slot has already been spent`);
+  }
   return budget;
 }
 
-function spendPlayerSlots(encounter: CombatEncounter, slotCosts: CombatTurnSlot[]): void {
+function reservePlayerSlots(encounter: CombatEncounter, slotCosts: CombatTurnSlot[]): void {
   const budget = requirePlayerSlots(encounter, slotCosts);
+  for (const slot of slotCosts) budget.slots[slot] = "reserved";
+}
+
+function spendPlayerSlots(encounter: CombatEncounter, slotCosts: CombatTurnSlot[]): void {
+  const budget = ensurePlayerTurnBudget(encounter);
+  if (!budget) throw new Error("Only the player turn uses selectable combat slots");
+  const invalid = slotCosts.find((slot) => budget.slots[slot] !== "available" && budget.slots[slot] !== "reserved");
+  if (invalid) throw new Error(`The ${invalid.replace("_", " ")} slot has already been spent`);
   for (const slot of slotCosts) budget.slots[slot] = "spent";
 }
 
 function advanceTurn(encounter: CombatEncounter): void {
   const start = encounter.currentTurnIndex;
+  encounter.pendingPlayerRoll = null;
   do {
     encounter.currentTurnIndex = (encounter.currentTurnIndex + 1) % encounter.combatants.length;
     if (encounter.currentTurnIndex === 0) encounter.round += 1;
@@ -240,7 +269,9 @@ export function getPlayerCombatTurnView(db: DatabaseSync, campaignId: string): P
     .filter((combatant) => combatant.status === "active" && combatant.side === "hostile")
     .map((combatant) => combatant.combatantId);
   const turnReason = isPlayerTurn ? null : `It is ${actor.name}'s turn`;
-  const actionReason = turnReason ?? (actionAvailable ? null : "The action slot has already been spent");
+  const actionReason = turnReason
+    ?? (encounter.pendingPlayerRoll ? `Complete the pending ${encounter.pendingPlayerRoll.phase} roll` : null)
+    ?? (actionAvailable ? null : "The action slot has already been spent");
   const options: CombatOptionView[] = [{
     optionId: "fight.basic_attack",
     category: "fight",
@@ -273,6 +304,7 @@ export function getPlayerCombatTurnView(db: DatabaseSync, campaignId: string): P
     currentActorName: actor.name,
     isPlayerTurn,
     slots: budget ? { ...budget.slots } : null,
+    pendingRoll: encounter.pendingPlayerRoll ?? null,
     options
   };
 }
@@ -282,6 +314,7 @@ export function endPlayerCombatTurn(db: DatabaseSync, campaignId: string): Comba
   encounter.updatedTurn = campaignTurn(db, campaignId);
   const actor = currentActor(encounter);
   if (actor.side !== "player") throw new Error(`It is ${actor.name}'s turn`);
+  if (encounter.pendingPlayerRoll) throw new Error(`Complete the pending ${encounter.pendingPlayerRoll.phase} roll before ending the turn`);
   ensurePlayerTurnBudget(encounter);
   db.exec("BEGIN IMMEDIATE");
   try {
@@ -299,6 +332,162 @@ export function endPlayerCombatTurn(db: DatabaseSync, campaignId: string): Comba
   return encounter;
 }
 
+function requireAttackTarget(encounter: CombatEncounter, actor: EncounterCombatant, targetId: string): EncounterCombatant {
+  const target = encounter.combatants.find((combatant) => combatant.combatantId === targetId);
+  if (!target || target.status !== "active") throw new Error("Attack target must be an active combatant");
+  if (actor.side === target.side || (actor.side !== "hostile" && target.side === "support") || (actor.side === "support" && target.side === "player")) {
+    throw new Error("Attack target must be on an opposing side");
+  }
+  return target;
+}
+
+export function beginPlayerCombatAttack(db: DatabaseSync, campaignId: string, targetId: string): PendingCombatRoll {
+  const encounter = activeEncounter(db, campaignId);
+  encounter.updatedTurn = campaignTurn(db, campaignId);
+  const actor = currentActor(encounter);
+  if (actor.side !== "player" || actor.combatantId !== "PC-001") throw new Error(`It is ${actor.name}'s turn`);
+  if (encounter.pendingPlayerRoll) throw new Error(`Complete the pending ${encounter.pendingPlayerRoll.phase} roll before selecting another combat action`);
+  requirePlayerSlots(encounter, ["action"]);
+  const target = requireAttackTarget(encounter, actor, targetId);
+  reservePlayerSlots(encounter, ["action"]);
+  const pending: PendingCombatRoll = {
+    rollId: `COMBAT-ROLL-${randomUUID()}`,
+    phase: "attack",
+    actorId: "PC-001",
+    targetId: target.combatantId,
+    actorName: actor.name,
+    targetName: target.name,
+    attackModifier: actor.attackBonus,
+    targetDefense: target.defense,
+    damageDie: actor.damageDie,
+    damageDice: 1,
+    attackRoll: null,
+    attackTotal: null,
+    critical: false,
+    createdTurn: encounter.updatedTurn
+  };
+  encounter.pendingPlayerRoll = pending;
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    persistCombatEncounter(db, encounter);
+    appendEvent(db, campaignId, encounter.updatedTurn, "combat_attack_roll_requested", {
+      encounterId: encounter.encounterId,
+      rollId: pending.rollId,
+      actorId: actor.combatantId,
+      targetId: target.combatantId,
+      attackModifier: actor.attackBonus,
+      targetDefense: target.defense,
+      slotCost: "action"
+    });
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+  return pending;
+}
+
+export function rollPendingPlayerCombat(
+  db: DatabaseSync,
+  campaignId: string,
+  rollId: string,
+  rollD20: () => number = () => randomInt(1, 21),
+  rollDamage: (sides: number) => number = (sides) => randomInt(1, sides + 1)
+): PlayerCombatRollResult {
+  const encounter = activeEncounter(db, campaignId);
+  encounter.updatedTurn = campaignTurn(db, campaignId);
+  const actor = currentActor(encounter);
+  if (actor.side !== "player" || actor.combatantId !== "PC-001") throw new Error(`It is ${actor.name}'s turn`);
+  const pending = encounter.pendingPlayerRoll;
+  if (!pending || pending.rollId !== rollId) throw new Error("That combat roll is not pending");
+  const target = requireAttackTarget(encounter, actor, pending.targetId);
+
+  if (pending.phase === "attack") {
+    const die = rollD20();
+    if (!Number.isInteger(die) || die < 1 || die > 20) throw new Error("Attack source returned an invalid d20 result");
+    const attackTotal = die + pending.attackModifier;
+    const critical = die === 20;
+    const hit = critical || (die !== 1 && attackTotal >= pending.targetDefense);
+    const nextPending: PendingCombatRoll | null = hit ? {
+      ...pending,
+      rollId: `COMBAT-ROLL-${randomUUID()}`,
+      phase: "damage",
+      damageDice: critical ? 2 : 1,
+      attackRoll: die,
+      attackTotal,
+      critical
+    } : null;
+    if (hit) encounter.pendingPlayerRoll = nextPending;
+    else {
+      encounter.pendingPlayerRoll = null;
+      spendPlayerSlots(encounter, ["action"]);
+    }
+    db.exec("BEGIN IMMEDIATE");
+    try {
+      persistCombatEncounter(db, encounter);
+      appendEvent(db, campaignId, encounter.updatedTurn, "combat_attack_roll_resolved", {
+        encounterId: encounter.encounterId,
+        rollId,
+        actorId: actor.combatantId,
+        targetId: target.combatantId,
+        attackRoll: die,
+        attackModifier: pending.attackModifier,
+        attackTotal,
+        targetDefense: pending.targetDefense,
+        hit,
+        critical,
+        nextRollId: nextPending?.rollId ?? null
+      });
+      db.exec("COMMIT");
+    } catch (error) {
+      db.exec("ROLLBACK");
+      throw error;
+    }
+    return { phase: "attack", rollId, dice: [die], attackTotal, hit, critical, damage: 0, resolution: null, pendingRoll: nextPending, encounter };
+  }
+
+  const dice = Array.from({ length: pending.damageDice }, () => rollDamage(pending.damageDie));
+  if (!dice.every((die) => Number.isInteger(die) && die >= 1 && die <= pending.damageDie)) throw new Error("Damage source returned an invalid result");
+  const damage = dice.reduce((total, die) => total + die, 0);
+  target.currentHp = Math.max(0, target.currentHp - damage);
+  if (target.currentHp === 0) target.status = "defeated";
+  encounter.pendingPlayerRoll = null;
+  spendPlayerSlots(encounter, ["action"]);
+  const resolution = finishIfDecided(encounter);
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    commitEncounter(db, encounter, resolution, false);
+    appendEvent(db, campaignId, encounter.updatedTurn, "combat_damage_roll_resolved", {
+      encounterId: encounter.encounterId,
+      rollId,
+      actorId: actor.combatantId,
+      targetId: target.combatantId,
+      damageDie: pending.damageDie,
+      dice,
+      damage,
+      critical: pending.critical,
+      targetHp: target.currentHp,
+      resolution
+    });
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+  return {
+    phase: "damage",
+    rollId,
+    dice,
+    attackTotal: pending.attackTotal,
+    hit: true,
+    critical: pending.critical,
+    damage,
+    resolution,
+    pendingRoll: null,
+    encounter
+  };
+}
+
 export function resolveCombatAttack(
   db: DatabaseSync,
   campaignId: string,
@@ -311,10 +500,8 @@ export function resolveCombatAttack(
   encounter.updatedTurn = campaignTurn(db, campaignId);
   const actor = currentActor(encounter);
   if (actor.combatantId !== actorId) throw new Error(`It is ${actor.name}'s turn`);
-  if (actor.side === "player") requirePlayerSlots(encounter, ["action"]);
-  const target = encounter.combatants.find((combatant) => combatant.combatantId === targetId);
-  if (!target || target.status !== "active") throw new Error("Attack target must be an active combatant");
-  if (actor.side === target.side || (actor.side !== "hostile" && target.side === "support") || (actor.side === "support" && target.side === "player")) throw new Error("Attack target must be on an opposing side");
+  if (actor.side === "player") throw new Error("Player attacks require a player-clicked combat roll");
+  const target = requireAttackTarget(encounter, actor, targetId);
   const attackRoll = rollD20();
   if (!Number.isInteger(attackRoll) || attackRoll < 1 || attackRoll > 20) throw new Error("Attack source returned an invalid d20 result");
   const attackTotal = attackRoll + actor.attackBonus;
@@ -329,7 +516,6 @@ export function resolveCombatAttack(
     target.currentHp = Math.max(0, target.currentHp - damage);
     if (target.currentHp === 0) target.status = "defeated";
   }
-  if (actor.side === "player") spendPlayerSlots(encounter, ["action"]);
   const resolution = finishIfDecided(encounter);
   db.exec("BEGIN IMMEDIATE");
   try {
@@ -337,7 +523,7 @@ export function resolveCombatAttack(
       const character = getPlayerCharacter(db, campaignId)!;
       persistPlayerCharacter(db, { ...character, currentHp: target.currentHp, updatedTurn: encounter.updatedTurn });
     }
-    commitEncounter(db, encounter, resolution, actor.side !== "player");
+    commitEncounter(db, encounter, resolution);
     appendEvent(db, campaignId, encounter.updatedTurn, "combat_attack_resolved", { encounterId: encounter.encounterId, actorId, targetId, attackRoll, attackTotal, hit, critical, damage, resolution });
     db.exec("COMMIT");
   } catch (error) {

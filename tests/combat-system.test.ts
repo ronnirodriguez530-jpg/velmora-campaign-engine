@@ -4,7 +4,7 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
-import { endPlayerCombatTurn, getPlayerCombatTurnView, resolveCombatAttack, resolveCombatExit, startCombatEncounter, type StartEncounterInput } from "../src/application/combat-system.ts";
+import { beginPlayerCombatAttack, endPlayerCombatTurn, getPlayerCombatTurnView, resolveCombatAttack, resolveCombatExit, rollPendingPlayerCombat, startCombatEncounter, type StartEncounterInput } from "../src/application/combat-system.ts";
 import { createPlayerCharacter, type PlayerCharacterInput } from "../src/application/player-character.ts";
 import { captureSnapshot, createCampaign, getActiveCombatEncounter, getPlayerCharacter, insertCheckpoint, listCombatEncounters, openDatabase, restorePreviousTurn } from "../src/persistence/database.ts";
 
@@ -62,9 +62,13 @@ test("resolves attacks, critical damage, defeat, and victory through turn order"
   const { db, campaignId } = await setup("combat-attack");
   try {
     startCombatEncounter(db, campaignId, quickEncounter, sequence(18, 7));
-    const result = resolveCombatAttack(db, campaignId, "PC-001", "HOSTILE-001", () => 20, () => 3);
-    assert.equal(result.hit, true);
-    assert.equal(result.critical, true);
+    const attackPrompt = beginPlayerCombatAttack(db, campaignId, "HOSTILE-001");
+    const attack = rollPendingPlayerCombat(db, campaignId, attackPrompt.rollId, () => 20);
+    assert.equal(attack.hit, true);
+    assert.equal(attack.critical, true);
+    assert.equal(attack.pendingRoll?.phase, "damage");
+    assert.equal(attack.pendingRoll?.damageDice, 2);
+    const result = rollPendingPlayerCombat(db, campaignId, attack.pendingRoll!.rollId, undefined, () => 3);
     assert.equal(result.damage, 6);
     assert.equal(result.encounter.combatants.find((entry) => entry.combatantId === "HOSTILE-001")?.status, "defeated");
     assert.equal(result.encounter.status, "resolved");
@@ -133,14 +137,17 @@ test("player attacks spend only the Action slot and require explicit End Turn", 
     });
     assert.equal(initial.options.find((option) => option.optionId === "fight.basic_attack")?.available, true);
 
-    const missed = resolveCombatAttack(db, campaignId, "PC-001", "HOSTILE-001", () => 1);
+    const prompt = beginPlayerCombatAttack(db, campaignId, "HOSTILE-001");
+    assert.equal(getPlayerCombatTurnView(db, campaignId).slots?.action, "reserved");
+    const missed = rollPendingPlayerCombat(db, campaignId, prompt.rollId, () => 1);
     assert.equal(missed.hit, false);
     assert.equal(missed.encounter.currentTurnIndex, 0);
     const afterAttack = getPlayerCombatTurnView(db, campaignId);
     assert.equal(afterAttack.slots?.action, "spent");
     assert.equal(afterAttack.slots?.movement, "available");
     assert.equal(afterAttack.options.find((option) => option.optionId === "fight.basic_attack")?.unavailableReason, "The action slot has already been spent");
-    assert.throws(() => resolveCombatAttack(db, campaignId, "PC-001", "HOSTILE-001", () => 20), /action slot has already been spent/);
+    assert.throws(() => beginPlayerCombatAttack(db, campaignId, "HOSTILE-001"), /action slot has already been spent/);
+    assert.throws(() => resolveCombatAttack(db, campaignId, "PC-001", "HOSTILE-001", () => 20), /player-clicked combat roll/);
 
     const ended = endPlayerCombatTurn(db, campaignId);
     assert.equal(ended.combatants[ended.currentTurnIndex]?.combatantId, "HOSTILE-001");
@@ -190,7 +197,8 @@ test("legacy active encounters gain a safe full player budget on first use", asy
 
     const view = getPlayerCombatTurnView(db, campaignId);
     assert.equal(view.slots?.action, "available");
-    resolveCombatAttack(db, campaignId, "PC-001", "HOSTILE-001", () => 1);
+    const prompt = beginPlayerCombatAttack(db, campaignId, "HOSTILE-001");
+    rollPendingPlayerCombat(db, campaignId, prompt.rollId, () => 1);
     assert.equal(getActiveCombatEncounter(db, campaignId)?.turnBudget?.slots.action, "spent");
   } finally { db.close(); }
 });
@@ -201,10 +209,42 @@ test("rollback restores the player combat slot budget", async () => {
     startCombatEncounter(db, campaignId, quickEncounter, sequence(18, 7));
     insertCheckpoint(db, campaignId, 0, 1, "pre_turn", captureSnapshot(db, campaignId));
     db.prepare("UPDATE campaigns SET turn = 1 WHERE id = ?").run(campaignId);
-    resolveCombatAttack(db, campaignId, "PC-001", "HOSTILE-001", () => 1);
+    const prompt = beginPlayerCombatAttack(db, campaignId, "HOSTILE-001");
+    rollPendingPlayerCombat(db, campaignId, prompt.rollId, () => 1);
     assert.equal(getPlayerCombatTurnView(db, campaignId).slots?.action, "spent");
 
     restorePreviousTurn(db, "combat-slot-rollback");
     assert.equal(getPlayerCombatTurnView(db, campaignId).slots?.action, "available");
+  } finally { db.close(); }
+});
+
+test("attack and damage prompts persist separately and cannot be bypassed or rerolled", async () => {
+  const { db, campaignId } = await setup("combat-clicked-rolls");
+  try {
+    startCombatEncounter(db, campaignId, { ...quickEncounter, participants: [{ ...quickEncounter.participants[0]!, maxHp: 20 }] }, sequence(18, 7));
+    const attackPrompt = beginPlayerCombatAttack(db, campaignId, "HOSTILE-001");
+    const refreshedAttack = getPlayerCombatTurnView(db, campaignId);
+    assert.equal(refreshedAttack.pendingRoll?.rollId, attackPrompt.rollId);
+    assert.equal(refreshedAttack.pendingRoll?.targetDefense, 11);
+    assert.equal(refreshedAttack.slots?.action, "reserved");
+    assert.throws(() => beginPlayerCombatAttack(db, campaignId, "HOSTILE-001"), /pending attack roll/);
+    assert.throws(() => endPlayerCombatTurn(db, campaignId), /pending attack roll/);
+
+    const attack = rollPendingPlayerCombat(db, campaignId, attackPrompt.rollId, () => 15);
+    assert.equal(attack.phase, "attack");
+    assert.equal(attack.hit, true);
+    assert.equal(attack.pendingRoll?.phase, "damage");
+    const damagePrompt = getPlayerCombatTurnView(db, campaignId).pendingRoll!;
+    assert.equal(damagePrompt.rollId, attack.pendingRoll?.rollId);
+    assert.equal(damagePrompt.attackRoll, 15);
+    assert.throws(() => rollPendingPlayerCombat(db, campaignId, attackPrompt.rollId, () => 20), /not pending/);
+
+    const damage = rollPendingPlayerCombat(db, campaignId, damagePrompt.rollId, undefined, () => 4);
+    assert.equal(damage.phase, "damage");
+    assert.deepEqual(damage.dice, [4]);
+    assert.equal(damage.damage, 4);
+    assert.equal(getPlayerCombatTurnView(db, campaignId).pendingRoll, null);
+    assert.equal(getPlayerCombatTurnView(db, campaignId).slots?.action, "spent");
+    assert.throws(() => rollPendingPlayerCombat(db, campaignId, damagePrompt.rollId), /not pending/);
   } finally { db.close(); }
 });

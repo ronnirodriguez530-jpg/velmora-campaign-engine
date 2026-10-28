@@ -15,9 +15,9 @@ Do not use the opening section of `PROJECT_STATUS.md` as current status; that fi
 
 - Public repository: `ronnirodriguez530-jpg/velmora-campaign-engine`
 - Branch: `main`
-- Current public commit before this handoff: `927b9bb2d35d2bfe11b5fd01afdf01e8dd4eee3f`
+- Current public commit is recorded by Git history; verify local `main` matches `origin/main` before changing files.
 - Version: `0.6.0`
-- Full automated suite: **135/135 passing**
+- Full automated suite after the current combat-roll checkpoint: **141/141 passing**
 - Work through the combat-state foundation is implemented.
 - Combat Interface Draft 1 is approved as a specification but is not yet implemented in the browser.
 
@@ -84,21 +84,28 @@ The persistent four-slot player turn-controller foundation is now implemented:
 - Rollback restores the prior slot budget.
 - The browser API exposes combat-turn state and an End Turn endpoint.
 
-## Exact next implementation checkpoint
+The refresh-safe player-clicked combat-roll foundation is also implemented:
 
-Build the **refresh-safe player-clicked combat roll pipeline** as the next small checkpoint:
+- Selecting Attack reserves Action and creates one durable attack prompt.
+- The prompt identifies the actor, target, modifier, target Defense, and slot cost.
+- A miss spends Action and returns the remaining slots.
+- A hit creates a separate damage prompt; damage cannot be rolled before a hit.
+- Refresh returns the exact pending attack or damage roll.
+- Committed attack and damage roll IDs cannot be reused.
+- Direct player-attack resolution is blocked; NPC/support attacks remain automatic.
+- The browser API exposes attack selection and combat-roll endpoints, but Draft 1 controls are not rendered yet.
 
-1. Selecting Attack creates one pending attack-roll prompt rather than rolling automatically.
-2. The prompt identifies the actor, target, modifier, Defense target, and Action cost.
-3. The player clicks the attack die exactly once.
-4. A miss resolves, consumes Action, and returns the remaining slots.
-5. A hit creates a separate pending damage-roll prompt.
-6. Damage cannot be rolled before a hit and cannot be rerolled after commitment.
-7. Refresh restores the exact pending attack or damage prompt.
-8. NPC/support attacks remain automatic and visible; their behavior rules remain a later user decision.
-9. Update tests and documents, commit, and publish before moving on.
+## Exact next decision checkpoint
 
-Do not reopen Draft 1 or silently define weapon-specific damage, range, movement, powers, conditions, or AI behavior during this checkpoint.
+Before connecting equipment to combat, ask the user to approve the minimum first-version **weapon and damage model**. Keep the questions small and limited to material gameplay choices:
+
+1. Whether weapon families use distinct damage dice or one common base die plus tags.
+2. Whether Strength/Dexterity modifies damage or only the attack roll.
+3. Whether critical hits double dice, maximize one die, or use another bounded rule.
+4. Whether switching an equipped weapon consumes Minor Interaction or Action.
+5. The smallest initial maneuver set, if any, beyond a normal attack.
+
+Do not silently choose these rules. The current generic d6 is only a combat-foundation placeholder, not an approved weapon system. After approval, implement the weapon/damage connection as its own tested and published checkpoint.
 
 ## Decisions that still require the user
 

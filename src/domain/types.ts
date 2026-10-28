@@ -279,7 +279,24 @@ export type CombatTurnSlot = "power" | "action" | "movement" | "minor_interactio
 export type CombatTurnBudget = {
   actorId: "PC-001";
   round: number;
-  slots: Record<CombatTurnSlot, "available" | "spent">;
+  slots: Record<CombatTurnSlot, "available" | "reserved" | "spent">;
+};
+
+export type PendingCombatRoll = {
+  rollId: string;
+  phase: "attack" | "damage";
+  actorId: "PC-001";
+  targetId: string;
+  actorName: string;
+  targetName: string;
+  attackModifier: number;
+  targetDefense: number;
+  damageDie: 4 | 6 | 8 | 10 | 12;
+  damageDice: 1 | 2;
+  attackRoll: number | null;
+  attackTotal: number | null;
+  critical: boolean;
+  createdTurn: number;
 };
 
 export type EncounterCombatant = {
@@ -308,6 +325,7 @@ export type CombatEncounter = {
   round: number;
   currentTurnIndex: number;
   turnBudget?: CombatTurnBudget | null;
+  pendingPlayerRoll?: PendingCombatRoll | null;
   combatants: EncounterCombatant[];
   availableExits: Array<"escape" | "surrender" | "negotiation">;
   createdTurn: number;
