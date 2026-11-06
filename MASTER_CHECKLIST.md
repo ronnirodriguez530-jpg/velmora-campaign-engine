@@ -10,6 +10,8 @@ This is the single top-level checklist for the entire Velmora campaign and appli
 - **Missing:** required work has not been created.
 - **Later:** deliberately excluded from the first playable release.
 
+Subsystem status does not by itself prove integration. Every first-release feature must also pass the seven gates in `SYSTEM_INTEGRATION_MATRIX.md`: definition, state, mechanics, Campaign Master authority, context/visibility, player surface, and recovery proof.
+
 ## Level 1 — Playable foundation
 
 ### 1. World canon — Complete foundation
@@ -154,6 +156,8 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 - [x] Quick, standard, and set-piece combat modes with bounded participant limits
 - [x] Persistent initiative and four-slot player turn-controller foundation
 - [x] Refresh-safe player-clicked attack and damage-roll pipeline
+- [x] Approved V1 weapon foundation: light d6, standard d8, heavy d10; relevant Strength/Dexterity adds to attack and damage; criticals double weapon dice; combat switching costs Minor Interaction
+- [ ] Connect typed weapon definitions, actual equipped inventory, derived combat values, and Minor Interaction switching
 - [ ] Draft 1 browser controls and complete player-facing turn flow
 - [ ] Condensed handling for groups and supporting NPCs
 - [ ] Actions, targets, damage, defense, conditions, and defeat
@@ -338,9 +342,10 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 130 of 130 tests
+- [x] Current automated suite passes 141 of 141 tests
 - [x] Isolated multi-path Simulation Runner
-- [ ] Tests for player characters, quests, combat, items, powers, and progression
+- [x] Isolated tests for player characters, quests, combat, items, powers, and progression
+- [ ] Cross-module integration tests for every seven-gate feature path
 - [ ] Full-campaign multi-path simulations
 - [ ] Real-provider behavior and regression evaluations
 - [ ] Browser interaction and accessibility testing
@@ -430,7 +435,7 @@ Approved progression bridge: the engine can validate one designated major object
 5. Establish and implement the minimum powers, items, and progression data.
 6. Build the generative Quest Engine and validated reusable quest structures.
 7. Build the minimum combat vertical slice.
-8. Connect factions, Tear events, locations, and NPCs to quests and consequences.
+8. Complete the bridge order in `SYSTEM_INTEGRATION_MATRIX.md`, beginning with weapon/inventory/combat and encounter authority.
 9. Complete the DM Core using only systems that actually exist.
 10. Finish the browser interfaces for those systems.
 11. Run local multi-path, rollback, browser, and endurance tests.
@@ -443,6 +448,10 @@ Approved progression bridge: the engine can validate one designated major object
 
 Velmora has completed the working foundations through step 5, the tested generative Quest Engine foundation in step 6, and the first bounded combat-state checkpoint in step 7. The strict quest contract, approved tagged modular composer, adaptive objective flow, exact causal outcomes, unexpected-solution handling, meaningful alternative validation, bounded Campaign Master controls, atomic consequences, visibility separation, recoverable ordinary failure, warning and neglect execution, evidence-backed route invalidation, progression bridge, persistence, rollback, compact Quest journal, sustained isolated multi-thread stress simulations, and automatic cloud semantic/sequence originality review now work. The d6 opening, adaptive pre-strike exploration, witnessed First Speaker strike, hidden crisis, first formal quest, persistent encounter state, initiative, attacks, HP, defeat, victory, and noncombat exits are integrated at the engine level. Player-facing combat, conditions, creature behavior, pacing enforcement, real-provider sustained play evaluation, and the complete DM Core do not yet exist.
 
+The refreshed integration audit confirms that opening/story/NPC/quest/noncombat play forms the current connected core. Combat, inventory, powers, progression, Tear payloads, creatures, relics, and several browser surfaces remain partial or isolated until they pass all seven gates. See `SYSTEM_INTEGRATION_MATRIX.md` and `GHOST_FEATURE_AUDIT.md`.
+
 ## Checkpoint discipline
 
 Each completed implementation section must update this checklist, pass the full automated suite, receive a local Git commit, and be pushed to the public GitHub `main` branch before the section is reported complete. Partial work must remain clearly marked partial and must not be described as playable functionality.
+
+No feature may be called integrated merely because it has tags, catalog prose, schema, isolated functions, API output, or unit tests. All applicable integration gates must pass.

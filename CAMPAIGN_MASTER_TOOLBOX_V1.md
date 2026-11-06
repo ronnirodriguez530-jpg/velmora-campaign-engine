@@ -31,18 +31,20 @@ The Campaign Master cannot directly edit the database, rewrite canon, change sch
 | Location and world tools | Move the player, record durable location consequences, and schedule bounded Tear activity | Partial scaffold |
 | Action and dice tools | Decide automatic versus uncertain action, create a hidden-DC check, accept the player's roll, and resolve approved outcome bands | Working foundation |
 | Character tools | Maintain the persistent player character and approved derived statistics | Working foundation |
-| Power tools | Maintain approved power definitions, ownership, sustained activation, and protected Level 3 acquisition | Working foundation |
-| Inventory tools | Maintain item definitions, quantities, equipment slots, consumption, and defense effects | Working foundation |
-| Progression tools | Award validated story milestones and apply explicitly approved ability or proficiency improvements | Working foundation |
+| Power tools | Maintain approved power definitions, ownership, sustained activation, and protected Level 3 acquisition | Isolated application foundation; no Campaign Master use/effect tool or browser surface |
+| Inventory tools | Maintain item definitions, quantities, equipment slots, consumption, and defense effects | Isolated application foundation; no Campaign Master item-use tool or functional Inventory page |
+| Progression tools | Award validated story milestones and apply explicitly approved ability or proficiency improvements | Partial bridge through quest rewards; no Campaign Master spending tool or browser surface |
 | Reference retrieval | Retrieve bounded abstract craft principles from repository libraries without copying source content or browsing during play | Working quest/NPC foundation |
 | Originality review | Enforce internal phrase checks and cloud semantic/sequence review before referenced quest generation persists | Working for cloud-requested quests |
 | Scene presentation | Turn validated state into player-facing narration, dialogue, atmosphere, and suggested actions | Cloud adapter working; sustained real-provider evaluation pending |
 | Journal | Show active quests and the latest five meaningful player-known events as a compact reminder | Working |
 | Persistence and rollback | Store accepted changes, checkpoints, event history, save continuity, and one-turn restoration | Working foundation |
-| Combat tools | Initiative, turns, attacks, damage, defense, conditions, defeat, escape, surrender, and encounter resolution | Working state/rules foundation; Campaign Master, conditions, and browser integration pending |
+| Combat tools | Initiative, turns, attacks, damage, defense, conditions, defeat, escape, surrender, and encounter resolution | Isolated state/rules/API foundation; Campaign Master authority, conditions, inventory connection, and browser integration pending |
 | Adaptive DM tools | Track player tendencies, craft performance, motifs, repetition, and tool-use effectiveness | Designed; not built |
 
 This table describes capabilities, not autonomous agents. The Campaign Master uses only the tools justified by the current moment.
+
+“Foundation” does not mean integrated. `SYSTEM_INTEGRATION_MATRIX.md` is authoritative for whether a tool family crosses definition, state, mechanics, Campaign Master authority, context, browser, and recovery proof.
 
 ## Bounded learning contract
 

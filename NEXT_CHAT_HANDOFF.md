@@ -8,6 +8,7 @@ Continue from this file, then read:
 2. `COMBAT_SYSTEM_V1.md` — implemented combat-engine boundary.
 3. `COMBAT_INTERFACE_DRAFT_1.md` — approved first-version combat experience.
 4. `CAMPAIGN_MASTER_TOOLBOX_V1.md` — authoritative single Campaign Master/toolbox architecture.
+5. `SYSTEM_INTEGRATION_MATRIX.md` — authoritative cross-system connection audit and bridge order.
 
 Do not use the opening section of `PROJECT_STATUS.md` as current status; that file is a preserved chronological record.
 
@@ -106,6 +107,16 @@ Before connecting equipment to combat, ask the user to approve the minimum first
 5. The smallest initial maneuver set, if any, beyond a normal attack.
 
 Do not silently choose these rules. The current generic d6 is only a combat-foundation placeholder, not an approved weapon system. After approval, implement the weapon/damage connection as its own tested and published checkpoint.
+
+Approved since the initial handoff:
+
+- Light weapons use d6, standard weapons d8, and heavy weapons d10.
+- Relevant Strength or Dexterity modifies both attack and damage.
+- Critical hits double weapon dice and add the modifier once.
+- Switching weapons in combat costs Minor Interaction.
+- Initial maneuver scope remains undecided.
+
+The refreshed ghost-feature audit now takes priority over adding isolated mechanics. Use `SYSTEM_INTEGRATION_MATRIX.md` and complete its bridge order. The first implementation bridge remains weapon → inventory/equipment → combat → browser/save/rollback.
 
 ## Decisions that still require the user
 
