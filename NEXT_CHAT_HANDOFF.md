@@ -1,5 +1,7 @@
 # Velmora — Next Chat Handoff
 
+Before further feature implementation, use `PROJECT_BIRDSEYE_AUDIT.md` to complete the whole-project reconciliation against the master checklist. Preserve useful runtime, design, reference, QA, map, and historical material; correct status drift rather than deleting it.
+
 ## Start here
 
 Continue from this file, then read:

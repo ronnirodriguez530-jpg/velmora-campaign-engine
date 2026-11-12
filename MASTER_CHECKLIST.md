@@ -1,5 +1,7 @@
 # Velmora Master Checklist
 
+For a current whole-project reconciliation of functional, partial, reference-only, and historical material, see `PROJECT_BIRDSEYE_AUDIT.md`. This checklist remains the only overall roadmap.
+
 This is the single top-level checklist for the entire Velmora campaign and application. Work proceeds in order. New ideas must be placed inside an existing section or explicitly added here before design or implementation begins.
 
 ## Status key
