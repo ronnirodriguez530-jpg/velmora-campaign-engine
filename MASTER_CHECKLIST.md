@@ -193,7 +193,7 @@ Implemented power scope: one sustained magical effect may be active at a time, a
 - [ ] Faction goods and basic city economy
 - [ ] Rewards, scarcity, acquisition, loss, and recovery
 
-Implemented item scope: eight bounded definitions prove every first-release item category. Weapons have no damage yet, consumables have no healing value, and the economy does not exist. See `ITEM_SYSTEM_V1.md`.
+Implemented item scope: eight bounded definitions prove every first-release item category. Typed weapons now drive equipped combat attack and damage values; consumables still have no healing value, and the economy does not exist. See `ITEM_SYSTEM_V1.md` and `WEAPON_SYSTEM_V1.md`.
 
 ### 11. Advancement — Working foundation
 
@@ -436,6 +436,8 @@ Approved progression bridge: the engine can validate one designated major object
 6. Build the generative Quest Engine and validated reusable quest structures.
 7. Build the minimum combat vertical slice.
 8. Complete the bridge order in `SYSTEM_INTEGRATION_MATRIX.md`, beginning with weapon/inventory/combat and encounter authority.
+
+Function-level work, dependencies, and unresolved decisions are tracked in `FUNCTION_BUILD_QUEUE.md`. A newly identified capability must be logged there before implementation or deferral so it cannot be lost between chats.
 9. Complete the DM Core using only systems that actually exist.
 10. Finish the browser interfaces for those systems.
 11. Run local multi-path, rollback, browser, and endurance tests.

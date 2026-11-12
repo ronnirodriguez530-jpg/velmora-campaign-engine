@@ -102,6 +102,8 @@ Mocked and local tests prove contracts. They do not prove that a live Campaign M
 
 Work proceeds in dependency order. Each line is a separate tested and public GitHub checkpoint:
 
+The concrete functions and unresolved decisions inside these bridges are tracked by stable IDs in `FUNCTION_BUILD_QUEUE.md`.
+
 1. **Weapon/inventory/combat bridge — COMPLETE** — typed weapon mechanics, d4+Strength unarmed fallback, equipped-weapon derivation, Minor Interaction switching, and combat use from actual inventory.
 2. **Encounter authority bridge** — validated Campaign Master encounter start, participant construction, exit/outcome propagation, and quest/world consequences.
 3. **Draft 1 combat browser bridge** — real categories, legal options, targets, player-clicked rolls, remaining slots, dialogue feed, and refresh recovery.

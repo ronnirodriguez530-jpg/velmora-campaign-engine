@@ -111,6 +111,8 @@ Approved since the initial handoff:
 
 The refreshed ghost-feature audit takes priority over adding isolated mechanics. Use `SYSTEM_INTEGRATION_MATRIX.md` and complete its bridge order. The next implementation bridge is validated Campaign Master encounter authority.
 
+Use `FUNCTION_BUILD_QUEUE.md` as the authoritative function-level queue. FBQ-001 records the encounter-authority requirements and preserves the unresolved enemy/support combat-stat assignment decision; do not choose that rule silently or lose it during implementation.
+
 ## Decisions that still require the user
 
 Stop and ask before fixing rules for:
