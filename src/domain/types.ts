@@ -292,6 +292,9 @@ export type PendingCombatRoll = {
   attackModifier: number;
   targetDefense: number;
   damageDie: 4 | 6 | 8 | 10 | 12;
+  damageModifier: number;
+  attackSourceId: string;
+  attackSourceName: string;
   damageDice: 1 | 2;
   attackRoll: number | null;
   attackTotal: number | null;
@@ -311,6 +314,9 @@ export type EncounterCombatant = {
   initiativeTotal: number;
   attackBonus: number;
   damageDie: 4 | 6 | 8 | 10 | 12;
+  damageModifier?: number;
+  attackSourceId?: string;
+  attackSourceName?: string;
   status: EncounterCombatantStatus;
 };
 
@@ -361,6 +367,14 @@ export type PlayerPower = {
 export type ItemCategory = "weapon" | "armor" | "shield" | "consumable" | "tool" | "relic" | "quest";
 export type EquipmentSlot = "main_hand" | "off_hand" | "body" | "utility";
 export type ItemAcquisitionSource = "starting" | "found" | "reward" | "purchased" | "crafted" | "given";
+export type WeaponClass = "light" | "standard" | "heavy";
+export type WeaponAbility = "strength" | "dexterity" | "strength_or_dexterity";
+
+export type WeaponProfile = {
+  class: WeaponClass;
+  damageDie: 6 | 8 | 10;
+  ability: WeaponAbility;
+};
 
 export type ItemDefinition = {
   id: string;
@@ -371,6 +385,7 @@ export type ItemDefinition = {
   maxStack: number;
   equipmentSlot: EquipmentSlot | null;
   defenseBonus: number;
+  weapon: WeaponProfile | null;
   tags: string[];
   limits: string[];
 };

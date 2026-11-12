@@ -157,7 +157,7 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 - [x] Persistent initiative and four-slot player turn-controller foundation
 - [x] Refresh-safe player-clicked attack and damage-roll pipeline
 - [x] Approved V1 weapon foundation: light d6, standard d8, heavy d10; relevant Strength/Dexterity adds to attack and damage; criticals double weapon dice; combat switching costs Minor Interaction
-- [ ] Connect typed weapon definitions, actual equipped inventory, derived combat values, and Minor Interaction switching
+- [x] Connect typed weapon definitions, actual equipped inventory, derived combat values, d4+Strength unarmed fallback, and Minor Interaction switching
 - [ ] Draft 1 browser controls and complete player-facing turn flow
 - [ ] Condensed handling for groups and supporting NPCs
 - [ ] Actions, targets, damage, defense, conditions, and defeat
@@ -165,7 +165,7 @@ The exact DC remains Director-only. Pending checks survive refreshes, resolved d
 - [x] Escape, surrender, and negotiation resolution paths
 - [ ] Approximately 65/35 story-to-combat pacing target
 
-Implemented combat scope: one active persistent encounter, initiative order, rounds, current actor, opposing targets, d20 attacks, Defense, bounded damage dice, critical hits, HP, defeat, victory, and noncombat exits. The player now receives a persistent Power/Action/Movement/Minor Interaction budget; attacks and exits spend Action, remaining slots survive until explicit End Turn, legal-option reasons enter the browser payload, older saves receive safe defaults, and rollback restores the budget. Player attacks require a refresh-safe clicked attack prompt followed by a separate damage prompt only after a hit; committed roll IDs cannot be reused, while NPC/support attacks remain automatic. Encounter actions commit atomically. Weapon-specific damage, movement/range execution, powers, Bag use, minor interactions, custom-action splitting, conditions, Downed recovery, creature AI, condensed groups, Draft 1 browser controls, Campaign Master integration, and pacing enforcement remain unfinished. See `COMBAT_SYSTEM_V1.md` and `COMBAT_INTERFACE_DRAFT_1.md`.
+Implemented combat scope: one active persistent encounter, initiative order, rounds, current actor, opposing targets, d20 attacks, Defense, bounded damage dice, critical hits, HP, defeat, victory, and noncombat exits. The player now receives a persistent Power/Action/Movement/Minor Interaction budget; attacks and exits spend Action, remaining slots survive until explicit End Turn, legal-option reasons enter the browser payload, older saves receive safe defaults, and rollback restores the budget. Player attacks require a refresh-safe clicked attack prompt followed by a separate damage prompt only after a hit; committed roll IDs cannot be reused, while NPC/support attacks remain automatic. Typed light/standard/heavy weapons derive attack and damage from actual equipped inventory, criticals double dice and add the modifier once, unarmed attacks use d4+Strength, and combat weapon switching atomically spends Minor Interaction. Movement/range execution, maneuvers, powers, Bag use, other minor interactions, custom-action splitting, conditions, Downed recovery, creature AI, condensed groups, Draft 1 browser controls, Campaign Master integration, and pacing enforcement remain unfinished. See `COMBAT_SYSTEM_V1.md`, `WEAPON_SYSTEM_V1.md`, and `COMBAT_INTERFACE_DRAFT_1.md`.
 
 ### 9. Powers, magic, and abilities — Partial
 
@@ -342,7 +342,7 @@ Approved progression bridge: the engine can validate one designated major object
 
 ### 19. Testing and quality assurance — Partial
 
-- [x] Current automated suite passes 141 of 141 tests
+- [x] Current automated suite passes 143 of 143 tests
 - [x] Isolated multi-path Simulation Runner
 - [x] Isolated tests for player characters, quests, combat, items, powers, and progression
 - [ ] Cross-module integration tests for every seven-gate feature path

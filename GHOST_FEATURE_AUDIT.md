@@ -32,7 +32,7 @@ These systems have real persisted state, executable rules, validation, and tests
 A feature below may contain real code. It remains a ghost or island because its complete operating path is missing.
 
 1. **Combat** — engine and API foundations exist, but the Campaign Master cannot start/manage encounters through the validated turn plan and the Draft 1 combat screen is not rendered.
-2. **Inventory** — records and equipment work, but no Campaign Master item tools or functional Inventory page exist; weapons do not yet drive combat statistics.
+2. **Inventory** — weapon and Defense equipment now drive engine mechanics, but no Campaign Master item tools or functional Inventory page exists and broader item use remains isolated.
 3. **Powers** — ownership/activation work, but powers have no approved combat/noncombat effects, validated use authority, or player interface.
 4. **Progression** — milestone and spending logic work, but players cannot view and spend opportunities in the browser.
 5. **Tear payloads** — arrival records exist, but payload labels do not instantiate creatures, alterations, relics, or durable world events.

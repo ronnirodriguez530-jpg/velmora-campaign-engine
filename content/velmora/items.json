@@ -8,8 +8,13 @@
     "maxStack": 1,
     "equipmentSlot": "main_hand",
     "defenseBonus": 0,
+    "weapon": {
+      "class": "light",
+      "damageDie": 6,
+      "ability": "strength_or_dexterity"
+    },
     "tags": ["mundane", "close-range", "tool"],
-    "limits": ["Damage and attack properties remain unavailable until combat rules exist."]
+    "limits": ["Uses the better of Strength or Dexterity for attack and damage."]
   },
   {
     "id": "ITM-SCRAP-CROSSBOW",
@@ -20,8 +25,13 @@
     "maxStack": 1,
     "equipmentSlot": "main_hand",
     "defenseBonus": 0,
+    "weapon": {
+      "class": "standard",
+      "damageDie": 8,
+      "ability": "dexterity"
+    },
     "tags": ["mundane", "ranged", "scrap-built"],
-    "limits": ["Ammunition, range, damage, and reload rules remain unavailable until combat exists."]
+    "limits": ["Ammunition, range, and reload rules remain unavailable until approved."]
   },
   {
     "id": "ITM-REINFORCED-COAT",
@@ -32,6 +42,7 @@
     "maxStack": 1,
     "equipmentSlot": "body",
     "defenseBonus": 1,
+    "weapon": null,
     "tags": ["mundane", "light-armor", "protective"],
     "limits": ["Grants only its listed defense bonus and provides no immunity or damage reduction."]
   },
@@ -44,6 +55,7 @@
     "maxStack": 1,
     "equipmentSlot": "off_hand",
     "defenseBonus": 1,
+    "weapon": null,
     "tags": ["magic-tech", "shield", "scrap-built"],
     "limits": ["Grants only its listed defense bonus until blocking and charge rules exist."]
   },
@@ -56,6 +68,7 @@
     "maxStack": 5,
     "equipmentSlot": null,
     "defenseBonus": 0,
+    "weapon": null,
     "tags": ["medical", "single-use", "mundane"],
     "limits": ["Can be consumed, but healing values remain unavailable until recovery rules exist."]
   },
@@ -68,6 +81,7 @@
     "maxStack": 1,
     "equipmentSlot": "utility",
     "defenseBonus": 0,
+    "weapon": null,
     "tags": ["magic-tech", "detection", "containment"],
     "limits": ["Detects instability only in the current scene and cannot reveal hidden story truth."]
   },
@@ -80,6 +94,7 @@
     "maxStack": 1,
     "equipmentSlot": "off_hand",
     "defenseBonus": 0,
+    "weapon": null,
     "tags": ["relic", "suppression", "containment"],
     "limits": ["Cannot suppress the central Tear, a stage-locked truth, or magic above its eventual approved strength."]
   },
@@ -92,6 +107,7 @@
     "maxStack": 1,
     "equipmentSlot": null,
     "defenseBonus": 0,
+    "weapon": null,
     "tags": ["quest", "evidence", "council"],
     "limits": ["Possession does not reveal the records' contents or create a quest without validated story authority."]
   }

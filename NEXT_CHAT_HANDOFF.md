@@ -18,7 +18,7 @@ Do not use the opening section of `PROJECT_STATUS.md` as current status; that fi
 - Branch: `main`
 - Current public commit is recorded by Git history; verify local `main` matches `origin/main` before changing files.
 - Version: `0.6.0`
-- Full automated suite after the current combat-roll checkpoint: **141/141 passing**
+- Full automated suite after the weapon/inventory/combat bridge: **143/143 passing**
 - Work through the combat-state foundation is implemented.
 - Combat Interface Draft 1 is approved as a specification but is not yet implemented in the browser.
 
@@ -96,17 +96,9 @@ The refresh-safe player-clicked combat-roll foundation is also implemented:
 - Direct player-attack resolution is blocked; NPC/support attacks remain automatic.
 - The browser API exposes attack selection and combat-roll endpoints, but Draft 1 controls are not rendered yet.
 
-## Exact next decision checkpoint
+## Completed weapon bridge
 
-Before connecting equipment to combat, ask the user to approve the minimum first-version **weapon and damage model**. Keep the questions small and limited to material gameplay choices:
-
-1. Whether weapon families use distinct damage dice or one common base die plus tags.
-2. Whether Strength/Dexterity modifies damage or only the attack roll.
-3. Whether critical hits double dice, maximize one die, or use another bounded rule.
-4. Whether switching an equipped weapon consumes Minor Interaction or Action.
-5. The smallest initial maneuver set, if any, beyond a normal attack.
-
-Do not silently choose these rules. The current generic d6 is only a combat-foundation placeholder, not an approved weapon system. After approval, implement the weapon/damage connection as its own tested and published checkpoint.
+The generic player d6 placeholder has been removed. Typed weapon mechanics now flow from actual equipped inventory into combat attack/damage values, player prompts, event history, persistence, and rollback. Switching weapons during combat costs Minor Interaction. A player without an equipped weapon always has a d4+Strength unarmed attack.
 
 Approved since the initial handoff:
 
@@ -114,9 +106,10 @@ Approved since the initial handoff:
 - Relevant Strength or Dexterity modifies both attack and damage.
 - Critical hits double weapon dice and add the modifier once.
 - Switching weapons in combat costs Minor Interaction.
+- Unarmed attacks use d4 plus Strength and remain always available.
 - Initial maneuver scope remains undecided.
 
-The refreshed ghost-feature audit now takes priority over adding isolated mechanics. Use `SYSTEM_INTEGRATION_MATRIX.md` and complete its bridge order. The first implementation bridge remains weapon → inventory/equipment → combat → browser/save/rollback.
+The refreshed ghost-feature audit takes priority over adding isolated mechanics. Use `SYSTEM_INTEGRATION_MATRIX.md` and complete its bridge order. The next implementation bridge is validated Campaign Master encounter authority.
 
 ## Decisions that still require the user
 

@@ -18,6 +18,10 @@ This checkpoint establishes the minimum persistent theater-of-the-mind combat st
 - Combat-turn state in the browser API, including safe defaults for older active encounters
 - Player-clicked attack rolls followed by a separate damage prompt only after a hit
 - Refresh-safe pending combat rolls, Action reservation, committed-roll protection, and browser API actions for attack selection and rolling
+- Typed light/standard/heavy weapon damage derived from actual equipped inventory
+- d4 plus Strength unarmed fallback when no weapon is equipped
+- Strength/Dexterity attack and damage modifiers, with criticals doubling dice only
+- Atomic combat weapon switching through Minor Interaction, including rollback
 - Automatic NPC/support attack resolution remains separate from the protected player-clicked path
 - Atomic encounter actions, durable audit events, save compatibility, and one-turn rollback
 

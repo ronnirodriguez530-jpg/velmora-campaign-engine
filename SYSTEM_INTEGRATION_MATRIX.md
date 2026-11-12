@@ -41,8 +41,8 @@ Status key:
 | Location/world state | PASS | PASS | PARTIAL | PARTIAL | PASS | PARTIAL | PASS | Movement/consequence foundation only |
 | Player character | PASS | PASS | PASS | PARTIAL | PASS | PASS | PASS | Core character integrated; background, role, ties, recovery, and party missing |
 | Noncombat action and dice | PASS | PASS | PASS | PASS | PASS | PASS | PASS | Integrated foundation |
-| Combat encounter state | PASS | PASS | PARTIAL | MISSING | PARTIAL | MISSING | PASS | Real isolated engine; not in normal Campaign Master/browser loop |
-| Inventory/equipment | PASS | PASS | PARTIAL | MISSING | PASS | MISSING | PASS | Ownership/equipment/Defense work; use and player loop missing |
+| Combat encounter state | PASS | PASS | PARTIAL | MISSING | PARTIAL | MISSING | PASS | Equipped weapons now drive attacks; encounter authority and browser loop still missing |
+| Inventory/equipment | PASS | PASS | PARTIAL | MISSING | PASS | MISSING | PASS | Weapon/Defense equipment mechanics work; broader item use and player loop missing |
 | Powers/abilities | PASS | PASS | PARTIAL | MISSING | PASS | MISSING | PASS | Ownership/sustained activation work; effects and use loop missing |
 | Progression | PASS | PASS | PASS | PARTIAL | PASS | MISSING | PASS | Quest reward bridge works; player spending surface and wider rewards missing |
 | Tear/Surge events | PARTIAL | PASS | PARTIAL | MISSING | PARTIAL | PARTIAL | PARTIAL | Arrival records exist; payloads do not act on the world |
@@ -102,7 +102,7 @@ Mocked and local tests prove contracts. They do not prove that a live Campaign M
 
 Work proceeds in dependency order. Each line is a separate tested and public GitHub checkpoint:
 
-1. **Weapon/inventory/combat bridge** — typed weapon mechanics, equipped-weapon derivation, Minor Interaction switching, and combat use from actual inventory.
+1. **Weapon/inventory/combat bridge — COMPLETE** — typed weapon mechanics, d4+Strength unarmed fallback, equipped-weapon derivation, Minor Interaction switching, and combat use from actual inventory.
 2. **Encounter authority bridge** — validated Campaign Master encounter start, participant construction, exit/outcome propagation, and quest/world consequences.
 3. **Draft 1 combat browser bridge** — real categories, legal options, targets, player-clicked rolls, remaining slots, dialogue feed, and refresh recovery.
 4. **Power-use bridge** — approved costs/limits/effects, Power-slot use, validated authority, and browser controls.

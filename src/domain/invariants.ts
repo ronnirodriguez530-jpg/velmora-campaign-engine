@@ -119,6 +119,16 @@ export function validateContent(content: VelmoraContent): void {
     assert(item.stackable || item.maxStack === 1, `Non-stackable item ${item.id} must have a maximum stack of one`);
     assert(item.defenseBonus >= 0 && item.defenseBonus <= 2, `Item ${item.id} defense bonus must be 0-2`);
     assert(item.equipmentSlot !== null || item.defenseBonus === 0, `Unequippable item ${item.id} cannot grant defense`);
+    if (item.category === "weapon") {
+      assert(item.equipmentSlot === "main_hand", `Weapon ${item.id} must equip in the main hand`);
+      assert(item.weapon !== null, `Weapon ${item.id} requires typed weapon mechanics`);
+      assert(["light", "standard", "heavy"].includes(item.weapon!.class), `Weapon ${item.id} has an invalid class`);
+      const expectedDie = item.weapon!.class === "light" ? 6 : item.weapon!.class === "standard" ? 8 : 10;
+      assert(item.weapon!.damageDie === expectedDie, `Weapon ${item.id} damage die must match its class`);
+      assert(["strength", "dexterity", "strength_or_dexterity"].includes(item.weapon!.ability), `Weapon ${item.id} has an invalid attack ability`);
+    } else {
+      assert(item.weapon === null, `Non-weapon item ${item.id} cannot define weapon mechanics`);
+    }
     assert(item.tags.length > 0 && item.limits.length > 0, `Item ${item.id} requires tags and explicit limits`);
   }
 

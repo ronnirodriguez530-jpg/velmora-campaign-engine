@@ -24,5 +24,15 @@ test("approved Velmora foundation content validates", async () => {
   assert.equal(content.powers.find((power) => power.id === "PWR-WORLD-ANCHOR")?.requiresPlayerApproval, true);
   assert.equal(content.items.length, 8);
   assert.equal(content.items.find((item) => item.id === "ITM-WARDED-RIOT-SHIELD")?.defenseBonus, 1);
+  assert.deepEqual(content.items.find((item) => item.id === "ITM-FIELD-KNIFE")?.weapon, {
+    class: "light",
+    damageDie: 6,
+    ability: "strength_or_dexterity"
+  });
+  assert.deepEqual(content.items.find((item) => item.id === "ITM-SCRAP-CROSSBOW")?.weapon, {
+    class: "standard",
+    damageDie: 8,
+    ability: "dexterity"
+  });
   assert.equal(content.sceneTemplates.length, 4, "One clearly labeled mechanical scaffold exists per stage");
 });

@@ -1,7 +1,7 @@
 import { randomInt, randomUUID } from "node:crypto";
 import type { DatabaseSync } from "node:sqlite";
-import type { CombatEncounter, CombatTurnBudget, CombatTurnSlot, EncounterCombatant, EncounterMode, EncounterResolution, PendingCombatRoll, RollOutcome } from "../domain/types.ts";
-import { appendEvent, getActiveCombatEncounter, getPlayerCharacter, persistCombatEncounter, persistPlayerCharacter } from "../persistence/database.ts";
+import type { CombatEncounter, CombatTurnBudget, CombatTurnSlot, EncounterCombatant, EncounterMode, EncounterResolution, ItemDefinition, PendingCombatRoll, PlayerCharacter, RollOutcome, VelmoraContent } from "../domain/types.ts";
+import { appendEvent, getActiveCombatEncounter, getPlayerCharacter, listPlayerInventory, persistCombatEncounter, persistPlayerCharacter, persistPlayerInventoryItem } from "../persistence/database.ts";
 
 const MODE_LIMITS: Record<EncounterMode, { hostiles: number; total: number }> = {
   quick: { hostiles: 2, total: 4 },
@@ -18,6 +18,7 @@ export type EncounterParticipantInput = {
   initiativeModifier: number;
   attackBonus: number;
   damageDie: 4 | 6 | 8 | 10 | 12;
+  damageModifier?: number;
 };
 
 export type StartEncounterInput = {
@@ -83,6 +84,49 @@ function validateParticipant(participant: EncounterParticipantInput): void {
   if (!Number.isInteger(participant.initiativeModifier) || participant.initiativeModifier < -5 || participant.initiativeModifier > 10) throw new Error("Initiative modifier must be -5 to 10");
   if (!Number.isInteger(participant.attackBonus) || participant.attackBonus < -5 || participant.attackBonus > 15) throw new Error("Attack bonus must be -5 to 15");
   if (![4, 6, 8, 10, 12].includes(participant.damageDie)) throw new Error("Damage die must be d4, d6, d8, d10, or d12");
+  if (participant.damageModifier !== undefined && (!Number.isInteger(participant.damageModifier) || participant.damageModifier < -5 || participant.damageModifier > 15)) throw new Error("Damage modifier must be -5 to 15");
+}
+
+type PlayerAttackProfile = {
+  attackBonus: number;
+  damageDie: 4 | 6 | 8 | 10;
+  damageModifier: number;
+  attackSourceId: string;
+  attackSourceName: string;
+};
+
+function itemDefinition(content: VelmoraContent, itemId: string): ItemDefinition {
+  const definition = content.items.find((item) => item.id === itemId);
+  if (!definition) throw new Error(`Unknown item ${itemId}`);
+  return definition;
+}
+
+function playerAttackProfile(db: DatabaseSync, content: VelmoraContent | undefined, campaignId: string, character: PlayerCharacter): PlayerAttackProfile {
+  const equipped = listPlayerInventory(db, campaignId).find((item) => item.equippedSlot === "main_hand");
+  if (!equipped) {
+    return {
+      attackBonus: character.abilityModifiers.strength + character.proficiencyBonus,
+      damageDie: 4,
+      damageModifier: character.abilityModifiers.strength,
+      attackSourceId: "UNARMED",
+      attackSourceName: "Unarmed"
+    };
+  }
+  if (!content) throw new Error("Velmora content is required to derive an equipped weapon");
+  const definition = itemDefinition(content, equipped.itemId);
+  if (definition.category !== "weapon" || !definition.weapon) throw new Error(`Equipped main-hand item ${definition.name} is not a weapon`);
+  const abilityModifier = definition.weapon.ability === "strength"
+    ? character.abilityModifiers.strength
+    : definition.weapon.ability === "dexterity"
+      ? character.abilityModifiers.dexterity
+      : Math.max(character.abilityModifiers.strength, character.abilityModifiers.dexterity);
+  return {
+    attackBonus: abilityModifier + character.proficiencyBonus,
+    damageDie: definition.weapon.damageDie,
+    damageModifier: abilityModifier,
+    attackSourceId: definition.id,
+    attackSourceName: definition.name
+  };
 }
 
 function initiativeOrder(combatants: EncounterCombatant[]): EncounterCombatant[] {
@@ -93,7 +137,8 @@ export function startCombatEncounter(
   db: DatabaseSync,
   campaignId: string,
   input: StartEncounterInput,
-  rollD20: () => number = () => randomInt(1, 21)
+  rollD20: () => number = () => randomInt(1, 21),
+  content?: VelmoraContent
 ): CombatEncounter {
   if (getActiveCombatEncounter(db, campaignId)) throw new Error("Resolve the active encounter before starting another");
   const character = getPlayerCharacter(db, campaignId);
@@ -118,7 +163,7 @@ export function startCombatEncounter(
     return roll;
   };
   const playerRoll = makeRoll();
-  const playerAttackAbility = Math.max(character.abilityModifiers.strength, character.abilityModifiers.dexterity);
+  const playerAttack = playerAttackProfile(db, content, campaignId, character);
   const combatants: EncounterCombatant[] = [{
     combatantId: character.characterId,
     name: character.name,
@@ -129,13 +174,19 @@ export function startCombatEncounter(
     initiativeModifier: character.abilityModifiers.dexterity,
     initiativeRoll: playerRoll,
     initiativeTotal: playerRoll + character.abilityModifiers.dexterity,
-    attackBonus: playerAttackAbility + character.proficiencyBonus,
-    damageDie: 6,
+    attackBonus: playerAttack.attackBonus,
+    damageDie: playerAttack.damageDie,
+    damageModifier: playerAttack.damageModifier,
+    attackSourceId: playerAttack.attackSourceId,
+    attackSourceName: playerAttack.attackSourceName,
     status: character.currentHp === 0 ? "defeated" : "active"
   }, ...input.participants.map((participant) => {
     const roll = makeRoll();
     return {
       ...participant,
+      damageModifier: participant.damageModifier ?? 0,
+      attackSourceId: participant.combatantId,
+      attackSourceName: `${participant.name}'s attack`,
       currentHp: participant.maxHp,
       initiativeRoll: roll,
       initiativeTotal: roll + participant.initiativeModifier,
@@ -275,7 +326,7 @@ export function getPlayerCombatTurnView(db: DatabaseSync, campaignId: string): P
   const options: CombatOptionView[] = [{
     optionId: "fight.basic_attack",
     category: "fight",
-    label: "Attack",
+    label: `Attack — ${actor.attackSourceName ?? "Unarmed"}`,
     slotCosts: ["action"],
     available: isPlayerTurn && actionAvailable && opposingTargets.length > 0,
     unavailableReason: actionReason ?? (opposingTargets.length === 0 ? "No active hostile target remains" : null),
@@ -332,6 +383,56 @@ export function endPlayerCombatTurn(db: DatabaseSync, campaignId: string): Comba
   return encounter;
 }
 
+export function switchPlayerCombatWeapon(
+  db: DatabaseSync,
+  content: VelmoraContent,
+  campaignId: string,
+  itemId: string | null
+): CombatEncounter {
+  const encounter = activeEncounter(db, campaignId);
+  encounter.updatedTurn = campaignTurn(db, campaignId);
+  const actor = currentActor(encounter);
+  if (actor.side !== "player" || actor.combatantId !== "PC-001") throw new Error(`It is ${actor.name}'s turn`);
+  if (encounter.pendingPlayerRoll) throw new Error(`Complete the pending ${encounter.pendingPlayerRoll.phase} roll before switching weapons`);
+  requirePlayerSlots(encounter, ["minor_interaction"]);
+  const character = getPlayerCharacter(db, campaignId)!;
+  const inventory = listPlayerInventory(db, campaignId);
+  const equipped = inventory.find((item) => item.equippedSlot === "main_hand");
+  const target = itemId === null ? null : inventory.find((item) => item.itemId === itemId);
+  if (itemId !== null && !target) throw new Error(`Weapon ${itemId} is not owned by the player`);
+  const targetDefinition = target ? itemDefinition(content, target.itemId) : null;
+  if (targetDefinition && (targetDefinition.category !== "weapon" || !targetDefinition.weapon || targetDefinition.equipmentSlot !== "main_hand")) {
+    throw new Error(`${targetDefinition.name} is not a main-hand weapon`);
+  }
+  if ((equipped?.itemId ?? null) === itemId) throw new Error(itemId === null ? "The player is already unarmed" : `${targetDefinition!.name} is already equipped`);
+
+  db.exec("BEGIN IMMEDIATE");
+  try {
+    if (equipped) persistPlayerInventoryItem(db, { ...equipped, equippedSlot: null, updatedTurn: encounter.updatedTurn });
+    if (target) persistPlayerInventoryItem(db, { ...target, equippedSlot: "main_hand", updatedTurn: encounter.updatedTurn });
+    const profile = playerAttackProfile(db, content, campaignId, character);
+    actor.attackBonus = profile.attackBonus;
+    actor.damageDie = profile.damageDie;
+    actor.damageModifier = profile.damageModifier;
+    actor.attackSourceId = profile.attackSourceId;
+    actor.attackSourceName = profile.attackSourceName;
+    spendPlayerSlots(encounter, ["minor_interaction"]);
+    persistCombatEncounter(db, encounter);
+    appendEvent(db, campaignId, encounter.updatedTurn, "combat_weapon_switched", {
+      encounterId: encounter.encounterId,
+      previousItemId: equipped?.itemId ?? null,
+      itemId,
+      attackSourceName: profile.attackSourceName,
+      slotCost: "minor_interaction"
+    });
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
+  }
+  return encounter;
+}
+
 function requireAttackTarget(encounter: CombatEncounter, actor: EncounterCombatant, targetId: string): EncounterCombatant {
   const target = encounter.combatants.find((combatant) => combatant.combatantId === targetId);
   if (!target || target.status !== "active") throw new Error("Attack target must be an active combatant");
@@ -360,6 +461,9 @@ export function beginPlayerCombatAttack(db: DatabaseSync, campaignId: string, ta
     attackModifier: actor.attackBonus,
     targetDefense: target.defense,
     damageDie: actor.damageDie,
+    damageModifier: actor.damageModifier ?? 0,
+    attackSourceId: actor.attackSourceId ?? "UNARMED",
+    attackSourceName: actor.attackSourceName ?? "Unarmed",
     damageDice: 1,
     attackRoll: null,
     attackTotal: null,
@@ -377,6 +481,8 @@ export function beginPlayerCombatAttack(db: DatabaseSync, campaignId: string, ta
       targetId: target.combatantId,
       attackModifier: actor.attackBonus,
       targetDefense: target.defense,
+      attackSourceId: pending.attackSourceId,
+      attackSourceName: pending.attackSourceName,
       slotCost: "action"
     });
     db.exec("COMMIT");
@@ -448,7 +554,7 @@ export function rollPendingPlayerCombat(
 
   const dice = Array.from({ length: pending.damageDice }, () => rollDamage(pending.damageDie));
   if (!dice.every((die) => Number.isInteger(die) && die >= 1 && die <= pending.damageDie)) throw new Error("Damage source returned an invalid result");
-  const damage = dice.reduce((total, die) => total + die, 0);
+  const damage = Math.max(0, dice.reduce((total, die) => total + die, 0) + pending.damageModifier);
   target.currentHp = Math.max(0, target.currentHp - damage);
   if (target.currentHp === 0) target.status = "defeated";
   encounter.pendingPlayerRoll = null;
@@ -463,6 +569,9 @@ export function rollPendingPlayerCombat(
       actorId: actor.combatantId,
       targetId: target.combatantId,
       damageDie: pending.damageDie,
+      damageModifier: pending.damageModifier,
+      attackSourceId: pending.attackSourceId,
+      attackSourceName: pending.attackSourceName,
       dice,
       damage,
       critical: pending.critical,
@@ -512,7 +621,7 @@ export function resolveCombatAttack(
     const first = rollDamage(actor.damageDie);
     const second = critical ? rollDamage(actor.damageDie) : 0;
     if (![first, second].every((roll) => Number.isInteger(roll)) || first < 1 || first > actor.damageDie || second < 0 || second > actor.damageDie) throw new Error("Damage source returned an invalid result");
-    damage = first + second;
+    damage = Math.max(0, first + second + (actor.damageModifier ?? 0));
     target.currentHp = Math.max(0, target.currentHp - damage);
     if (target.currentHp === 0) target.status = "defeated";
   }
@@ -524,7 +633,21 @@ export function resolveCombatAttack(
       persistPlayerCharacter(db, { ...character, currentHp: target.currentHp, updatedTurn: encounter.updatedTurn });
     }
     commitEncounter(db, encounter, resolution);
-    appendEvent(db, campaignId, encounter.updatedTurn, "combat_attack_resolved", { encounterId: encounter.encounterId, actorId, targetId, attackRoll, attackTotal, hit, critical, damage, resolution });
+    appendEvent(db, campaignId, encounter.updatedTurn, "combat_attack_resolved", {
+      encounterId: encounter.encounterId,
+      actorId,
+      targetId,
+      attackRoll,
+      attackTotal,
+      hit,
+      critical,
+      damageDie: actor.damageDie,
+      damageModifier: actor.damageModifier ?? 0,
+      attackSourceId: actor.attackSourceId ?? actor.combatantId,
+      attackSourceName: actor.attackSourceName ?? `${actor.name}'s attack`,
+      damage,
+      resolution
+    });
     db.exec("COMMIT");
   } catch (error) {
     db.exec("ROLLBACK");

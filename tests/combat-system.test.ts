@@ -4,7 +4,8 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { loadVelmoraContent } from "../src/application/campaign-loader.ts";
-import { beginPlayerCombatAttack, endPlayerCombatTurn, getPlayerCombatTurnView, resolveCombatAttack, resolveCombatExit, rollPendingPlayerCombat, startCombatEncounter, type StartEncounterInput } from "../src/application/combat-system.ts";
+import { beginPlayerCombatAttack, endPlayerCombatTurn, getPlayerCombatTurnView, resolveCombatAttack, resolveCombatExit, rollPendingPlayerCombat, startCombatEncounter, switchPlayerCombatWeapon, type StartEncounterInput } from "../src/application/combat-system.ts";
+import { addPlayerItem, equipPlayerItem, listOwnedInventory } from "../src/application/inventory-system.ts";
 import { createPlayerCharacter, type PlayerCharacterInput } from "../src/application/player-character.ts";
 import { captureSnapshot, createCampaign, getActiveCombatEncounter, getPlayerCharacter, insertCheckpoint, listCombatEncounters, openDatabase, restorePreviousTurn } from "../src/persistence/database.ts";
 
@@ -37,7 +38,7 @@ async function setup(name: string) {
   const db = openDatabase(join(mkdtempSync(join(tmpdir(), "velmora-combat-test-")), "test.sqlite"));
   const campaignId = createCampaign(db, content, name, `${name}-seed`);
   createPlayerCharacter(db, campaignId, characterInput);
-  return { db, campaignId };
+  return { db, campaignId, content };
 }
 
 function sequence(...values: number[]): () => number {
@@ -246,5 +247,59 @@ test("attack and damage prompts persist separately and cannot be bypassed or rer
     assert.equal(getPlayerCombatTurnView(db, campaignId).pendingRoll, null);
     assert.equal(getPlayerCombatTurnView(db, campaignId).slots?.action, "spent");
     assert.throws(() => rollPendingPlayerCombat(db, campaignId, damagePrompt.rollId), /not pending/);
+  } finally { db.close(); }
+});
+
+test("derives unarmed and equipped-weapon attacks from the saved character and inventory", async () => {
+  const unarmed = await setup("combat-unarmed-profile");
+  try {
+    const encounter = startCombatEncounter(unarmed.db, unarmed.campaignId, { ...quickEncounter, participants: [{ ...quickEncounter.participants[0]!, maxHp: 20 }] }, sequence(18, 7), unarmed.content);
+    const player = encounter.combatants.find((entry) => entry.combatantId === "PC-001")!;
+    assert.equal(player.attackSourceId, "UNARMED");
+    assert.equal(player.damageDie, 4);
+    assert.equal(player.damageModifier, 0);
+    assert.equal(player.attackBonus, 2);
+  } finally { unarmed.db.close(); }
+
+  const armed = await setup("combat-equipped-profile");
+  try {
+    addPlayerItem(armed.db, armed.content, armed.campaignId, { itemId: "ITM-FIELD-KNIFE", source: "starting" });
+    equipPlayerItem(armed.db, armed.content, armed.campaignId, "ITM-FIELD-KNIFE");
+    const encounter = startCombatEncounter(armed.db, armed.campaignId, { ...quickEncounter, participants: [{ ...quickEncounter.participants[0]!, maxHp: 20 }] }, sequence(18, 7), armed.content);
+    const player = encounter.combatants.find((entry) => entry.combatantId === "PC-001")!;
+    assert.equal(player.attackSourceId, "ITM-FIELD-KNIFE");
+    assert.equal(player.damageDie, 6);
+    assert.equal(player.damageModifier, 2);
+    assert.equal(player.attackBonus, 4);
+    const prompt = beginPlayerCombatAttack(armed.db, armed.campaignId, "HOSTILE-001");
+    const attack = rollPendingPlayerCombat(armed.db, armed.campaignId, prompt.rollId, () => 20);
+    const damage = rollPendingPlayerCombat(armed.db, armed.campaignId, attack.pendingRoll!.rollId, undefined, () => 3);
+    assert.deepEqual(damage.dice, [3, 3]);
+    assert.equal(damage.damage, 8, "Critical doubles weapon dice and adds Dexterity once");
+  } finally { armed.db.close(); }
+});
+
+test("switches only owned weapons through Minor Interaction and rollback restores both systems", async () => {
+  const { db, campaignId, content } = await setup("combat-weapon-switch");
+  try {
+    addPlayerItem(db, content, campaignId, { itemId: "ITM-FIELD-KNIFE", source: "starting" });
+    addPlayerItem(db, content, campaignId, { itemId: "ITM-SCRAP-CROSSBOW", source: "found" });
+    equipPlayerItem(db, content, campaignId, "ITM-FIELD-KNIFE");
+    startCombatEncounter(db, campaignId, quickEncounter, sequence(18, 7), content);
+    insertCheckpoint(db, campaignId, 0, 1, "pre_turn", captureSnapshot(db, campaignId));
+    db.prepare("UPDATE campaigns SET turn = 1 WHERE id = ?").run(campaignId);
+
+    const switched = switchPlayerCombatWeapon(db, content, campaignId, "ITM-SCRAP-CROSSBOW");
+    const player = switched.combatants.find((entry) => entry.combatantId === "PC-001")!;
+    assert.equal(player.attackSourceId, "ITM-SCRAP-CROSSBOW");
+    assert.equal(player.damageDie, 8);
+    assert.equal(player.damageModifier, 2);
+    assert.equal(getPlayerCombatTurnView(db, campaignId).slots?.minor_interaction, "spent");
+    assert.equal(listOwnedInventory(db, content, campaignId).find((item) => item.itemId === "ITM-SCRAP-CROSSBOW")?.equippedSlot, "main_hand");
+    assert.throws(() => switchPlayerCombatWeapon(db, content, campaignId, "ITM-FIELD-KNIFE"), /minor interaction slot has already been spent/);
+
+    restorePreviousTurn(db, "combat-weapon-switch");
+    assert.equal(getActiveCombatEncounter(db, campaignId)?.combatants.find((entry) => entry.combatantId === "PC-001")?.attackSourceId, "ITM-FIELD-KNIFE");
+    assert.equal(listOwnedInventory(db, content, campaignId).find((item) => item.itemId === "ITM-FIELD-KNIFE")?.equippedSlot, "main_hand");
   } finally { db.close(); }
 });
